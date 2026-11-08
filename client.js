@@ -2075,17 +2075,69 @@ delete document.body.dataset.dshWechatDark;
 //#region sone-wx: merged settings section
 
 /**
+ * Error boundary around the merged page: a render failure in either half
+ * must not silently blank the section — surface the reason on the page and
+ * in the console so it is diagnosable.
+ */
+class SoneWxBoundary extends _react.Component {
+	constructor(props) {
+		super(props);
+		this.state = { error: null };
+	}
+	static getDerivedStateFromError(error) {
+		return { error };
+	}
+	componentDidCatch(error, info) {
+		try { console.error("[sone-wx] section render error:", error, info && info.componentStack); } catch (e) { /* noop */ }
+		try { window.__soneWxLastError = String((error && error.stack) || error); } catch (e) { /* noop */ }
+	}
+	render() {
+		const error = this.state.error;
+		if (!error) return this.props.children;
+		return (0, react_jsx_runtime.jsxs)("div", {
+			style: { padding: "12px 14px", border: "1px solid rgba(229,72,77,0.4)", borderRadius: 8, fontSize: 12, lineHeight: 1.6 },
+			children: [
+				(0, react_jsx_runtime.jsx)("div", { style: { fontWeight: 600 }, children: "SONE主题 渲染出错" }),
+				(0, react_jsx_runtime.jsx)("pre", {
+					style: { margin: "6px 0 0", whiteSpace: "pre-wrap", wordBreak: "break-all", fontFamily: "inherit", fontSize: 11 },
+					children: String((error && error.stack) || error)
+				})
+			]
+		});
+	}
+}
+
+/**
  * Merged settings page: the WeChat skin controls on top, the brand
  * editor below. Props (t/useStore/actions) come from the slot
  * composition of the section registration (store + locale + inject).
+ * If the composition ever withholds them, say so visibly instead of
+ * crashing into a blank page.
  */
 function SoneWxSection(props) {
-return (0, react_jsx_runtime.jsxs)("div", {
+const missing = [];
+if (typeof props !== "object" || props === null) missing.push("props");
+else {
+if (typeof props.t !== "function") missing.push("t");
+if (typeof props.useStore !== "function") missing.push("useStore");
+if (!props.actions || typeof props.actions !== "object") missing.push("actions");
+}
+return (0, react_jsx_runtime.jsx)(SoneWxBoundary, {
+children: (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", flexDirection: "column", gap: 20 },
 children: [
+missing.length === 0 ? null : (0, react_jsx_runtime.jsxs)("div", {
+style: { padding: "10px 12px", border: "1px solid rgba(230,167,0,0.5)", borderRadius: 8, fontSize: 12 },
+children: [
+(0, react_jsx_runtime.jsx)("div", { style: { fontWeight: 600 }, children: "SONE主题：组合参数缺失" }),
+(0, react_jsx_runtime.jsx)("div", { children: "缺少 " + missing.join(", ") + "（slot 组合层未传入）" }),
+(0, react_jsx_runtime.jsx)("div", { children: "收到参数：" + Object.keys(props || {}).join(", ") })
+]
+}),
 (0, react_jsx_runtime.jsx)(WechatSkinRow, props),
 (0, react_jsx_runtime.jsx)(BRAND.BrandStudioSection, null)
 ]
+})
 });
 }
 
