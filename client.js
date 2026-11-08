@@ -2135,7 +2135,7 @@ children: [
 ]
 }),
 (0, react_jsx_runtime.jsx)(WechatSkinRow, props),
-(0, react_jsx_runtime.jsx)(BRAND.BrandStudioSection, null)
+(0, react_jsx_runtime.jsx)(BRAND.BrandStudioSection, {})
 ]
 })
 });
