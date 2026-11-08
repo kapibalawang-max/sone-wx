@@ -1,0 +1,47 @@
+{
+  "name": "sone-wx",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sone-wx：微信风格皮肤 + 品牌自定义（独立设置分区）：绿色气泡、会话头像、消息密度、对话宽度等，外加品牌标志与标题修改",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "icon.svg"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web",
+      "immediately": true
+    },
+    "compatibility": {
+      "dshReleases": {
+        "0.2.2-rc.1": "compatible"
+      }
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-store": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-locale": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-theme": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.1 <0.3.0",
+    "react": "^18.2.0"
+  },
+  "license": "MIT"
+}

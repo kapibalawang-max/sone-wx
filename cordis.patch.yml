@@ -1,0 +1,4 @@
+- insert:
+    - id: sone-wx
+      name: sone-wx
+      config: {}
