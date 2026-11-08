@@ -2160,11 +2160,94 @@ d: "M9 2.6c3.8 0 6.9 2.6 6.9 5.8 0 3.3-3.1 5.8-6.9 5.8-.74 0-1.46-.1-2.14-.28l-2
 
 /**
  * Client plugin body: skin half (tokens/style/observers/store) + brand
- * half (brand state/seats/OWNED_CSS), then one settings.section.
+ * half (brand state/seats/OWNED_CSS) + table stabilizer half (wide
+ * Markdown table scrollbar reserve), then one settings.section.
  */
+
+//#region sone-wx: table stabilizer (merged from dsh-table-stabilizer)
+
+/**
+ * Wide Markdown tables (>= 4 columns) reserve room for their hover-revealed
+ * horizontal scrollbar with `padding-bottom: var(--dsh-scrollbar-width, 5px)`
+ * and flip `overflow-x: hidden -> scroll` on hover. The host never binds
+ * --dsh-scrollbar-width on the table container, so the reserve falls back to
+ * 5px while the Claude-style theme paints an 8px scrollbar: on hover the real
+ * scrollbar eats 3px more than the reserve and the table jumps up.
+ *
+ * Fix: bind --dsh-scrollbar-width on the table containers to the actual
+ * horizontal scrollbar height, so reserve == real consumption and the hover
+ * transition moves nothing.
+ */
+const TABLE_SELECTORS = [
+	'[data-dsh-claude-part~="table-scroll"]',
+	'[class*="tableScroll"]'
+];
+
+function tableRuleFor(px) {
+	return TABLE_SELECTORS.map((s) => `${s}{--dsh-scrollbar-width:${px}px}`).join(",");
+}
+
+function tableScrollbarMeasure() {
+	const probe = document.createElement("div");
+	probe.style.cssText =
+		"position:absolute;top:-9999px;left:-9999px;width:100px;height:40px;" +
+		"overflow-x:scroll;overflow-y:hidden;visibility:hidden;pointer-events:none;";
+	document.body.appendChild(probe);
+	const h = probe.offsetHeight - probe.clientHeight;
+	probe.remove();
+	// 0 is a valid reading (overlay scrollbars consume nothing).
+	return Number.isFinite(h) && h >= 0 && h < 40 ? Math.round(h) : 8;
+}
+
+function applyTableStabilizer(ctx) {
+	if (typeof document === "undefined") return;
+
+	const style = document.createElement("style");
+	style.dataset.plugin = "sone-wx:table";
+	style.textContent = tableRuleFor(8);
+
+	ctx.effect(
+		() => {
+			document.head.append(style);
+			return () => style.remove();
+		},
+		"sone-wx: table stabilizer stylesheet"
+	);
+
+	// Re-measure: the theme's 8px is the default, but a system switch to
+	// overlay scrollbars (height 0 -> keep the reserve small) or a future
+	// theme change would make the static rule wrong. Cheap, no observers.
+	function sync() {
+		const px = tableScrollbarMeasure();
+		const next = tableRuleFor(px);
+		if (style.textContent !== next) style.textContent = next;
+	}
+
+	ctx.effect(
+		() => {
+			sync();
+			const timers = [
+				window.setTimeout(sync, 1500),
+				window.setTimeout(sync, 8000)
+			];
+			window.addEventListener("resize", sync);
+			window.addEventListener("focus", sync);
+			return () => {
+				timers.forEach((t) => window.clearTimeout(t));
+				window.removeEventListener("resize", sync);
+				window.removeEventListener("focus", sync);
+			};
+		},
+		"sone-wx: table stabilizer measurement"
+	);
+}
+
+//#endregion
+
 function apply(ctx) {
 const skin = applySkin(ctx);
 BRAND.applyBrand(ctx);
+applyTableStabilizer(ctx);
 ctx.effect(() => {
 const offSection = ctx.slots.inject("settings.section", () => ctx.slots.register({
 name: "settings.section",
