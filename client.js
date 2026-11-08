@@ -1706,21 +1706,17 @@ delete document.body.dataset.dshWechatDark;
     //#region 页面样式
 
     var S = {
-      root: { display: 'flex', flexDirection: 'column', minWidth: 0, fontFamily: 'var(--dsw-font-family, inherit)' },
-      intro: {
-        margin: '0 0 16px', fontSize: '13px', lineHeight: '20px',
-        color: 'var(--dsw-alias-label-secondary, #5f6672)'
-      },
+      root: { display: 'flex', flexDirection: 'column', minWidth: 0 },
+      head: { padding: '16px 0 6px' },
       block: {
-        border: '0.5px solid var(--dsw-alias-border-l1)', borderRadius: '12px',
-        background: 'var(--dsw-alias-bg-layer-1, transparent)',
-        padding: '14px 16px', marginBottom: '12px', boxSizing: 'border-box'
+        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
+        padding: '14px 0', boxSizing: 'border-box'
       },
       blockHead: { display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' },
-      blockTitle: { fontSize: '14px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)' },
+      blockTitle: { fontSize: '14px', fontWeight: 500, lineHeight: '22px', color: 'var(--dsw-alias-label-primary)' },
       blockDesc: {
-        margin: '0 0 12px', fontSize: '13px', lineHeight: '18px',
-        color: 'var(--dsw-alias-label-secondary, #5f6672)'
+        margin: '0 0 10px', fontSize: '12px', lineHeight: '18px',
+        color: 'var(--dsw-alias-label-tertiary)'
       },
       row: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
       preview: {
@@ -1730,38 +1726,26 @@ delete document.body.dataset.dshWechatDark;
         background: 'var(--dsw-alias-bg-layer-2, rgba(128,128,128,.08))', overflow: 'hidden'
       },
       previewImg: { display: 'block', maxWidth: '36px', maxHeight: '36px', objectFit: 'contain' },
-      previewEmpty: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary, #5f6672)' },
+      previewEmpty: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)' },
       input: {
-        flex: '1 1 200px', minWidth: '0', height: '30px', padding: '0 10px', boxSizing: 'border-box',
+        flex: '1 1 200px', minWidth: '0', height: '32px', padding: '0 10px', boxSizing: 'border-box',
         border: '0.5px solid var(--dsw-alias-border-l2)', borderRadius: '8px',
         background: 'var(--dsw-alias-bg-base, transparent)',
         color: 'var(--dsw-alias-label-primary)', fontFamily: 'inherit', fontSize: '13px', outline: 'none'
       },
-      btn: {
-        height: '30px', flex: 'none', padding: '0 12px', boxSizing: 'border-box',
-        border: '0.5px solid var(--dsw-alias-border-l2)', borderRadius: '8px', background: 'transparent',
-        color: 'var(--dsw-alias-label-primary)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer'
-      },
       ghost: {
-        height: '30px', flex: 'none', padding: '0 10px', boxSizing: 'border-box',
+        height: '32px', flex: 'none', padding: '0 10px', boxSizing: 'border-box',
         border: '0', borderRadius: '8px', background: 'transparent',
-        color: 'var(--dsw-alias-label-secondary, #5f6672)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer'
+        color: 'var(--dsw-alias-label-tertiary)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer'
       },
-      primary: {
-        height: '30px', flex: 'none', padding: '0 14px', boxSizing: 'border-box',
-        border: '0', borderRadius: '8px',
-        background: 'var(--dsw-alias-button-primary-fill, var(--dsw-alias-label-primary))',
-        color: 'var(--dsw-alias-label-primary-inverted, #fff)',
-        fontFamily: 'inherit', fontSize: '13px', fontWeight: 500, cursor: 'pointer'
-      },
-      disabled: { opacity: 0.55, cursor: 'default' },
+      disabled: { opacity: 0.45, cursor: 'not-allowed' },
       switch: {
         position: 'relative', display: 'inline-block', width: '34px', height: '20px', flex: 'none',
         borderRadius: '999px', border: '0', cursor: 'pointer', padding: '0',
         background: 'var(--dsw-alias-state-idle-primary, rgba(128,128,128,.3))',
         transition: 'background 250ms ease-out'
       },
-      switchOn: { background: 'var(--dsw-alias-brand-primary, #4D6BFE)' },
+      switchOn: { background: '#07c160' },
       switchKnob: {
         position: 'absolute', top: '2px', left: '2px', width: '16px', height: '16px',
         borderRadius: '999px', background: 'var(--dsw-alias-bg-overlay, #fff)',
@@ -1770,10 +1754,10 @@ delete document.body.dataset.dshWechatDark;
       },
       switchKnobOn: { transform: 'translateX(14px)' },
       switchRow: { display: 'flex', alignItems: 'center', gap: '10px' },
-      status: { fontSize: '13px', color: 'var(--dsw-alias-label-secondary, #5f6672)', minWidth: '0', wordBreak: 'break-all' },
+      status: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)', minWidth: '0', wordBreak: 'break-all' },
       ok: { color: 'var(--dsw-alias-state-success-primary)' },
       err: { color: 'var(--dsw-alias-state-error-primary)' },
-      hint: { fontSize: '13px', color: 'var(--dsw-alias-label-secondary, #5f6672)' }
+      hint: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)' }
     }
 
     //#endregion
@@ -1830,7 +1814,7 @@ delete document.body.dataset.dshWechatDark;
       return h('span', { style: { display: 'inline-flex' } },
         h('button', {
           type: 'button',
-          style: disabled ? Object.assign({}, S.btn, S.disabled) : S.btn,
+          className: 'dsh-wc-btn dsh-wc-btn-secondary',
           disabled: disabled || busy[0],
           onClick: pick
         }, busy[0] ? t('saving') : label),
@@ -1908,7 +1892,9 @@ delete document.body.dataset.dshWechatDark;
       var markSrc = imageUrl('mark')
       var wordSrc = imageUrl('wordmark')
 
-      var children = [h('p', { style: S.intro, key: 'intro' }, t('intro'))]
+      var children = [h('div', { style: S.head, key: 'head' },
+        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('pageTitle'))),
+        h('p', { style: Object.assign({}, S.blockDesc, { margin: 0 }) }, t('intro')))]
 
       if (!snap.loaded) {
         children.push(h('div', { style: S.hint, key: 'loading' }, t('loading')))
@@ -1956,7 +1942,7 @@ delete document.body.dataset.dshWechatDark;
           }),
           h('button', {
             type: 'button',
-            style: dirty ? S.primary : Object.assign({}, S.primary, S.disabled),
+            className: 'dsh-wc-btn dsh-wc-btn-primary',
             disabled: !dirty,
             onClick: saveTitle
           }, t('save'))
