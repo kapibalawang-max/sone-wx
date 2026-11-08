@@ -1337,7 +1337,7 @@ delete document.body.dataset.dshWechatDark;
 
     var TEXT = {
       zh: {
-        entry: '品牌修改',
+        entry: 'SONE主题',
         pageTitle: '品牌修改',
         intro: '替换左侧栏与新会话页的品牌标志，并修改品牌标题。图片支持 PNG、SVG、WebP，不超过 2 MB。',
         mark: '品牌标志',
@@ -1365,7 +1365,7 @@ delete document.body.dataset.dshWechatDark;
         preview: '当前标志'
       },
       en: {
-        entry: 'Brand editor',
+        entry: 'SONE Theme',
         pageTitle: 'Brand editor',
         intro: 'Replace the brand mark in the sidebar and on the new-session page, and edit the brand title. PNG, SVG or WebP, up to 2 MB.',
         mark: 'Brand mark',
@@ -2069,7 +2069,7 @@ delete document.body.dataset.dshWechatDark;
     }
 
 
-		return { applyBrand: applyBrand, BrandStudioSection: BrandStudioSection };
+		return { applyBrand: applyBrand, BrandStudioSection: BrandStudioSection, t: t };
 	})();
 
 //#region sone-wx: merged settings section
@@ -2118,7 +2118,7 @@ const offSection = ctx.slots.inject("settings.section", () => ctx.slots.register
 name: "settings.section",
 id: "sone-wx",
 order: 50,
-label: () => "Sone-wx",
+label: () => BRAND.t("entry"),
 locale: SETTINGS_NS,
 store: skin.store,
 inject: skin.injected
