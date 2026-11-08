@@ -14,6 +14,11 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 - `client.js` — Client 半：皮肤（含全部样式与行为）+ 品牌编辑器，合并注册一个 `settings.section`。
 - 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；样式改 `client.js` 内 WECHAT_CSS（本插件无独立 src，双源合并为单源）。
 
+## 更新记录
+
+- 2026-11-08 设置页布局统一：品牌半去卡片改扁平分组，与皮肤半同一套分组/字号/按钮/绿色主色。
+- 2026-11-08 去掉「停用微信皮肤」开关：皮肤恒启用（enabled=true），删除 toggle/readEnabled/writeEnabled/STORAGE_KEY 与相关 locale 键，设置页保留字号/头像/密度/宽度/尾巴/恢复默认。
+
 ## 兼容
 
 dsh 0.2.2-rc.1（compatibility 声明）。宿主半永久保留 brand 的 webServer 实现（生产验证过），皮肤半不做任何网络调用。

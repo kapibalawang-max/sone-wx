@@ -23,7 +23,6 @@ window.__ModuleLoader__.load({
 		/** Settings row locale namespace. */
 		const SETTINGS_NS = "sone-wx.skin";
 		/** localStorage keys. */
-		const STORAGE_KEY = "dsh-wechat-skin:enabled";
 		const AVATAR_MAP_KEY = "dsh-wechat-skin:avatar-map";
 		const COMPOSER_H_KEY = "dsh-wechat-skin:composer-height";
 		/** Source identity for the token override layer. */
@@ -508,16 +507,6 @@ body .dsh-wc-btn[disabled]:active {
 //#endregion
 
 		//#region dsh-wechat-skin: persistence + DOM helpers
-		/** Read the enabled flag; absent flag means disabled (opt-in). */
-		function readEnabled() {
-			const value = window.localStorage.getItem(STORAGE_KEY);
-			if (value === null) return false;
-			return value !== "0";
-		}
-		/** Persist the enabled flag. */
-		function writeEnabled(on) {
-			window.localStorage.setItem(STORAGE_KEY, on ? "1" : "0");
-		}
 		/** Read a JSON value from localStorage (fallback on absence/error). */
 		function readJson(key, fallback) {
 			try {
@@ -871,13 +860,12 @@ if (rows.length > 0) sessionListPrimed = true;
 		};
 
 		/**
-		 * The settings row: toggle + font size + avatars + density + bubble tail + reset.
+		 * The settings row: font size + avatars + density + bubble tail + reset.
 		 * Buttons are class-styled (hover/active/disabled live in WECHAT_UI_CSS);
 		 * controls without visible effect while the skin is off are disabled.
-		 * @param props - composed Settings slot props (t, toggle, setFontLevel, setDensity, setTail, setChatWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
+		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
 		 */
-		function WechatSkinRow({ t, toggle, setFontLevel, setDensity, setTail, setChatWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
-			const enabled = useStore((s) => s.enabled);
+		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 			const fontLevel = useStore((s) => s.fontLevel);
 			const density = useStore((s) => s.density);
 			const tail = useStore((s) => s.tail);
@@ -889,7 +877,6 @@ if (rows.length > 0) sessionListPrimed = true;
 				if (file) downscaleImage(file).then(action).catch(() => {});
 				event.target.value = "";
 			};
-			const off = !enabled;
 			const seg = (pressed) => "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-fontbtn" + (pressed ? " dsh-wc-fontbtn-on" : "");
 			return (0, react_jsx_runtime.jsxs)("div", {
 				style: styles.group,
@@ -901,12 +888,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					(0, react_jsx_runtime.jsx)("div", {
 						style: styles.desc,
 						children: t("description")
-					}),
-					(0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						className: "dsh-wc-btn " + (enabled ? "dsh-wc-btn-secondary" : "dsh-wc-btn-primary"),
-						onClick: () => toggle(!enabled),
-						children: t(enabled ? "disable" : "enable")
 					}),
 					(0, react_jsx_runtime.jsx)("div", {
 						style: styles.title,
@@ -922,7 +903,6 @@ if (rows.length > 0) sessionListPrimed = true;
 							type: "button",
 							className: seg(fontLevel === index + 1),
 							"aria-pressed": fontLevel === index + 1,
-							disabled: off,
 							onClick: () => setFontLevel(index + 1),
 							children: t("fontL" + (index + 1))
 						}, "font-" + (index + 1)))
@@ -951,14 +931,12 @@ if (rows.length > 0) sessionListPrimed = true;
 							(0, react_jsx_runtime.jsx)("button", {
 								type: "button",
 								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-								disabled: off,
 								onClick: () => userRef.current && userRef.current.click(),
 								children: t("uploadUser")
 							}),
 							(0, react_jsx_runtime.jsx)("button", {
 								type: "button",
 								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-								disabled: off,
 								onClick: () => aiRef.current && aiRef.current.click(),
 								children: t("uploadAi")
 							})
@@ -975,7 +953,6 @@ if (rows.length > 0) sessionListPrimed = true;
 								type: "button",
 								className: seg(density === "cozy"),
 								"aria-pressed": density === "cozy",
-								disabled: off,
 								onClick: () => setDensity("cozy"),
 								children: t("densityCozy")
 							}),
@@ -983,7 +960,6 @@ if (rows.length > 0) sessionListPrimed = true;
 								type: "button",
 								className: seg(density === "compact"),
 								"aria-pressed": density === "compact",
-								disabled: off,
 								onClick: () => setDensity("compact"),
 								children: t("densityCompact")
 							})
@@ -1000,7 +976,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					      type: "button",
 					      className: seg(chatWidth === "wide"),
 					      "aria-pressed": chatWidth === "wide",
-					      disabled: off,
 					      onClick: () => setChatWidth("wide"),
 					      children: t("widthWide")
 					    }),
@@ -1008,7 +983,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					      type: "button",
 					      className: seg(chatWidth === "medium"),
 					      "aria-pressed": chatWidth === "medium",
-					      disabled: off,
 					      onClick: () => setChatWidth("medium"),
 					      children: t("widthMedium")
 					    }),
@@ -1016,7 +990,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					      type: "button",
 					      className: seg(chatWidth === "native"),
 					      "aria-pressed": chatWidth === "native",
-					      disabled: off,
 					      onClick: () => setChatWidth("native"),
 					      children: t("widthNative")
 					    })
@@ -1033,7 +1006,6 @@ if (rows.length > 0) sessionListPrimed = true;
 								type: "button",
 								className: seg(tail === true),
 								"aria-pressed": tail === true,
-								disabled: off,
 								onClick: () => setTail(true),
 								children: t("tailOn")
 							}),
@@ -1041,7 +1013,6 @@ if (rows.length > 0) sessionListPrimed = true;
 								type: "button",
 								className: seg(tail === false),
 								"aria-pressed": tail === false,
-								disabled: off,
 								onClick: () => setTail(false),
 								children: t("tailOff")
 							})
@@ -1052,7 +1023,6 @@ if (rows.length > 0) sessionListPrimed = true;
 						children: (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
 							className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-							disabled: off,
 							onClick: () => resetSkin && resetSkin(),
 							children: t("reset")
 						})
@@ -1075,7 +1045,7 @@ if (rows.length > 0) sessionListPrimed = true;
 		 * @param ctx - client cordis context.
 		 */
 		function applySkin(ctx) {
-			let enabled = readEnabled();
+			const enabled = true;
 			let disposeTokens = null;
 			let observer = null;
 
@@ -1091,7 +1061,6 @@ const themeSvc = (typeof ctx.get === "function" ? ctx.get("theme") : undefined) 
 const scheme = themeSvc && typeof themeSvc.getTheme === "function"
 ? (themeSvc.getTheme().active || {}).colorScheme
 : (document.body.hasAttribute("data-ds-dark-theme") ? "dark" : "light");
-if (enabled) {
 // Structural CSS needs body.dsh-wechat-match; latch it once the hashed selectors
 // are seen so a slow first render cannot leave the skin half-off, while a DSH
 // upgrade that renames every class still disables the gated rules.
@@ -1099,40 +1068,15 @@ if (!matchLatched && selectorsMatch()) matchLatched = true;
 document.body.classList.add(BODY_CLASS);
 if (matchLatched) document.body.classList.add(MATCH_CLASS);
 document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
-} else {
-document.body.classList.remove(BODY_CLASS);
-document.body.classList.remove(MATCH_CLASS);
-delete document.body.dataset.dshWechatDark;
-}
 			};
 
 			/** Apply the current state: token layer + stylesheet + body class. */
 			const applyState = () => {
-				if (enabled) {
-					if (!disposeTokens) {
-						const themeSvc = (typeof ctx.get === "function" ? ctx.get("theme") : undefined) || ctx.theme; if (themeSvc) disposeTokens = themeSvc.overrideTokens(OVERRIDE_SOURCE, TOKEN_OVERRIDES);
-					}
-					ensureStyleTag();
-					ensureSidebarAvatar();
-				} else {
-					if (disposeTokens) {
-						disposeTokens();
-						disposeTokens = null;
-					}
-					removeStyleTag();
-					removeSidebarAvatar();
-					if (document.body) {
-					  delete document.body.dataset.dshWechatDensity;
-					  delete document.body.dataset.dshWechatTail;
-					  delete document.body.dataset.dshWechatWidth;
-					}
-					const card = document.querySelector(".JZLxKW_card");
-					if (card) {
-					card.style.height = "";
-					card.style.removeProperty("--dsh-composer-text-max-height");
-					delete card.dataset.dshHeightRestored;
-					}
+				if (!disposeTokens) {
+					const themeSvc = (typeof ctx.get === "function" ? ctx.get("theme") : undefined) || ctx.theme; if (themeSvc) disposeTokens = themeSvc.overrideTokens(OVERRIDE_SOURCE, TOKEN_OVERRIDES);
 				}
+				ensureStyleTag();
+				ensureSidebarAvatar();
 				syncBodyClass();
 			};
 
@@ -1188,13 +1132,6 @@ delete document.body.dataset.dshWechatDark;
 				bound = actions;
 				sync();
 				return {
-					toggle: (on) => {
-						enabled = !!on;
-						writeEnabled(enabled);
-						applyState();
-						if (enabled) { applyDensity(density); applyTail(tail); applyChatWidth(chatWidth); }
-						sync();
-					},
 					setFontLevel: (level) => {
 						fontLevel = (level >= 1 && level <= 5) ? level : 3;
 						writeJson(FONT_LEVEL_KEY, fontLevel);
@@ -1253,9 +1190,7 @@ delete document.body.dataset.dshWechatDark;
 			ctx.effect(() => ctx.locale.register(SETTINGS_NS, {
 				zh: {
 					"title": "微信皮肤",
-					"description": "仿微信主题：绿色气泡、微信绿强调色。停用即还原官方外观。",
-					"enable": "启用微信皮肤",
-					"disable": "停用微信皮肤",
+					"description": "仿微信主题：绿色气泡、微信绿强调色。",
 					"avatarTitle": "头像",
 					"uploadUser": "上传我的头像",
 					"uploadAi": "上传 AI 头像",
@@ -1280,9 +1215,7 @@ delete document.body.dataset.dshWechatDark;
 				},
 				en: {
 					"title": "WeChat Skin",
-					"description": "WeChat-style theme: green sent bubbles and WeChat-green accents. Disable to restore the official look.",
-					"enable": "Enable WeChat skin",
-					"disable": "Disable WeChat skin",
+					"description": "WeChat-style theme: green sent bubbles and WeChat-green accents.",
 					"avatarTitle": "Avatars",
 					"uploadUser": "Upload my avatar",
 					"uploadAi": "Upload AI avatar",
