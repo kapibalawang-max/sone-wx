@@ -303,7 +303,38 @@ export function apply(ctx) {
     },
   }
 
-  for (const route of [statusRoute, ...imageRoutes]) {
+  const diagPath = () => join(brandDir(ctx), '..', 'diag.json')
+  const diagRoute = {
+    kind: 'exact',
+    path: '/sone-wx/diag',
+    handler: (req, res) => {
+      if (methodRefused(req, res, ['GET', 'HEAD', 'POST'])) return
+      if (fenceRefused(ctx, req, res)) return
+      if (req.method === 'POST') {
+        return void readJsonBody(req, 64 * 1024).then((payload) => {
+          if (payload === null) return sendJson(res, 400, { ok: false, error: 'bad_json' })
+          try {
+            mkdirSync(brandDir(ctx), { recursive: true })
+            const entries = Array.isArray(payload.entries) ? payload.entries.slice(-20) : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
+            writeFileSync(diagPath(), JSON.stringify({ entries }, null, 2))
+          } catch {}
+          return sendJson(res, 200, { ok: true })
+        }).catch((error) => {
+          if (!res.headersSent) sendJson(res, 500, { ok: false, error: String(error?.message ?? error) })
+        })
+      }
+      // GET：回读最近一次写入的诊断内容（便于排查）
+      try {
+        const body = readFileSync(diagPath())
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'content-length': String(body.byteLength) })
+        res.end(req.method === 'HEAD' ? undefined : body)
+      } catch {
+        sendJson(res, 200, { entries: [] })
+      }
+    },
+  }
+
+  for (const route of [statusRoute, ...imageRoutes, diagRoute]) {
     ctx.effect(() => ctx.webServer.register(route), `sone-wx: ${route.path}`)
   }
 }

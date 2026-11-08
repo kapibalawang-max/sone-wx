@@ -2244,7 +2244,51 @@ function applyTableStabilizer(ctx) {
 
 //#endregion
 
+/** 渲染端 slot 崩溃自诊断：SlotErrorBoundary 会 console.error 崩溃详情后把条目
+ * abdicate 成空白（页面只剩 <div data-slot-error>），Electron 渲染进程的
+ * console 我方不可见，故拦截 console.error/unhandledrejection，把匹配
+ * "slot entry crashed"/"slot factory occurrence crashed" 的错误 POST 到
+ * 宿主 /sone-wx/diag 落盘（~/.dsh/sone-wx/diag.json），供外部读取。 */
+function installDiagHook() {
+if (globalThis.__soneWxDiagHooked) return;
+globalThis.__soneWxDiagHooked = true;
+const post = (msg) => {
+try {
+fetch("/sone-wx/diag", {
+method: "POST",
+headers: { "content-type": "application/json" },
+body: JSON.stringify({ t: Date.now(), msg: String(msg).slice(0, 4000) })
+}).catch(() => {});
+} catch {}
+};
+const origError = console.error.bind(console);
+console.error = (...args) => {
+try {
+const head = typeof args[0] === "string" ? args[0] : "";
+if (head.includes("slot entry crashed") || head.includes("slot factory occurrence crashed")) {
+const text = args.map((a) => {
+if (a instanceof Error) return a.stack || String(a);
+if (typeof a === "string") return a;
+try { return JSON.stringify(a); } catch { return String(a); }
+}).join(" | ");
+post(text);
+}
+} catch {}
+origError(...args);
+};
+try {
+window.addEventListener("unhandledrejection", (event) => {
+try {
+const reason = event && event.reason;
+const text = reason instanceof Error ? (reason.stack || String(reason)) : String(reason);
+if (text.includes("slot") || text.includes("settings.section")) post("unhandledrejection: " + text);
+} catch {}
+});
+} catch {}
+}
+
 function apply(ctx) {
+try { installDiagHook(); } catch {}
 const skin = applySkin(ctx);
 BRAND.applyBrand(ctx);
 applyTableStabilizer(ctx);
