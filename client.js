@@ -483,7 +483,7 @@ body .dsh-wc-btn-secondary {
 }
 body .dsh-wc-btn-secondary:hover { background: var(--dsw-alias-interactive-bg-hover); }
 body .dsh-wc-btn-secondary:active { background: var(--dsw-alias-interactive-bg-active); }
-body .dsh-wc-btn-sm { padding: 5px 12px; font-size: 12px; line-height: 18px; }
+body .dsh-wc-btn-sm { padding: 6px 12px; font-size: 12px; line-height: 18px; }
 body .dsh-wc-fontbtn { min-width: 34px; height: 30px; padding: 0 8px; }
 body .dsh-wc-fontbtn:hover { border-color: #07c160; }
 body .dsh-wc-fontbtn-on,
@@ -690,6 +690,7 @@ row.dataset.dshAvatar = value;
 
 		/** Composer drag-to-resize via document-level delegation (survives re-renders).
 		    Drag the input box's TOP border up, or its BOTTOM border down, to resize. */
+		let composerResizeCleanup = null;
 		function initComposerResize() {
 			const root = document.documentElement;
 			if (root.dataset.dshResizeDelegated) return;
@@ -699,6 +700,12 @@ row.dataset.dshAvatar = value;
 			let fromTop = false;
 			let startY = 0;
 			let startH = 0;
+			composerResizeCleanup = () => {
+				document.removeEventListener("pointerdown", onPointerDown);
+				document.removeEventListener("pointermove", onPointerMove);
+				document.removeEventListener("pointerup", onPointerUp);
+				delete root.dataset.dshResizeDelegated;
+			};
 
 			const skinOn = () => document.body.classList.contains(BODY_CLASS);
 			const applyHeight = (card, height) => {
@@ -717,7 +724,7 @@ row.dataset.dshAvatar = value;
 				card.dataset.dshHeightRestored = "1";
 			};
 
-			document.addEventListener("pointerdown", (event) => {
+			const onPointerDown = (event) => {
 				if (!skinOn()) return;
 				const card = document.querySelector(".JZLxKW_card");
 				if (!card) return;
@@ -732,21 +739,25 @@ row.dataset.dshAvatar = value;
 				startH = rect.height;
 				event.preventDefault();
 				document.body.style.cursor = "ns-resize";
-			});
+			};
 
-			document.addEventListener("pointermove", (event) => {
+			const onPointerMove = (event) => {
 				if (!dragging) return;
 				const card = document.querySelector(".JZLxKW_card");
 				if (!card) return;
 				const delta = fromTop ? (startY - event.clientY) : (event.clientY - startY);
 				const height = Math.min(Math.max(startH + delta, 64), Math.round(window.innerHeight * 0.6));
 				applyHeight(card, height);
-			});
+			};
 
-			document.addEventListener("pointerup", () => {
+			const onPointerUp = () => {
 				dragging = false;
 				document.body.style.cursor = "";
-			});
+			};
+
+			document.addEventListener("pointerdown", onPointerDown);
+			document.addEventListener("pointermove", onPointerMove);
+			document.addEventListener("pointerup", onPointerUp);
 
 			restoreHeight();
 		}
@@ -835,7 +846,7 @@ if (rows.length > 0) sessionListPrimed = true;
 		/** Inline styles for static (non-interactive) parts of the settings row. */
 		const styles = {
 			group: {
-				borderBottom: "1px solid var(--dsw-alias-border-l2)",
+				borderBottom: "0.5px solid var(--dsw-alias-border-l2)",
 				display: "flex",
 				flexDirection: "column",
 				gap: "8px",
@@ -1245,8 +1256,10 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 				if (disposeTokens) disposeTokens();
 				removeStyleTag();
 				removeUiStyleTag();
-				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove("dsh-wechat-match"); if (document.body) { delete document.body.dataset.dshWechatDark; delete document.body.dataset.dshWechatDensity; delete document.body.dataset.dshWechatTail; delete document.body.dataset.dshWechatWidth; }
+				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS); if (document.body) { delete document.body.dataset.dshWechatDark; delete document.body.dataset.dshWechatDensity; delete document.body.dataset.dshWechatTail; delete document.body.dataset.dshWechatWidth; }
 				observer?.disconnect();
+				if (composerResizeCleanup) { composerResizeCleanup(); composerResizeCleanup = null; }
+				document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
 			}, "sone-wx: skin cleanup");
 			return { store, injected };
 		}

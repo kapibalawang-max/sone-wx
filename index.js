@@ -316,7 +316,10 @@ export function apply(ctx) {
           try {
             mkdirSync(brandDir(ctx), { recursive: true })
             const entries = Array.isArray(payload.entries) ? payload.entries.slice(-20) : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
-            writeFileSync(diagPath(), JSON.stringify({ entries }, null, 2))
+            const target = diagPath()
+            const temporary = tempPath(target)
+            writeFileSync(temporary, JSON.stringify({ entries }, null, 2))
+            renameSync(temporary, target)
           } catch {}
           return sendJson(res, 200, { ok: true })
         }).catch((error) => {
