@@ -2,10 +2,11 @@
 
 DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里独立「SONE主题」分区（不再占用通用页）。
 
-由两个本地插件合并而来（2026-11-08）：
+由三个本地插件合并而来（2026-11-08）：
 
 - `dsh-wechat-skin`（移植自 licheng-ma/dsh-wechat-skin v1.0.0，本地已深度定制 79 轮）：绿色气泡、会话/消息头像、字号五档、消息密度、气泡尾巴、对话宽度、输入框拖高、运行状态点圈、深浅两套配色。localStorage 键保持 `dsh-wechat-skin:*`，老数据直接延续。
-- `dsh-brand-studio`：品牌标志/标题/文字标志图片，接管侧栏与新会话页品牌位。数据从 `~/.dsh/dsh-brand-studio/brand/` 首次启动自动迁移到 `~/.dsh/sone-wx/brand/`，接口 `/sone-wx/brand`。
+- `dsh-brand-studio`：品牌标志/标题/文字标志图片，接管侧栏与新会话页品牌位。
+- `dsh-table-stabilizer`：宽表格悬停跳动修复（把 `--dsh-scrollbar-width` 绑到表格容器，实测滚动条高度），纯 client 行为，无设置项。数据从 `~/.dsh/dsh-brand-studio/brand/` 首次启动自动迁移到 `~/.dsh/sone-wx/brand/`，接口 `/sone-wx/brand`。
 
 ## 结构
 
