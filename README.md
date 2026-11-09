@@ -4,7 +4,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 由三个本地插件合并而来（2026-11-08）：
 
-- `dsh-wechat-skin`（移植自 licheng-ma/dsh-wechat-skin v1.0.0，本地已深度定制 79 轮）：绿色气泡、会话/消息头像、字号五档、消息密度、气泡尾巴、对话宽度、侧边栏背景色、输入框拖高、运行状态点圈、深浅两套配色。localStorage 键保持 `dsh-wechat-skin:*`，老数据直接延续。
+- `dsh-wechat-skin`（移植自 licheng-ma/dsh-wechat-skin v1.0.0，本地已深度定制 79 轮）：绿色气泡、会话/消息头像、字号五档、消息密度、气泡尾巴、对话宽度、侧边栏背景色、侧边栏入口排序、输入框拖高、运行状态点圈、深浅两套配色。localStorage 键保持 `dsh-wechat-skin:*`，老数据直接延续。
 - `dsh-brand-studio`：品牌标志/标题/文字标志图片，接管侧栏与新会话页品牌位。
 - `dsh-table-stabilizer`：宽表格悬停跳动修复（把 `--dsh-scrollbar-width` 绑到表格容器，实测滚动条高度），纯 client 行为，无设置项。数据从 `~/.dsh/dsh-brand-studio/brand/` 首次启动自动迁移到 `~/.dsh/sone-wx/brand/`，接口 `/sone-wx/brand`。
 
@@ -16,6 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-09 新增「侧边栏入口顺序」：设置里用上下箭头调整，也可以直接在侧边栏拖动图标排序；顺序按入口标签存 `dsh-wechat-skin:sidebar-order`，用 CSS `order` 实现，不动 DSH 的 DOM；「恢复默认顺序」清空覆盖。
 - 2026-11-09 新增「侧边栏背景色」：默认值按微信 4.x 实测取色（会话列表 rgb(238,238,240)），深浅主题各一套；选自定义色时文字按底色亮度自动切换深/浅（会话列表、hover 行同步适配）；键 `dsh-wechat-skin:sidebar-bg`，「微信色」恢复默认。同日修掉 macOS 上 DSH 的蓝色渐变覆盖皮肤侧栏底色的问题（皮肤规则加 !important 提高优先级）。
 - 2026-11-09 移除「侧边栏宽度」调整：滑块、原生手柄接管、`dsh-wechat-skin:sidebar-width` 全部删除，侧栏宽度回归 DSH 自己的三栏求解（用户要求只保留纯微信外观）。
 - 2026-11-08 审查修复：组分隔线统一 0.5px、次要按钮高度统一 30px、卸载时回收输入框拖拽监听与字号变量、diag 落盘改原子写。
