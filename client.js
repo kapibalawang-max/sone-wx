@@ -34,7 +34,7 @@ window.__ModuleLoader__.load({
 		/** Added only when the skin's hashed selectors still match this DSH build. */
 		const MATCH_CLASS = "dsh-wechat-match";
 		/** A few hashed classes that move when DSH changes; if none exist the skin must not hide/alter anything. */
-		const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame"];
+const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame", ".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
 		/** The streaming chat column; mutations inside it do not affect the skin's DOM work. */
 		const CHAT_AREA = ".tnXGgG_scroll, .tnXGgG_column, .kiGsTW_scrollBody, .kiGsTW_viewArea";
 		/** Fixed avatar indices for message bubbles (user / assistant). */
@@ -52,6 +52,9 @@ window.__ModuleLoader__.load({
 		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
 		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
 		const PRESET_KEY = "dsh-wechat-skin:preset";
+		const LINE_HEIGHT_KEY = "dsh-wechat-skin:line-height";
+		const MOTION_KEY = "dsh-wechat-skin:reduced-motion";
+		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
 		const SIDEBAR_ORDER_KEY = "dsh-wechat-skin:sidebar-order";
@@ -71,7 +74,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY, PRESET_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -562,7 +565,7 @@ body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: 11px; color: var(--dsw-ali
 body.dsh-wechat-skin-on ._3j1mRa_error { font-size: 12px; }
 
 /* Markdown inside assistant replies: WeChat reading rhythm, light chrome. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, ul, ol) { line-height: 1.72; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, ul, ol) { line-height: var(--wc-line-height, 1.72); }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(h1, h2, h3, h4) { font-weight: 600; line-height: 1.4; margin: 14px 0 6px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a { color: var(--wc-green); text-decoration: underline; text-underline-offset: 2px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :not(pre) > code {
@@ -598,15 +601,16 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:
 
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */
+body.dsh-wechat-skin-on { --wc-hover: var(--wc-hover); --wc-hover-accent: var(--wc-hover-accent); }
 body.dsh-wechat-skin-on .Dv5QdW_panel { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
 body.dsh-wechat-skin-on .Dv5QdW_panelBody { padding: 10px 12px; }
 body.dsh-wechat-skin-on .Dv5QdW_tabTitle { font-size: 13px; font-weight: 600; }
 body.dsh-wechat-skin-on .Dv5QdW_tabBody { font-size: 12.5px; }
 body.dsh-wechat-skin-on .Dv5QdW_iconButton { border-radius: 6px; }
-body.dsh-wechat-skin-on .Dv5QdW_iconButton:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .Dv5QdW_iconButton:hover { background: var(--wc-hover); }
 body.dsh-wechat-skin-on .Dv5QdW_unavailable { font-size: 12px; color: var(--dsw-alias-label-tertiary, #999); }
 body.dsh-wechat-skin-on .F6Huca_entry { border-radius: 8px; padding: 8px; }
-body.dsh-wechat-skin-on .F6Huca_entry:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .F6Huca_entry:hover { background: var(--wc-hover); }
 body.dsh-wechat-skin-on .F6Huca_entryTitle { font-size: 13px; font-weight: 500; }
 body.dsh-wechat-skin-on .F6Huca_entryDescription { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
 
@@ -616,7 +620,7 @@ body.dsh-wechat-skin-on .m00Doa_card {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10); background: var(--dsw-alias-bg-overlay, #ffffff);
 }
 body.dsh-wechat-skin-on .m00Doa_row { border-radius: 6px; }
-body.dsh-wechat-skin-on .m00Doa_rowActive { background: var(--dsw-alias-interactive-bg-hover-accent, rgba(7, 193, 96, 0.10)); }
+body.dsh-wechat-skin-on .m00Doa_rowActive { background: var(--wc-hover-accent); }
 body.dsh-wechat-skin-on .m00Doa_label { font-size: 13px; }
 body.dsh-wechat-skin-on .m00Doa_badge { border-radius: 999px; font-size: 11px; }
 body.dsh-wechat-skin-on .m00Doa_search { border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: 6px; }
@@ -626,7 +630,7 @@ body.dsh-wechat-skin-on .JoiKIa_time,
 body.dsh-wechat-skin-on .JoiKIa_timestamp { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
 body.dsh-wechat-skin-on .JoiKIa_searchResultHeading { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); letter-spacing: 0.02em; }
 body.dsh-wechat-skin-on .JoiKIa_searchResultRow { border-radius: 8px; }
-body.dsh-wechat-skin-on .JoiKIa_searchResultRow:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .JoiKIa_searchResultRow:hover { background: var(--wc-hover); }
 body.dsh-wechat-skin-on .JoiKIa_searchResultTitle { font-size: 13px; font-weight: 500; }
 body.dsh-wechat-skin-on .JoiKIa_searchResultSnippet { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
 body.dsh-wechat-skin-on .JoiKIa_dot { background: var(--wc-green); }
@@ -640,7 +644,7 @@ body.dsh-wechat-skin-on .ZITbJG_action {
   width: 24px; height: 24px; border-radius: 6px;
   color: var(--dsw-alias-label-tertiary, #999); transition: background-color .15s ease-out, color .15s ease-out;
 }
-body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); color: var(--dsw-alias-label-primary, #1b1b1c); }
+body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--wc-hover); color: var(--dsw-alias-label-primary, #1b1b1c); }
 body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); }
 
 /* Running / streaming group label. */
@@ -660,6 +664,24 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"
   --dsw-alias-bg-base: #1b1813;
   --dsw-alias-bg-module-platform: #26231d;
   --dsw-specific-bubble: #3d3829;
+}
+
+/* ================= line height + reduced motion ================= */
+body.dsh-wechat-skin-on { --wc-line-height: 1.72; }
+body.dsh-wechat-skin-on[data-dsh-wechat-line-height="compact"] { --wc-line-height: 1.55; }
+body.dsh-wechat-skin-on[data-dsh-wechat-line-height="relaxed"] { --wc-line-height: 1.92; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, ul, ol),
+body.dsh-wechat-skin-on [data-chat-flow-kind="user"] [class*="_bubble_"] { line-height: var(--wc-line-height, 1.72); }
+
+body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *,
+body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::before,
+body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
+  transition: none !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.dsh-wechat-skin-on *, body.dsh-wechat-skin-on *::before, body.dsh-wechat-skin-on *::after {
+    transition: none !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+  }
 }
 
 /* bubble tail off: hide the right-pointing triangle on sent bubbles */
@@ -1097,6 +1119,25 @@ if (rows.length > 0) sessionListPrimed = true;
 			return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : null;
 		}
 
+/** Reading rhythm: compact / normal / relaxed. */
+function applyLineHeight(value) {
+if (typeof document === "undefined" || !document.body) return;
+const mode = value === "compact" || value === "relaxed" ? value : "normal";
+document.body.dataset.dshWechatLineHeight = mode;
+}
+
+/** Turn off skin transitions/animations (also honors the OS setting via CSS). */
+function applyReducedMotion(on) {
+if (typeof document === "undefined" || !document.body) return;
+document.body.dataset.dshWcReduceMotion = on ? "1" : "0";
+}
+
+/** User-saved presets, newest first. */
+function readCustomPresets() {
+const list = readJson(CUSTOM_PRESETS_KEY, []);
+return Array.isArray(list) ? list.filter((item) => item && typeof item.id === "string" && typeof item.name === "string") : [];
+}
+
 /** Theme-level preset marker (drives palette overrides in CSS). */
 function applyPresetTheme(id) {
 if (typeof document === "undefined" || !document.body) return;
@@ -1510,7 +1551,7 @@ t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, setAiAvatarVisible, applyPreset, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const density = useStore((s) => s.density);
 const tail = useStore((s) => s.tail);
@@ -1527,6 +1568,15 @@ const presetId = presetPair[0];
 const setPresetId = presetPair[1];
 const status = statusPair[0];
 const setStatus = statusPair[1];
+const lineHeightPair = (0, _react.useState)(() => { const raw = readJson(LINE_HEIGHT_KEY, "normal"); return raw === "compact" || raw === "relaxed" ? raw : "normal"; });
+const lineHeight = lineHeightPair[0];
+const setLineHeightLocal = lineHeightPair[1];
+const motionPair = (0, _react.useState)(() => readJson(MOTION_KEY, false) === true);
+const reduceMotion = motionPair[0];
+const setReduceMotionLocal = motionPair[1];
+const presetTickPair = (0, _react.useState)(0);
+const bumpPresets = presetTickPair[1];
+const customPresets = typeof listPresets === "function" ? listPresets() : [];
 const missing = SELECTOR_PROBES.filter((selector) => {
 try { return document.querySelector(selector) === null; } catch (error) { return true; }
 });
@@ -1586,7 +1636,16 @@ const tailOptions = [
 { value: true, label: t("tailOn") },
 { value: false, label: t("tailOff") }
 ];
-const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) }));
+const lineHeightOptions = [
+{ value: "compact", label: t("lineHeightCompact") },
+{ value: "normal", label: t("lineHeightNormal") },
+{ value: "relaxed", label: t("lineHeightRelaxed") }
+];
+const motionOptions = [
+{ value: false, label: t("motionFull") },
+{ value: true, label: t("motionReduced") }
+];
+const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) })).concat(customPresets.map((preset) => ({ value: preset.id, label: preset.name })));
 return (0, react_jsx_runtime.jsxs)("div", {
 style: styles.card,
 children: [
@@ -1594,13 +1653,36 @@ children: [
 title: t("presetTitle"),
 first: true,
 hint: t("presetHint"),
-children: (0, react_jsx_runtime.jsx)(Segmented, {
+children: (0, react_jsx_runtime.jsxs)("div", {
+style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" },
+children: [
+(0, react_jsx_runtime.jsx)(Segmented, {
 value: presetId,
 options: presetOptions,
 onChange: (id) => {
 setPresetId(id);
 if (applyPreset) applyPreset(id);
 }
+}),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => {
+if (!savePreset) return;
+const saved = savePreset(t("presetMine") + " " + (customPresets.length + 1));
+if (saved) { setPresetId(saved.id); bumpPresets((n) => n + 1); }
+},
+children: t("presetSave")
+}),
+typeof presetId === "string" && presetId.indexOf("custom-") === 0 && deletePreset
+? (0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => { deletePreset(presetId); setPresetId(null); bumpPresets((n) => n + 1); },
+children: t("presetDelete")
+})
+: null
+]
 })
 }),
 (0, react_jsx_runtime.jsx)("div", {
@@ -1665,8 +1747,26 @@ onChange: (event) => setSidebarBg(event.target.value)
 ]
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("lineHeightTitle"),
+hint: t("lineHeightHint"),
+children: (0, react_jsx_runtime.jsx)(Segmented, {
+value: lineHeight,
+options: lineHeightOptions,
+onChange: (value) => { setLineHeightLocal(value); if (setLineHeight) setLineHeight(value); }
+})
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("tailTitle"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("motionTitle"),
+hint: t("motionHint"),
+children: (0, react_jsx_runtime.jsx)(Segmented, {
+value: reduceMotion,
+options: motionOptions,
+onChange: (value) => { setReduceMotionLocal(value); if (setReduceMotion) setReduceMotion(value); }
+})
 }),
 (0, react_jsx_runtime.jsxs)("div", {
 style: styles.cardFoot,
@@ -1809,6 +1909,8 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
 			applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
+			applyLineHeight(readJson(LINE_HEIGHT_KEY, "normal"));
+			applyReducedMotion(readJson(MOTION_KEY, false) === true);
 			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible);
 			let bound = null;
 			let revision = 0;
@@ -1862,7 +1964,7 @@ scanHooks.push(composerScrollScan);
 					  sync();
 					},
 					applyPreset: (id) => {
-						const preset = THEME_PRESETS.find((item) => item.id === id);
+						const preset = THEME_PRESETS.find((item) => item.id === id) || readCustomPresets().find((item) => item.id === id);
 						if (!preset) return;
 						fontLevel = preset.fontLevel;
 						writeJson(FONT_LEVEL_KEY, fontLevel);
@@ -1882,7 +1984,7 @@ scanHooks.push(composerScrollScan);
 							else window.localStorage.setItem(SIDEBAR_BG_KEY, JSON.stringify(sidebarBg));
 						} catch (e) {}
 
-						const presetId = preset.id === "paper" ? "paper" : null;
+						const presetId = preset.id;
 						try {
 							if (presetId === null) window.localStorage.removeItem(PRESET_KEY);
 							else window.localStorage.setItem(PRESET_KEY, JSON.stringify(presetId));
@@ -1942,6 +2044,8 @@ scanHooks.push(composerScrollScan);
 						aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
 						applyAiAvatar(aiAvatarVisible);
 						applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
+						applyLineHeight(readJson(LINE_HEIGHT_KEY, "normal"));
+						applyReducedMotion(readJson(MOTION_KEY, false) === true);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -1983,6 +2087,27 @@ scanHooks.push(composerScrollScan);
 					uploadAiAvatar: (dataUrl) => {
 						setAiAvatar(dataUrl);
 					},
+					setLineHeight: (value) => {
+					const mode = value === "compact" || value === "relaxed" ? value : "normal";
+					writeJson(LINE_HEIGHT_KEY, mode);
+					applyLineHeight(mode);
+					},
+					setReduceMotion: (on) => {
+					const flag = on === true;
+					writeJson(MOTION_KEY, flag);
+					applyReducedMotion(flag);
+					},
+					savePreset: (name) => {
+					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, density, tail, chatWidth, sidebarBg };
+					const list = readCustomPresets();
+					list.unshift(preset);
+					writeJson(CUSTOM_PRESETS_KEY, list.slice(0, 6));
+					return preset;
+					},
+					deletePreset: (id) => {
+					writeJson(CUSTOM_PRESETS_KEY, readCustomPresets().filter((item) => item.id !== id));
+					},
+					listPresets: () => readCustomPresets(),
 					resetSkin: () => {
 						try {
 							window.localStorage.removeItem(USER_AVATAR_KEY);
@@ -1995,6 +2120,8 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
 							window.localStorage.removeItem(AI_AVATAR_SHOW_KEY);
 							window.localStorage.removeItem(PRESET_KEY);
+window.localStorage.removeItem(LINE_HEIGHT_KEY);
+window.localStorage.removeItem(MOTION_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -2010,6 +2137,8 @@ scanHooks.push(composerScrollScan);
 						aiAvatarVisible = true; applyAiAvatar(aiAvatarVisible);
 						sidebarBg = null; applySidebarBg();
 						applyPresetTheme(null);
+						applyLineHeight("normal");
+						applyReducedMotion(false);
 						sync();
 					}
 				};
@@ -2035,6 +2164,18 @@ scanHooks.push(composerScrollScan);
 					"widthNative": "官方",
 					"sidebarBgTitle": "侧边栏背景色",
 					"sidebarBgReset": "微信色",
+"lineHeightTitle": "行高",
+"lineHeightHint": "正文段落的行间距",
+"lineHeightCompact": "紧凑",
+"lineHeightNormal": "标准",
+"lineHeightRelaxed": "舒展",
+"motionTitle": "减少动效",
+"motionHint": "关闭皮肤的过渡与动画，跟随系统辅助功能设置",
+"motionFull": "完整",
+"motionReduced": "减少",
+"presetSave": "存为预设",
+"presetDelete": "删除预设",
+"presetMine": "我的预设",
 					"tailTitle": "气泡尾巴",
 					"tailOn": "开",
 					"tailOff": "关",
@@ -2080,6 +2221,18 @@ scanHooks.push(composerScrollScan);
 					"widthNative": "Native",
 					"sidebarBgTitle": "Sidebar background",
 					"sidebarBgReset": "WeChat colour",
+"lineHeightTitle": "Line height",
+"lineHeightHint": "Spacing between lines in body text",
+"lineHeightCompact": "Tight",
+"lineHeightNormal": "Normal",
+"lineHeightRelaxed": "Airy",
+"motionTitle": "Reduce motion",
+"motionHint": "Turn off skin transitions and animations; follows the system setting",
+"motionFull": "Full",
+"motionReduced": "Reduced",
+"presetSave": "Save preset",
+"presetDelete": "Delete preset",
+"presetMine": "My preset",
 					"tailTitle": "Bubble tail",
 					"tailOn": "On",
 					"tailOff": "Off",
