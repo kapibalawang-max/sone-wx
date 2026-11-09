@@ -1838,7 +1838,7 @@ style: styles.footLeft,
 children: status.kind
 ? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
 : [
-(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot + " " + (contextMissing.length ? "opacity:.5" : ""), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
+(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : Object.assign({}, styles.dot, contextMissing.length ? { opacity: 0.5 } : null), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
 (0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) })
 ]
 }),
@@ -3236,6 +3236,17 @@ window.localStorage.removeItem(MOTION_KEY);
  * must not silently blank the section — surface the reason on the page and
  * in the console so it is diagnosable.
  */
+/** 崩溃详情 POST 到宿主 /sone-wx/diag（~/.dsh/sone-wx/diag.json）：渲染进程 console 不可见时的兜底。 */
+function reportDiag(msg) {
+	try {
+		fetch("/sone-wx/diag", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ t: Date.now(), msg: String(msg).slice(0, 4000) })
+		}).catch(() => {});
+	} catch (e) { /* noop */ }
+}
+
 class SoneWxBoundary extends _react.Component {
 	constructor(props) {
 		super(props);
@@ -3247,6 +3258,7 @@ class SoneWxBoundary extends _react.Component {
 	componentDidCatch(error, info) {
 		try { console.error("[sone-wx] section render error:", error, info && info.componentStack); } catch (e) { /* noop */ }
 		try { window.__soneWxLastError = String((error && error.stack) || error); } catch (e) { /* noop */ }
+		reportDiag("settings.section render error: " + String((error && error.stack) || error));
 	}
 	render() {
 		const error = this.state.error;

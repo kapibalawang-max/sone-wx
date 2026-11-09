@@ -1,8 +1,8 @@
 {
   "name": "sone-wx",
-  "version": "1.12.1",
+  "version": "1.12.2",
   "private": true,
-  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）：上一版 1.12.0 基础上修复渲染报错，确保所有 CSS 变量均在 WECHAT_CSS :root 块中声明，不再依赖宿主 tokens 解析；README 更新兼容说明。",
+  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
   "main": "./index.js",
   "exports": {
