@@ -48,6 +48,7 @@ window.__ModuleLoader__.load({
 		const DENSITY_KEY = "dsh-wechat-skin:density";
 		const CHAT_WIDTH_KEY = "dsh-wechat-skin:chat-width";
 		const TAIL_KEY = "dsh-wechat-skin:tail";
+		const AI_AVATAR_SHOW_KEY = "dsh-wechat-skin:ai-avatar-visible";
 		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
 		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
@@ -69,7 +70,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -314,6 +315,9 @@ body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]:n
   background-size: cover; background-position: center;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
+/* AI avatar off: no avatar, and the answer rows sit flush left with the rest. */
+body.dsh-wechat-skin-on[data-dsh-wechat-ai-avatar="0"] .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"] { margin-left: 0 !important; }
+body.dsh-wechat-skin-on[data-dsh-wechat-ai-avatar="0"] .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]::before { content: none !important; }
 /* Process-group seat ("已完成分析" chip, bare .r52wTW_root) has no avatar either —
    flush left like the other avatar-less rows. */
 /* The settled-turn line ("已完成，用时 X 秒", button.gTO55a_root) is a system
@@ -926,6 +930,11 @@ if (rows.length > 0) sessionListPrimed = true;
 		  if (document.body) document.body.dataset.dshWechatTail = on ? "1" : "0";
 		}
 
+		/** Show/hide the assistant avatar; hiding it also drops the reserved 42px column. */
+		function applyAiAvatar(on) {
+		  if (document.body) document.body.dataset.dshWechatAiAvatar = on ? "1" : "0";
+		}
+
 		/** Apply the chat content width mode: wide (full) / medium / native sizing. */
 		function applyChatWidth(width) {
 		  if (!document.body) return;
@@ -1140,11 +1149,11 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg, initialAiAvatar) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, revision) => {
+		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatar, revision) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1152,6 +1161,7 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 		        d.tail = tail;
 		        d.chatWidth = chatWidth;
 		        d.sidebarBg = sidebarBg;
+		        d.aiAvatar = aiAvatar;
 		        d.revision = revision;
 					}
 				}
@@ -1351,10 +1361,11 @@ t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, applyPreset, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, setAiAvatarVisible, applyPreset, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const density = useStore((s) => s.density);
 const tail = useStore((s) => s.tail);
+const aiAvatarStore = useStore((s) => s.aiAvatar);
 const chatWidth = useStore((s) => s.chatWidth);
 const sidebarBg = useStore((s) => s.sidebarBg);
 const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
@@ -1418,6 +1429,10 @@ const widthOptions = [
 { value: "medium", label: t("widthMedium") },
 { value: "native", label: t("widthNative") }
 ];
+const aiAvatarOptions = [
+{ value: true, label: t("aiAvatarOn") },
+{ value: false, label: t("aiAvatarOff") }
+];
 const tailOptions = [
 { value: true, label: t("tailOn") },
 { value: false, label: t("tailOff") }
@@ -1466,6 +1481,11 @@ onClick: () => aiRef.current && aiRef.current.click(),
 children: t("uploadAi")
 })
 ]
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("aiAvatarTitle"),
+hint: t("aiAvatarHint"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: aiAvatarStore, options: aiAvatarOptions, onChange: setAiAvatarVisible })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("densityTitle"),
@@ -1634,14 +1654,16 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applyDensity(density);
 			let tail = readJson(TAIL_KEY, true) !== false;
 			applyTail(tail);
+			let aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
+			applyAiAvatar(aiAvatarVisible);
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg);
+			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, ++revision);
+				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, ++revision);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -1666,6 +1688,12 @@ scanHooks.push(composerScrollScan);
 					  tail = !!on;
 					  writeJson(TAIL_KEY, tail);
 					  applyTail(tail);
+					  sync();
+					},
+					setAiAvatarVisible: (on) => {
+					  aiAvatarVisible = !!on;
+					  writeJson(AI_AVATAR_SHOW_KEY, aiAvatarVisible);
+					  applyAiAvatar(aiAvatarVisible);
 					  sync();
 					},
 					setChatWidth: (value) => {
@@ -1754,6 +1782,8 @@ scanHooks.push(composerScrollScan);
 						applyChatWidth(chatWidth);
 						sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 						applySidebarBg();
+						aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
+						applyAiAvatar(aiAvatarVisible);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -1805,6 +1835,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
+							window.localStorage.removeItem(AI_AVATAR_SHOW_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -1817,6 +1848,7 @@ scanHooks.push(composerScrollScan);
 						density = "cozy"; applyDensity(density);
 						tail = true; applyTail(tail);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
+						aiAvatarVisible = true; applyAiAvatar(aiAvatarVisible);
 						sidebarBg = null; applySidebarBg();
 						sync();
 					}
@@ -1828,6 +1860,10 @@ scanHooks.push(composerScrollScan);
 					"title": "微信皮肤",
 					"description": "仿微信主题：绿色气泡、微信绿强调色。",
 					"avatarTitle": "头像",
+"aiAvatarTitle": "AI 头像",
+"aiAvatarHint": "关闭后 AI 回复不再留头像位，整段会话区靠左",
+"aiAvatarOn": "显示",
+"aiAvatarOff": "隐藏",
 					"uploadUser": "上传我的头像",
 					"uploadAi": "上传 AI 头像",
 					"densityTitle": "消息密度",
@@ -1869,6 +1905,10 @@ scanHooks.push(composerScrollScan);
 					"title": "WeChat Skin",
 					"description": "WeChat-style theme: green sent bubbles and WeChat-green accents.",
 					"avatarTitle": "Avatars",
+"aiAvatarTitle": "AI avatar",
+"aiAvatarHint": "When hidden, replies drop the avatar column and align left",
+"aiAvatarOn": "Shown",
+"aiAvatarOff": "Hidden",
 					"uploadUser": "Upload my avatar",
 					"uploadAi": "Upload AI avatar",
 					"densityTitle": "Message density",
