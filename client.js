@@ -596,6 +596,72 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:first-child th
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:first-child { border-bottom-left-radius: 7px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:last-child { border-bottom-right-radius: 7px; }
 
+/* ================= right panel, popups, session list, actions ================= */
+/* Right panel: same surface language as the sidebar. */
+body.dsh-wechat-skin-on .Dv5QdW_panel { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
+body.dsh-wechat-skin-on .Dv5QdW_panelBody { padding: 10px 12px; }
+body.dsh-wechat-skin-on .Dv5QdW_tabTitle { font-size: 13px; font-weight: 600; }
+body.dsh-wechat-skin-on .Dv5QdW_tabBody { font-size: 12.5px; }
+body.dsh-wechat-skin-on .Dv5QdW_iconButton { border-radius: 6px; }
+body.dsh-wechat-skin-on .Dv5QdW_iconButton:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .Dv5QdW_unavailable { font-size: 12px; color: var(--dsw-alias-label-tertiary, #999); }
+body.dsh-wechat-skin-on .F6Huca_entry { border-radius: 8px; padding: 8px; }
+body.dsh-wechat-skin-on .F6Huca_entry:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .F6Huca_entryTitle { font-size: 13px; font-weight: 500; }
+body.dsh-wechat-skin-on .F6Huca_entryDescription { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
+
+/* Slash / popup selects: one rounded sheet, green-tinted active row. */
+body.dsh-wechat-skin-on .m00Doa_card {
+  border-radius: 12px; border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.10); background: var(--dsw-alias-bg-overlay, #ffffff);
+}
+body.dsh-wechat-skin-on .m00Doa_row { border-radius: 6px; }
+body.dsh-wechat-skin-on .m00Doa_rowActive { background: var(--dsw-alias-interactive-bg-hover-accent, rgba(7, 193, 96, 0.10)); }
+body.dsh-wechat-skin-on .m00Doa_label { font-size: 13px; }
+body.dsh-wechat-skin-on .m00Doa_badge { border-radius: 999px; font-size: 11px; }
+body.dsh-wechat-skin-on .m00Doa_search { border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: 6px; }
+
+/* Session list details: quieter meta, readable search hits. */
+body.dsh-wechat-skin-on .JoiKIa_time,
+body.dsh-wechat-skin-on .JoiKIa_timestamp { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
+body.dsh-wechat-skin-on .JoiKIa_searchResultHeading { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); letter-spacing: 0.02em; }
+body.dsh-wechat-skin-on .JoiKIa_searchResultRow { border-radius: 8px; }
+body.dsh-wechat-skin-on .JoiKIa_searchResultRow:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); }
+body.dsh-wechat-skin-on .JoiKIa_searchResultTitle { font-size: 13px; font-weight: 500; }
+body.dsh-wechat-skin-on .JoiKIa_searchResultSnippet { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
+body.dsh-wechat-skin-on .JoiKIa_dot { background: var(--wc-green); }
+body.dsh-wechat-skin-on .JoiKIa_pinIndicator { color: var(--wc-green); }
+body.dsh-wechat-skin-on .JoiKIa_arrow,
+body.dsh-wechat-skin-on .JoiKIa_chevron { color: var(--dsw-alias-label-tertiary, #999); }
+
+/* Assistant message actions: small quiet pills that only speak on hover. */
+body.dsh-wechat-skin-on .ZITbJG_actions { gap: 2px; }
+body.dsh-wechat-skin-on .ZITbJG_action {
+  width: 24px; height: 24px; border-radius: 6px;
+  color: var(--dsw-alias-label-tertiary, #999); transition: background-color .15s ease-out, color .15s ease-out;
+}
+body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05)); color: var(--dsw-alias-label-primary, #1b1b1c); }
+body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); }
+
+/* Running / streaming group label. */
+body.dsh-wechat-skin-on .r52wTW_label { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
+
+/* Paper preset, dark flavour: warm charcoal instead of neutral black. */
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"] {
+  --wc-sidebar: #221f1a;
+  --wc-sidebar-dark: #221f1a;
+  --wc-surface: #26231d;
+  --wc-surface-dark: #26231d;
+  --wc-code-bg: #1e1b16;
+  --wc-bubble: #3d3829;
+  --wc-bubble-ink: #efe8d8;
+  --wc-bubble-link: #d9c48f;
+  --wc-bubble-code-ink: #efe8d8;
+  --dsw-alias-bg-base: #1b1813;
+  --dsw-alias-bg-module-platform: #26231d;
+  --dsw-specific-bubble: #3d3829;
+}
+
 /* bubble tail off: hide the right-pointing triangle on sent bubbles */
 body.dsh-wechat-skin-on[data-dsh-wechat-tail="0"] .tnXGgG_column [class*="_bubble_"]:not([data-portal])::before {
   content: none;
