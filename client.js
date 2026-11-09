@@ -34,7 +34,9 @@ window.__ModuleLoader__.load({
 		/** Added only when the skin's hashed selectors still match this DSH build. */
 		const MATCH_CLASS = "dsh-wechat-match";
 		/** A few hashed classes that move when DSH changes; if none exist the skin must not hide/alter anything. */
-const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame", ".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
+const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame"];
+/** Surfaces that only exist in some contexts (right rail open, tool call, subagent). */
+const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
 		/** The streaming chat column; mutations inside it do not affect the skin's DOM work. */
 		const CHAT_AREA = ".tnXGgG_scroll, .tnXGgG_column, .kiGsTW_scrollBody, .kiGsTW_viewArea";
 		/** Fixed avatar indices for message bubbles (user / assistant). */
@@ -1586,6 +1588,9 @@ const customPresets = typeof listPresets === "function" ? listPresets() : [];
 const missing = SELECTOR_PROBES.filter((selector) => {
 try { return document.querySelector(selector) === null; } catch (error) { return true; }
 });
+const contextMissing = CONTEXT_PROBES.filter((selector) => {
+try { return document.querySelector(selector) === null; } catch (error) { return true; }
+});
 const onFile = (action) => (event) => {
 const file = event.target.files && event.target.files[0];
 if (file) downscaleImage(file).then(action).catch(() => {});
@@ -1782,7 +1787,7 @@ style: styles.footLeft,
 children: status.kind
 ? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
 : [
-(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot }),
+(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot, title: contextMissing.length ? "未渲染：" + contextMissing.join(", ") : "" }),
 (0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : t("fitOk") })
 ]
 }),
