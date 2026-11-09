@@ -16,6 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.12.4 修品牌卡片「用图片代替标题」右侧开关：滑轨写死 34×20，却又带 `minHeight: 28px`，按钮实际被撑成 34×28 的高胶囊，16px 滑块贴在顶部 2px，看上去既不像开关也不居中。去掉 minHeight 让轨道回到 34×20，滑块上下各留 2px；补禁用态（品牌未加载完时不可点，避免必然失败的 POST）与 focus-visible 描边，并在四周加 4px 透明命中区，外观不变但更容易点中。CSS 快照改为同时覆盖 `WECHAT_UI_CSS`，控件样式漂移也能被 diff 抓到。
 - 2026-11-10 v1.12.3 全量巡查修复：①探针日志改成「缺失集合变化时才打印」，原先挂在每次非会话区 DOM 变更上，流式输出时会连续刷控制台；②删掉当前自定义预设后同步清 `dsh-wechat-skin:preset`，避免重启后选中项指向不存在的 id；③导入配置时如果预设指向本地已不存在的 `custom-*`，自动清空选中而不是留一个悬空高亮；④卸载时补清 `--dsh-user-avatar` / `--dsh-assistant-avatar` 与预设、行高、动效、AI 头像等 body 标记；⑤侧边栏拖动排序的卸载回收现在会一并移除进行中的 pointermove/up/cancel 监听并清掉浮层；⑥字号与圆角 token 真正落到规则上（13/12/11px 与 12/10/8/6/4px 不再散写），顺手修掉 12.5px 与 0.92em 这两处脱档字号；⑦自检按钮/分段/色板的过渡统一 250ms ease-out，主色改引用 `--wc-green`；⑧`/sone-wx/diag` 改为追加保留最近 30 条，不再每条覆盖上一条。
 - 2026-11-10 v1.12.2 修复设置页整段渲染崩溃（React minified error #62）：适配自检行把样式对象和字符串相加，`style` 收到 `"[object Object] opacity:.5"`，React 要求 style 是对象映射，直接抛错并让整个「Sone-wx」分区被错误边界接管。改为 `Object.assign({}, styles.dot, { opacity: 0.5 })`。新增 `test/style-prop-test.mjs` 静态守卫：扫描 client.js 里所有 `style:` 表达式，出现「非字面量 + 字符串拼接」即失败，防止同类写法回归。渲染错误边界现在同时把崩溃详情 POST 到 `/sone-wx/diag`（`~/.dsh/sone-wx/diag.json`），下次崩溃能直接看到真实堆栈。
 - 2026-11-10 v1.12.1 字号 token 补进 `WECHAT_CSS` 的 `:root`（--wc-font-base 13px / --wc-font-sm 12px / --wc-font-xs 11px）；package.json 描述恢复为稳定文案。

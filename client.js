@@ -805,8 +805,18 @@ body .dsh-wc-swatch {
 body .dsh-wc-swatch[aria-pressed="true"] {
 	box-shadow: 0 0 0 1.5px var(--wc-green, #07c160);
 }
+body .dsh-wc-switch { position: relative; }
+/* 20px 高的轨道保持轻量外观，四周补 4px 透明命中区，不至于难点中 */
+body .dsh-wc-switch::before {
+content: "";
+position: absolute;
+inset: -4px -2px;
+border-radius: 999px;
+}
+body .dsh-wc-switch:disabled { cursor: not-allowed; }
 body .dsh-wc-seg-item:focus-visible,
 body .dsh-wc-btn:focus-visible,
+body .dsh-wc-switch:focus-visible,
 body .dsh-wc-swatch:focus-visible,
 body .dsh-wc-color:focus-visible {
 	outline: 2px solid rgba(7, 193, 96, 0.5);
@@ -2890,11 +2900,12 @@ window.localStorage.removeItem(MOTION_KEY);
       },
       disabled: { opacity: 0.45, cursor: 'not-allowed' },
       switch: {
-        position: 'relative', display: 'inline-block', width: '34px', height: '20px', flex: 'none', minHeight: '28px',
-        borderRadius: '999px', border: '0', cursor: 'pointer', padding: '0',
+        position: 'relative', display: 'inline-block', width: '34px', height: '20px', flex: 'none',
+        margin: '0', borderRadius: '999px', border: '0', cursor: 'pointer', padding: '0',
         background: 'var(--dsw-alias-state-idle-primary, rgba(128,128,128,.3))',
         transition: 'background 250ms ease-out'
       },
+      switchDisabled: { opacity: 0.45, cursor: 'not-allowed' },
       switchOn: { background: 'var(--dsw-alias-state-business-primary, #07c160)' },
       switchKnob: {
         position: 'absolute', top: '2px', left: '2px', width: '16px', height: '16px',
@@ -2990,6 +3001,7 @@ window.localStorage.removeItem(MOTION_KEY);
 
     function Switch(props) {
       var on = !!props.checked
+      var disabled = props.disabled === true
       var reduceMotion = false
       if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
         try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { reduceMotion = false; }
@@ -3000,13 +3012,17 @@ window.localStorage.removeItem(MOTION_KEY);
         switchStyle.transition = 'none'
         knobStyle.transition = 'none'
       }
+      if (disabled) Object.assign(switchStyle, S.switchDisabled)
       return h('button', {
         type: 'button',
         role: 'switch',
+        className: 'dsh-wc-switch',
         'aria-checked': on ? 'true' : 'false',
         'aria-label': props.label,
+        disabled: disabled,
         style: switchStyle,
         onClick: function () {
+          if (disabled) return
           props.onChange(!on)
         }
       }, h('span', { style: knobStyle }))
@@ -3144,7 +3160,8 @@ window.localStorage.removeItem(MOTION_KEY);
             h(Switch, {
               checked: snap.wordmarkImage,
               label: t('wordmark'),
-              onChange: toggleWordmark
+              onChange: toggleWordmark,
+              disabled: !snap.loaded
             }),
             wordSrc === null
               ? h(UploadButton, {
@@ -3181,7 +3198,8 @@ window.localStorage.removeItem(MOTION_KEY);
             h(Switch, {
               checked: snap.heroMark,
               label: t('hero'),
-              onChange: toggleHero
+              onChange: toggleHero,
+              disabled: !snap.loaded
             }))),
         h('div', { style: S.foot },
           h('span', { style: S.hint }, t('resetHint')),

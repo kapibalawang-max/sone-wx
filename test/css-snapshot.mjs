@@ -3,9 +3,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const src = fs.readFileSync(path.join(__dirname, '..', 'client.js'), 'utf8');
-const m = src.match(/const WECHAT_CSS = `([\s\S]*?)`\s*;?\s*\n/);
-if (!m) { console.error('WECHAT_CSS not found'); process.exit(1); }
-const css = m[1];
+const skin = src.match(/const WECHAT_CSS = `([\s\S]*?)`\s*;?\s*\n/);
+const ui = src.match(/const WECHAT_UI_CSS = `([\s\S]*?)`\s*;?\s*\n/);
+if (!skin || !ui) { console.error('WECHAT_CSS / WECHAT_UI_CSS not found'); process.exit(1); }
+// 两份样式表都是皮肤产物，一起入库，UI 控件样式漂移也能被 diff 抓到。
+const css = skin[1] + '\n/* ===== settings UI ===== */\n' + ui[1];
 const snapPath = path.join(__dirname, 'wechat-css.snapshot.json');
 const prev = fs.existsSync(snapPath) ? JSON.parse(fs.readFileSync(snapPath, 'utf8')) : null;
 const data = { length: css.length, hash: Buffer.from(css).toString('base64').slice(0, 32), lines: css.split('\n').length };
