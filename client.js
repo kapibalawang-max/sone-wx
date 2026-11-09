@@ -368,36 +368,91 @@ body.dsh-wechat-skin-on .ijfCxa_thinkBody { font-size: 12px; }
 
 /* ================= composer ================= */
 body.dsh-wechat-skin-on .JZLxKW_card {
-  background: #ffffff; border: 1px solid var(--wc-border-light); border-radius: 8px; box-shadow: none;
+  background: #ffffff;
+  border: 0.5px solid var(--wc-border-light);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card { background: var(--wc-sidebar-dark); border-color: var(--wc-border-dark); }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card {
+  background: var(--wc-sidebar-dark);
+  border-color: var(--wc-border-dark);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+/* focus ring while composing */
+body.dsh-wechat-skin-on .JZLxKW_card:focus-within {
+  border-color: rgba(7, 193, 96, 0.55);
+  box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.12), 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card:focus-within {
+  border-color: rgba(7, 193, 96, 0.6);
+  box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.16), 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+/* drag grip hint on the top edge: hover to see it, drag or double-click to reset */
+body.dsh-wechat-skin-on .JZLxKW_card::before {
+  content: ""; position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, 0.16);
+  opacity: 0; transition: opacity 150ms ease-out; pointer-events: none;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card::before { background: rgba(255, 255, 255, 0.22); }
+body.dsh-wechat-skin-on .JZLxKW_card:hover::before,
+body.dsh-wechat-skin-on .JZLxKW_card:focus-within::before { opacity: 1; }
+/* align input, placeholder and the toolbar to one 12px gutter */
+body.dsh-wechat-skin-on .JZLxKW_input { padding: 4px 10px 0 12px; }
+body.dsh-wechat-skin-on .JZLxKW_placeholder { inset: 4px 10px auto 12px; }
+body.dsh-wechat-skin-on .JZLxKW_row { padding: 2px 10px 8px; }
+body.dsh-wechat-skin-on .JZLxKW_modes > * { border-radius: 8px; }
+/* "+" becomes a quiet outlined square, not a grey blob */
+body.dsh-wechat-skin-on .JZLxKW_add {
+  background: transparent; border: 0.5px solid var(--wc-border-light);
+  border-radius: 8px; color: var(--dsw-alias-label-secondary);
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_add { border-color: var(--wc-border-dark); }
+body.dsh-wechat-skin-on .JZLxKW_add:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
+/* model selector: lighter weight, hover surface only */
+body.dsh-wechat-skin-on .JZLxKW_select { height: 28px; font-size: 12px; border-radius: 6px; }
+body.dsh-wechat-skin-on .JZLxKW_select:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
+/* send: small green circle with the native arrow icon, no text label */
 body.dsh-wechat-skin-on .JZLxKW_primary {
-  width: 64px; min-width: 64px; max-width: 64px; height: 30px; padding: 0; border-radius: 5px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--wc-btn-idle-bg); color: var(--wc-btn-idle-ink); font-size: 14px; transition: background-color .1s;
+  width: 32px; min-width: 32px; max-width: 32px; height: 32px; padding: 0; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; transform: none;
+  background: var(--wc-btn-idle-bg); color: var(--wc-btn-idle-ink);
+  transition: background-color 120ms ease-out, color 120ms ease-out, transform 120ms ease-out;
 }
-body.dsh-wechat-skin-on .JZLxKW_primary::after { content: "发送"; }
-body.dsh-wechat-skin-on:lang(zh) .JZLxKW_primary::after { content: "发送"; }
-body.dsh-wechat-skin-on:lang(en) .JZLxKW_primary::after { content: "Send"; }
-body.dsh-wechat-skin-on:lang(ja) .JZLxKW_primary::after { content: "送信"; }
-body.dsh-wechat-skin-on .JZLxKW_primary > svg { display: none; }
-/* state comes from the native disabled/sending attributes */
+body.dsh-wechat-skin-on .JZLxKW_primary > svg { display: block; width: 16px; height: 16px; }
+body.dsh-wechat-skin-on .JZLxKW_primary::after,
+body.dsh-wechat-skin-on:lang(zh) .JZLxKW_primary::after,
+body.dsh-wechat-skin-on:lang(en) .JZLxKW_primary::after,
+body.dsh-wechat-skin-on:lang(ja) .JZLxKW_primary::after { content: none; }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_primary {
+  background: rgba(255, 255, 255, 0.12); color: rgba(242, 242, 243, 0.5);
+}
 body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled) { background: var(--wc-green); color: #ffffff; }
-body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):not([aria-label*="停止"]):not([aria-label*="stop" i]):hover { background: var(--wc-green-hover); }
+body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):hover { background: var(--wc-green-hover); }
+body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):active { transform: scale(0.94); }
+/* while the model is generating the button is a "stop" action (native stop icon, red) */
+body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"],
+body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] { background: var(--wc-stop); color: #ffffff; }
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"]:hover,
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i]:hover { background: var(--wc-stop-hover); }
 body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-green); color: #ffffff; }
-body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] > svg { display: block; }
-body.dsh-wechat-skin-on .JZLxKW_primary[data-sending]::after { content: none; }
-/* while the model is generating the button is a "stop" action (native stop icon, red) */
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"],
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] {
-  background: var(--wc-stop); color: #ffffff;
+/* thin scrollbar + soft fade for long drafts */
+body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar { width: 6px; }
+body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar-thumb {
+  background: var(--dsw-alias-scrollbar-bg-l2); border-radius: 3px;
 }
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"] > svg,
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] > svg { display: block; }
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"]::after,
-body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i]::after { content: none; }
+body.dsh-wechat-skin-on .JZLxKW_scroll[data-dsh-fade="both"] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 12px), transparent 100%);
+}
+body.dsh-wechat-skin-on .JZLxKW_scroll[data-dsh-fade="top"] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 10px);
+}
+body.dsh-wechat-skin-on .JZLxKW_scroll[data-dsh-fade="bottom"] {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 12px), transparent 100%);
+}
 
 /* ================= motion ================= */
 /* Interactive surfaces ease with the host's own motion tokens, and only on
@@ -803,7 +858,26 @@ row.dataset.dshAvatar = value;
 			document.getElementById("dsh-wechat-avatar")?.remove();
 		}		//#endregion
 
-		/** Composer drag-to-resize via document-level delegation (survives re-renders).
+		/** Long drafts: fade the scroll area's clipped edge(s) instead of hard-cutting. */
+function updateComposerFade(view) {
+const canScroll = view.scrollHeight - view.clientHeight > 2;
+if (!canScroll) { delete view.dataset.dshFade; return; }
+const atTop = view.scrollTop <= 1;
+const atBottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 1;
+if (atTop && atBottom) delete view.dataset.dshFade;
+else view.dataset.dshFade = atTop ? "bottom" : atBottom ? "top" : "both";
+}
+function composerScrollScan() {
+const view = document.querySelector(".JZLxKW_scroll");
+if (!view) return;
+if (!view.dataset.dshFadeBound) {
+view.dataset.dshFadeBound = "1";
+view.addEventListener("scroll", () => updateComposerFade(view), { passive: true });
+}
+updateComposerFade(view);
+}
+
+/** Composer drag-to-resize via document-level delegation (survives re-renders).
 		    Drag the input box's TOP border up, or its BOTTOM border down, to resize. */
 		let composerResizeCleanup = null;
 		function initComposerResize() {
@@ -1670,6 +1744,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
+scanHooks.push(composerScrollScan);
 			const injected = (actions) => {
 				bound = actions;
 				sync();
