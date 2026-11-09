@@ -647,6 +647,12 @@ body.dsh-wechat-skin-on .ZITbJG_action {
 body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--wc-hover); color: var(--dsw-alias-label-primary, #1b1b1c); }
 body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: 11px; color: var(--dsw-alias-label-tertiary, #999); }
 
+/* Toast: same top-center pill, tuned to the skin's radius and weight. */
+body.dsh-wechat-skin-on ._toast_hr9yd_6 {
+  top: 24px; padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; line-height: 20px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
 /* Running / streaming group label. */
 body.dsh-wechat-skin-on .r52wTW_label { font-size: 12px; color: var(--dsw-alias-label-secondary, #666); }
 
