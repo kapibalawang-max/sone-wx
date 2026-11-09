@@ -603,7 +603,10 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:
 
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */
-body.dsh-wechat-skin-on { --wc-hover: var(--wc-hover); --wc-hover-accent: var(--wc-hover-accent); }
+body.dsh-wechat-skin-on {
+  --wc-hover: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.05));
+  --wc-hover-accent: var(--dsw-alias-interactive-bg-hover-accent, rgba(7, 193, 96, 0.10));
+}
 /* Paint only when open: the panel is a full-height overlay that stays translated
    off-canvas when closed, so an always-on background shows as a slab over chat. */
 body.dsh-wechat-skin-on .Dv5QdW_panel[data-sidebar-right-open] { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
@@ -1151,7 +1154,9 @@ return Array.isArray(list) ? list.filter((item) => item && typeof item.id === "s
 /** Theme-level preset marker (drives palette overrides in CSS). */
 function applyPresetTheme(id) {
 if (typeof document === "undefined" || !document.body) return;
-if (id) document.body.dataset.dshWechatPreset = id;
+// Keep the paper palette marker isolated: every other preset uses the
+// ordinary WeChat palette simply by clearing the marker.
+if (id === "paper") document.body.dataset.dshWechatPreset = id;
 else delete document.body.dataset.dshWechatPreset;
 }
 
@@ -1349,11 +1354,11 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg, initialAiAvatar) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatar, revision) => {
+		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1362,6 +1367,8 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 		        d.chatWidth = chatWidth;
 		        d.sidebarBg = sidebarBg;
 		        d.aiAvatar = aiAvatar;
+		        d.lineHeight = lineHeight;
+		        d.reduceMotion = reduceMotion;
 		        d.revision = revision;
 					}
 				}
@@ -1474,6 +1481,13 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 			previewBlock: {
 				padding: "12px 16px",
 				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
+			},
+			groupTitle: {
+				padding: "14px 16px 6px",
+				color: "var(--dsw-alias-label-tertiary)",
+				fontSize: "12px",
+				fontWeight: 600,
+				lineHeight: "16px"
 			}
 		};
 
@@ -1509,7 +1523,7 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 		}
 
 /** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
-function SkinPreview({ t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin }) {
+function SkinPreview({ t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
 const gap = 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
@@ -1517,7 +1531,8 @@ const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
 const canvasColor = darkSkin ? "#111113" : "#fafafa";
 const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
 const outBubble = "#95ec69";
-const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: 1.5 };
+const lh = lineHeight === "compact" ? 1.4 : lineHeight === "relaxed" ? 1.75 : 1.55;
+const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: lh };
 const tailStyle = (color, right) => {
 const style = { position: "absolute", top: "9px", width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent" };
 if (right) { style.right = "-5px"; style.borderLeft = "6px solid " + color; }
@@ -1537,10 +1552,19 @@ style: { height: "14px", borderRadius: "4px", background: index === 0 ? "rgba(7,
 style: { flex: "1 1 auto", minWidth: 0, background: canvasColor, padding: "10px 12px", display: "flex", flexDirection: "column", gap: gap },
 children: [
 (0, react_jsx_runtime.jsxs)("div", {
-style: Object.assign({}, bubbleBase, { alignSelf: "flex-start", background: inBubble, color: darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a", border: darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)" }),
+style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-start" },
+children: [
+aiAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
+style: { width: "22px", height: "22px", borderRadius: "5px", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
+children: "AI"
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: Object.assign({}, bubbleBase, { background: inBubble, color: darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a", border: darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)" }),
 children: [
 tail ? (0, react_jsx_runtime.jsx)("span", { style: tailStyle(inBubble, false) }) : null,
 t("previewIn")
+]
+})
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -1572,18 +1596,14 @@ const darkSkin = typeof document !== "undefined" && document.body && document.bo
 const userRef = (0, _react.useRef)(null);
 const aiRef = (0, _react.useRef)(null);
 const importRef = (0, _react.useRef)(null);
-const presetPair = (0, _react.useState)(null);
+const presetPair = (0, _react.useState)(() => { const id = readJson(PRESET_KEY, null); return typeof id === "string" && id ? id : null; });
 const statusPair = (0, _react.useState)({ kind: "", detail: "" });
 const presetId = presetPair[0];
 const setPresetId = presetPair[1];
 const status = statusPair[0];
 const setStatus = statusPair[1];
-const lineHeightPair = (0, _react.useState)(() => { const raw = readJson(LINE_HEIGHT_KEY, "normal"); return raw === "compact" || raw === "relaxed" ? raw : "normal"; });
-const lineHeight = lineHeightPair[0];
-const setLineHeightLocal = lineHeightPair[1];
-const motionPair = (0, _react.useState)(() => readJson(MOTION_KEY, false) === true);
-const reduceMotion = motionPair[0];
-const setReduceMotionLocal = motionPair[1];
+const lineHeight = useStore((s) => s.lineHeight);
+const reduceMotion = useStore((s) => s.reduceMotion);
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -1625,7 +1645,9 @@ setStatus({ kind: "err", detail: t("importBad") });
 return;
 }
 importConfig(payload).then(() => {
-setPresetId(null);
+const importedPreset = readJson(PRESET_KEY, null);
+setPresetId(typeof importedPreset === "string" && importedPreset ? importedPreset : null);
+bumpPresets((n) => n + 1);
 setStatus({ kind: "ok", detail: t("imported") });
 }).catch(() => setStatus({ kind: "err", detail: t("importBad") }));
 };
@@ -1700,13 +1722,15 @@ children: t("presetDelete")
 }),
 (0, react_jsx_runtime.jsx)("div", {
 style: styles.previewBlock,
-children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin })
+children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
 }),
+(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupAppearance") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("fontTitle"),
 hint: t("fontHint"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
 }),
+(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupMessage") }),
 (0, react_jsx_runtime.jsxs)(SkinRow, {
 title: t("avatarTitle"),
 children: [
@@ -1735,6 +1759,7 @@ children: (0, react_jsx_runtime.jsx)(Segmented, { value: aiAvatarStore, options:
 title: t("densityTitle"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
 }),
+(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupLayout") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("widthTitle"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: chatWidth, options: widthOptions, onChange: setChatWidth })
@@ -1762,24 +1787,17 @@ onChange: (event) => setSidebarBg(event.target.value)
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("lineHeightTitle"),
 hint: t("lineHeightHint"),
-children: (0, react_jsx_runtime.jsx)(Segmented, {
-value: lineHeight,
-options: lineHeightOptions,
-onChange: (value) => { setLineHeightLocal(value); if (setLineHeight) setLineHeight(value); }
-})
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: lineHeight, options: lineHeightOptions, onChange: (value) => { if (setLineHeight) setLineHeight(value); } })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("tailTitle"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
 }),
+(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupAssist") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("motionTitle"),
 hint: t("motionHint"),
-children: (0, react_jsx_runtime.jsx)(Segmented, {
-value: reduceMotion,
-options: motionOptions,
-onChange: (value) => { setReduceMotionLocal(value); if (setReduceMotion) setReduceMotion(value); }
-})
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: reduceMotion, options: motionOptions, onChange: (value) => { if (setReduceMotion) setReduceMotion(value); } })
 }),
 (0, react_jsx_runtime.jsxs)("div", {
 style: styles.cardFoot,
@@ -1921,14 +1939,17 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
-			applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
-			applyLineHeight(readJson(LINE_HEIGHT_KEY, "normal"));
-			applyReducedMotion(readJson(MOTION_KEY, false) === true);
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible);
+			applyPresetTheme(readJson(PRESET_KEY, null));
+			let lineHeight = readJson(LINE_HEIGHT_KEY, "normal");
+			if (lineHeight !== "compact" && lineHeight !== "relaxed") lineHeight = "normal";
+			applyLineHeight(lineHeight);
+			let reduceMotion = readJson(MOTION_KEY, false) === true;
+			applyReducedMotion(reduceMotion);
+			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, ++revision);
+				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -2034,14 +2055,30 @@ scanHooks.push(composerScrollScan);
 						}).catch(() => {}).then(() => payload);
 					},
 					importConfig: (payload) => {
-						if (!payload || typeof payload !== "object") return Promise.reject(new Error("invalid config"));
-						const skin = payload.skin && typeof payload.skin === "object" ? payload.skin : {};
+						if (!payload || typeof payload !== "object" || payload.app !== "sone-wx" || payload.version !== 1) return Promise.reject(new Error("invalid config"));
+						const skin = payload.skin && typeof payload.skin === "object" && !Array.isArray(payload.skin) ? payload.skin : {};
+						const importedValue = (key) => {
+							try { return Object.prototype.hasOwnProperty.call(skin, key) ? JSON.parse(skin[key]) : undefined; } catch (e) { return undefined; }
+						};
+						const importedLineHeight = importedValue(LINE_HEIGHT_KEY);
+						if (importedLineHeight !== undefined && importedLineHeight !== "compact" && importedLineHeight !== "relaxed" && importedLineHeight !== "normal") return Promise.reject(new Error("invalid config"));
+						const importedMotion = importedValue(MOTION_KEY);
+						if (importedMotion !== undefined && typeof importedMotion !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedFontLevel = importedValue(FONT_LEVEL_KEY);
+						if (importedFontLevel !== undefined && !(Number(importedFontLevel) >= 1 && Number(importedFontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
+						const importedDensity = importedValue(DENSITY_KEY);
+						if (importedDensity !== undefined && importedDensity !== "cozy" && importedDensity !== "compact") return Promise.reject(new Error("invalid config"));
+						const importedChatWidth = importedValue(CHAT_WIDTH_KEY);
+						if (importedChatWidth !== undefined && importedChatWidth !== "wide" && importedChatWidth !== "medium" && importedChatWidth !== "native") return Promise.reject(new Error("invalid config"));
 						try {
+							let sawSkinKey = false;
 							for (const key of CONFIG_SKIN_KEYS) {
-								if (Object.prototype.hasOwnProperty.call(skin, key) && typeof skin[key] === "string") window.localStorage.setItem(key, skin[key]);
-								else window.localStorage.removeItem(key);
+								if (!Object.prototype.hasOwnProperty.call(skin, key)) continue;
+								sawSkinKey = true;
+								if (typeof skin[key] === "string") window.localStorage.setItem(key, skin[key]);
 							}
-						} catch (e) {}
+							if (!sawSkinKey) return Promise.reject(new Error("invalid config"));
+						} catch (e) { return Promise.reject(new Error("invalid config")); }
 						fontLevel = Number(readJson(FONT_LEVEL_KEY, 3));
 						if (!(fontLevel >= 1 && fontLevel <= 5)) fontLevel = 3;
 						applyFontLevel(fontLevel);
@@ -2056,9 +2093,12 @@ scanHooks.push(composerScrollScan);
 						applySidebarBg();
 						aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
 						applyAiAvatar(aiAvatarVisible);
-						applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
-						applyLineHeight(readJson(LINE_HEIGHT_KEY, "normal"));
-						applyReducedMotion(readJson(MOTION_KEY, false) === true);
+						applyPresetTheme(readJson(PRESET_KEY, null));
+						lineHeight = readJson(LINE_HEIGHT_KEY, "normal");
+						if (lineHeight !== "compact" && lineHeight !== "relaxed") lineHeight = "normal";
+						applyLineHeight(lineHeight);
+						reduceMotion = readJson(MOTION_KEY, false) === true;
+						applyReducedMotion(reduceMotion);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -2101,14 +2141,16 @@ scanHooks.push(composerScrollScan);
 						setAiAvatar(dataUrl);
 					},
 					setLineHeight: (value) => {
-					const mode = value === "compact" || value === "relaxed" ? value : "normal";
-					writeJson(LINE_HEIGHT_KEY, mode);
-					applyLineHeight(mode);
+					lineHeight = value === "compact" || value === "relaxed" ? value : "normal";
+					writeJson(LINE_HEIGHT_KEY, lineHeight);
+					applyLineHeight(lineHeight);
+					sync();
 					},
 					setReduceMotion: (on) => {
-					const flag = on === true;
-					writeJson(MOTION_KEY, flag);
-					applyReducedMotion(flag);
+					reduceMotion = on === true;
+					writeJson(MOTION_KEY, reduceMotion);
+					applyReducedMotion(reduceMotion);
+					sync();
 					},
 					savePreset: (name) => {
 					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, density, tail, chatWidth, sidebarBg };
@@ -2150,8 +2192,8 @@ window.localStorage.removeItem(MOTION_KEY);
 						aiAvatarVisible = true; applyAiAvatar(aiAvatarVisible);
 						sidebarBg = null; applySidebarBg();
 						applyPresetTheme(null);
-						applyLineHeight("normal");
-						applyReducedMotion(false);
+						lineHeight = "normal"; applyLineHeight(lineHeight);
+						reduceMotion = false; applyReducedMotion(reduceMotion);
 						sync();
 					}
 				};
@@ -2183,6 +2225,10 @@ window.localStorage.removeItem(MOTION_KEY);
 "lineHeightNormal": "标准",
 "lineHeightRelaxed": "舒展",
 "motionTitle": "减少动效",
+"groupAppearance": "外观",
+"groupMessage": "消息",
+"groupLayout": "布局",
+"groupAssist": "辅助",
 "motionHint": "关闭皮肤的过渡与动画，跟随系统辅助功能设置",
 "motionFull": "完整",
 "motionReduced": "减少",
@@ -2240,6 +2286,10 @@ window.localStorage.removeItem(MOTION_KEY);
 "lineHeightNormal": "Normal",
 "lineHeightRelaxed": "Airy",
 "motionTitle": "Reduce motion",
+"groupAppearance": "Appearance",
+"groupMessage": "Messages",
+"groupLayout": "Layout",
+"groupAssist": "Assist",
 "motionHint": "Turn off skin transitions and animations; follows the system setting",
 "motionFull": "Full",
 "motionReduced": "Reduced",
@@ -2332,6 +2382,8 @@ window.localStorage.removeItem(MOTION_KEY);
         saving: '保存中…',
         saved: '已保存',
         loading: '正在读取品牌配置…',
+        loadFailed: '读取失败：{detail}',
+        retry: '重新读取',
         notSet: '未设置',
         resetBrand: '恢复默认品牌',
         resetHint: '清空标题与图片，回到内置 SONE 标志',
@@ -2363,6 +2415,8 @@ window.localStorage.removeItem(MOTION_KEY);
         saving: 'Saving…',
         saved: 'Saved',
         loading: 'Loading brand settings…',
+        loadFailed: 'Could not load: {detail}',
+        retry: 'Retry',
         notSet: 'Not set',
         resetBrand: 'Reset brand',
         resetHint: 'Clears the title and images back to the built-in SONE mark',
@@ -2380,6 +2434,7 @@ window.localStorage.removeItem(MOTION_KEY);
 
     var state = {
       loaded: false,
+      loadError: '',
       title: '',
       wordmarkImage: false,
       heroMark: true,
@@ -2408,6 +2463,7 @@ window.localStorage.removeItem(MOTION_KEY);
       if (!payload || payload.ok !== true) return
       setState({
         loaded: true,
+        loadError: '',
         title: typeof payload.title === 'string' ? payload.title : '',
         wordmarkImage: payload.wordmarkImage === true,
         heroMark: payload.heroMark !== false,
@@ -2448,10 +2504,12 @@ window.localStorage.removeItem(MOTION_KEY);
           return res.json()
         })
         .then(applyAnswer)
-        .catch(function () {
+        .catch(function (error) {
           state.loaded = true
+          state.loadError = String(error && error.message ? error.message : error)
           syncSeats()
           notify()
+          throw error
         })
     }
 
@@ -2725,7 +2783,7 @@ window.localStorage.removeItem(MOTION_KEY);
       previewImg: { display: 'block', maxWidth: '36px', maxHeight: '36px', objectFit: 'contain' },
       previewEmpty: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)' },
       input: {
-        flex: '0 1 240px', minWidth: '0', height: '32px', padding: '0 10px', boxSizing: 'border-box',
+        flex: '0 1 240px', minWidth: '0', height: '32px', padding: '0 10px', boxSizing: 'border-box', maxWidth: '100%',
         border: '0.5px solid var(--dsw-alias-border-l2)', borderRadius: '8px',
         background: 'var(--dsw-alias-bg-base, transparent)',
         color: 'var(--dsw-alias-label-primary)', fontFamily: 'inherit', fontSize: '13px', outline: 'none'
@@ -2737,7 +2795,7 @@ window.localStorage.removeItem(MOTION_KEY);
       },
       disabled: { opacity: 0.45, cursor: 'not-allowed' },
       switch: {
-        position: 'relative', display: 'inline-block', width: '34px', height: '20px', flex: 'none',
+        position: 'relative', display: 'inline-block', width: '34px', height: '20px', flex: 'none', minHeight: '28px',
         borderRadius: '999px', border: '0', cursor: 'pointer', padding: '0',
         background: 'var(--dsw-alias-state-idle-primary, rgba(128,128,128,.3))',
         transition: 'background 250ms ease-out'
@@ -2749,6 +2807,8 @@ window.localStorage.removeItem(MOTION_KEY);
         boxShadow: '0 1px 2px rgba(0,0,0,.25)',
         transition: 'transform 250ms ease-out'
       },
+      reduceMotionSwitch: { transition: 'none' },
+      reduceMotionKnob: { transition: 'none' },
       switchKnobOn: { transform: 'translateX(14px)' },
       switchRow: { display: 'flex', alignItems: 'center', gap: '10px' },
       status: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)', minWidth: '0', wordBreak: 'break-all' },
@@ -2835,16 +2895,26 @@ window.localStorage.removeItem(MOTION_KEY);
 
     function Switch(props) {
       var on = !!props.checked
+      var reduceMotion = false
+      if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { reduceMotion = false; }
+      }
+      var switchStyle = on ? Object.assign({}, S.switch, S.switchOn) : Object.assign({}, S.switch)
+      var knobStyle = on ? Object.assign({}, S.switchKnob, S.switchKnobOn) : Object.assign({}, S.switchKnob)
+      if (reduceMotion) {
+        switchStyle.transition = 'none'
+        knobStyle.transition = 'none'
+      }
       return h('button', {
         type: 'button',
         role: 'switch',
         'aria-checked': on ? 'true' : 'false',
         'aria-label': props.label,
-        style: on ? Object.assign({}, S.switch, S.switchOn) : S.switch,
+        style: switchStyle,
         onClick: function () {
           props.onChange(!on)
         }
-      }, h('span', { style: on ? Object.assign({}, S.switchKnob, S.switchKnobOn) : S.switchKnob }))
+      }, h('span', { style: knobStyle }))
     }
 
     function BrandStudioSection() {
@@ -2862,7 +2932,9 @@ window.localStorage.removeItem(MOTION_KEY);
       }
 
       function reportError(error) {
-        setStatus('err', t('failError', { detail: String(error && error.message ? error.message : error) }))
+        var detail = String(error && error.message ? error.message : error)
+        if (detail.length > 120) detail = detail.slice(0, 117) + '…'
+        setStatus('err', t('failError', { detail: detail }))
       }
 
       function saveTitle() {
@@ -2910,6 +2982,15 @@ window.localStorage.removeItem(MOTION_KEY);
       if (!snap.loaded) {
         children.push(h('div', { style: S.hint, key: 'loading' }, t('loading')))
       }
+      if (snap.loadError) {
+        children.push(h('div', { style: S.status, key: 'loadError' },
+          h('span', { style: S.err }, t('loadFailed', { detail: String(snap.loadError).slice(0, 120) })),
+          h('button', {
+            type: 'button', className: 'dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm',
+            style: { marginLeft: '8px' },
+            onClick: function () { state.loaded = false; state.loadError = ''; notify(); load().catch(function () {}) }
+          }, t('retry'))))
+      }
 
       children.push(h('div', { style: S.card, key: 'rows' },
         h('div', { style: S.itemFirst },
@@ -2920,7 +3001,7 @@ window.localStorage.removeItem(MOTION_KEY);
             h('div', { style: S.preview, title: t('preview') },
               markSrc === null
                 ? h('span', { style: S.previewEmpty }, t('notSet'))
-                : h('img', { src: markSrc, alt: '', style: S.previewImg, draggable: false })),
+                : h('img', { src: markSrc, alt: t('preview'), style: S.previewImg, draggable: false })),
             h(UploadButton, {
               kind: 'mark',
               label: markSrc === null ? t('upload') : t('replace'),
@@ -2979,7 +3060,7 @@ window.localStorage.removeItem(MOTION_KEY);
               })
               : h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 } },
                 h('img', {
-                  src: wordSrc, alt: '', draggable: false,
+                  src: wordSrc, alt: t('wordmark'), draggable: false,
                   style: { display: 'block', height: '18px', maxWidth: '140px', objectFit: 'contain' }
                 }),
                 h(UploadButton, {
