@@ -1,8 +1,8 @@
 {
   "name": "sone-wx",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "private": true,
-  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）：微信气泡绿、运行状态点、引用淡化、文件/图片卡片、搜索高亮、深色代码块、圆角与字号 token、配置导出导入、行高与减少动效、AI 头像开关、品牌标志与标题修改等，外加品牌标志与标题修改",
+  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）：上一版 1.12.0 基础上修复渲染报错，确保所有 CSS 变量均在 WECHAT_CSS :root 块中声明，不再依赖宿主 tokens 解析；README 更新兼容说明。",
   "type": "module",
   "main": "./index.js",
   "exports": {

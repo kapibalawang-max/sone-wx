@@ -148,6 +148,9 @@ window.__ModuleLoader__.load({
   --wc-btn-idle-ink: #9b9b9b;
   --wc-sched-badge: #3b82f6;
   --wc-code-bg: #f7f7f7;
+  --wc-font-base: 13px;
+  --wc-font-sm: 12px;
+  --wc-font-xs: 11px;
   --wc-radius-card: 12px;
   --wc-radius-bubble: 8px;
   --wc-radius-btn: 8px;
