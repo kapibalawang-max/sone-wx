@@ -24,7 +24,6 @@ window.__ModuleLoader__.load({
 		const SETTINGS_NS = "sone-wx.skin";
 		/** localStorage keys. */
 		const AVATAR_MAP_KEY = "dsh-wechat-skin:avatar-map";
-		const COMPOSER_H_KEY = "dsh-wechat-skin:composer-height";
 		/** Source identity for the token override layer. */
 		const OVERRIDE_SOURCE = "dsh-wechat-skin:tokens";
 		/** <style> tag id for the structural stylesheet. */
@@ -70,7 +69,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, COMPOSER_H_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -389,14 +388,6 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card:focus-within {
   box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.16), 0 8px 22px rgba(0, 0, 0, 0.4);
 }
 /* drag grip hint on the top edge: hover to see it, drag or double-click to reset */
-body.dsh-wechat-skin-on .JZLxKW_card::before {
-  content: ""; position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
-  width: 36px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, 0.16);
-  opacity: 0; transition: opacity 150ms ease-out; pointer-events: none;
-}
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card::before { background: rgba(255, 255, 255, 0.22); }
-body.dsh-wechat-skin-on .JZLxKW_card:hover::before,
-body.dsh-wechat-skin-on .JZLxKW_card:focus-within::before { opacity: 1; }
 /* align input, placeholder and the toolbar to one 12px gutter */
 body.dsh-wechat-skin-on .JZLxKW_input { padding: 4px 10px 0 12px; }
 body.dsh-wechat-skin-on .JZLxKW_placeholder { inset: 4px 10px auto 12px; }
@@ -436,11 +427,6 @@ body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] { background: var(
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"]:hover,
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i]:hover { background: var(--wc-stop-hover); }
 body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-green); color: #ffffff; }
-/* a custom (dragged) height must be filled by the text area, not left as blank space */
-body.dsh-wechat-skin-on .JZLxKW_card[data-dsh-composer-h="1"] .JZLxKW_grow {
-  flex: 1 1 auto; min-height: 0; display: flex;
-}
-body.dsh-wechat-skin-on .JZLxKW_card[data-dsh-composer-h="1"] .JZLxKW_scroll { flex: 1 1 auto; max-height: none; }
 /* thin scrollbar + soft fade for long drafts */
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar { width: 6px; }
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar-thumb {
@@ -882,130 +868,6 @@ row.dataset.dshAvatar = value;
 			updateComposerFade(view);
 		}
 
-		/** Composer drag-to-resize via document-level delegation (survives re-renders).
-		    The composer is docked to the bottom, so only the TOP edge can move: drag it
-		    up to make the box taller, down to shrink it. Double-click either edge resets. */
-		let composerResizeCleanup = null;
-		function initComposerResize() {
-			const root = document.documentElement;
-			if (root.dataset.dshResizeDelegated) return;
-			root.dataset.dshResizeDelegated = "1";
-
-			let dragging = false;
-			let startY = 0;
-			let startH = 0;
-			let hoverCursor = false;
-
-			const clearCursor = () => {
-				if (hoverCursor) { document.body.style.cursor = ""; hoverCursor = false; }
-			};
-			composerResizeCleanup = () => {
-				document.removeEventListener("pointerdown", onPointerDown);
-				document.removeEventListener("pointermove", onPointerMove);
-				document.removeEventListener("pointerup", onPointerUp);
-				document.removeEventListener("dblclick", onDblClick);
-				window.removeEventListener("resize", onWindowResize);
-				clearCursor();
-				delete root.dataset.dshResizeDelegated;
-			};
-
-			const skinOn = () => document.body.classList.contains(BODY_CLASS);
-			const applyHeight = (card, height) => {
-				card.style.height = height + "px";
-				card.style.setProperty("--dsh-composer-text-max-height", Math.max(40, height - 64) + "px");
-				card.dataset.dshComposerH = "1";
-				writeJson(COMPOSER_H_KEY, height);
-			};
-			const dropHeight = (card) => {
-				card.style.removeProperty("height");
-				card.style.removeProperty("--dsh-composer-text-max-height");
-				delete card.dataset.dshComposerH;
-				delete card.dataset.dshHeightRestored;
-				try { window.localStorage.removeItem(COMPOSER_H_KEY); } catch (e) {}
-			};
-
-			// restore the persisted height whenever a card appears
-			const restoreHeight = () => {
-				if (!skinOn()) return;
-				const card = document.querySelector(".JZLxKW_card");
-				if (!card || card.dataset.dshHeightRestored) return;
-				const savedHeight = readJson(COMPOSER_H_KEY, null);
-				if (typeof savedHeight === "number" && savedHeight >= 64) applyHeight(card, savedHeight);
-				card.dataset.dshHeightRestored = "1";
-			};
-
-			const nearTopEdge = (card, y) => {
-				const rect = card.getBoundingClientRect();
-				return y >= rect.top - 8 && y <= rect.top + 10;
-			};
-
-			const onPointerDown = (event) => {
-				if (!skinOn()) return;
-				const card = document.querySelector(".JZLxKW_card");
-				if (!card) return;
-				if (event.target.closest && event.target.closest("button, select, input, a, textarea")) return;
-				if (!nearTopEdge(card, event.clientY)) return;
-				dragging = true;
-				startY = event.clientY;
-				startH = card.getBoundingClientRect().height;
-				event.preventDefault();
-				document.body.style.cursor = "ns-resize";
-			};
-
-			const onPointerMove = (event) => {
-				if (!dragging) {
-					if (!skinOn()) { clearCursor(); return; }
-					const card = document.querySelector(".JZLxKW_card");
-					const near = !!card && nearTopEdge(card, event.clientY)
-						&& !(event.target.closest && event.target.closest("button, select, input, a, textarea"));
-					if (near !== hoverCursor) {
-						hoverCursor = near;
-						document.body.style.cursor = near ? "ns-resize" : "";
-					}
-					return;
-				}
-				const card = document.querySelector(".JZLxKW_card");
-				if (!card) return;
-				const delta = startY - event.clientY;
-				const height = Math.min(Math.max(startH + delta, 64), Math.round(window.innerHeight * 0.6));
-				applyHeight(card, height);
-			};
-
-			const onPointerUp = () => {
-				if (!dragging) return;
-				dragging = false;
-				clearCursor();
-			};
-
-			// Double-click either edge to drop the custom height.
-			const onDblClick = (event) => {
-				if (!skinOn()) return;
-				const card = document.querySelector(".JZLxKW_card");
-				if (!card) return;
-				const rect = card.getBoundingClientRect();
-				const nearTop = event.clientY >= rect.top - 10 && event.clientY <= rect.top + 12;
-				const nearBottom = event.clientY >= rect.bottom - 12 && event.clientY <= rect.bottom + 10;
-				if (!nearTop && !nearBottom) return;
-				dropHeight(card);
-			};
-
-			const onWindowResize = () => {
-				const card = document.querySelector(".JZLxKW_card");
-				if (!card || card.dataset.dshComposerH !== "1") return;
-				const current = Number.parseFloat(card.style.height) || 0;
-				const max = Math.round(window.innerHeight * 0.6);
-				if (current > max) applyHeight(card, max);
-			};
-
-			document.addEventListener("pointerdown", onPointerDown);
-			document.addEventListener("pointermove", onPointerMove);
-			document.addEventListener("pointerup", onPointerUp);
-			document.addEventListener("dblclick", onDblClick);
-			window.addEventListener("resize", onWindowResize);
-
-			restoreHeight();
-		}
-
 		/** Debounced full DOM enhancement pass. */
 		let scheduled = null;
 		/** Extra passes registered by the client body (frame-level layout work). */
@@ -1016,7 +878,6 @@ row.dataset.dshAvatar = value;
 				scheduled = null;
 				scanRows();
 				ensureMessageAvatars();
-				initComposerResize();
 				ensureSidebarAvatar();
 				for (const hook of scanHooks) hook();
 			});
@@ -1753,7 +1614,9 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 				});
 			}
 
-			sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
+			// older builds stored a manual composer height; drop it so the box follows content again
+try { window.localStorage.removeItem("dsh-wechat-skin:composer-height"); } catch (e) {}
+sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applySidebarBg();
 			sidebarOrder = normalizePanelOrder(readJson(SIDEBAR_ORDER_KEY, []));
 			applyPanelOrder();
@@ -2052,7 +1915,6 @@ scanHooks.push(composerScrollScan);
 				removeUiStyleTag();
 				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS); if (document.body) { delete document.body.dataset.dshWechatDark; delete document.body.dataset.dshWechatDensity; delete document.body.dataset.dshWechatTail; delete document.body.dataset.dshWechatWidth; }
 				observer?.disconnect();
-				if (composerResizeCleanup) { composerResizeCleanup(); composerResizeCleanup = null; }
 				document.body?.classList.remove(SIDEBAR_BG_CLASS);
 				if (panelDragCleanup) { panelDragCleanup(); panelDragCleanup = null; }
 				document.body?.classList.remove(PANEL_DRAGGING_CLASS);
