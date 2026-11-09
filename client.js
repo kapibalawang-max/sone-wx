@@ -525,17 +525,9 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-enter="1"] {
 }
 
 /* ================= density + bubble tail toggles ================= */
-/* compact density: shorter session rows, tighter message gaps */
+/* compact density: shorter session list rows (list density only; message rhythm untouched) */
 body.dsh-wechat-skin-on[data-dsh-wechat-density="compact"] .JoiKIa_sessionRow {
   height: 32px; margin: 0;
-}
-/* Tighten the base rhythm via the native gap token: items without a local
-   --dsh-chat-flow-gap inherit this value, while the native structural gaps
-   (12/16px around tool rows, 44px steering-batch start, 0px pending-steering)
-   keep their own local values. The old `+` margin rule never won against the
-   native sibling selector's specificity. */
-body.dsh-wechat-skin-on[data-dsh-wechat-density="compact"] .tnXGgG_column {
-  --dsh-chat-flow-gap: 2px;
 }
 /* bubble tail off: hide the right-pointing triangle on sent bubbles */
 body.dsh-wechat-skin-on[data-dsh-wechat-tail="0"] .tnXGgG_column [class*="_bubble_"]:not([data-portal])::before {
@@ -935,7 +927,7 @@ if (rows.length > 0) sessionListPrimed = true;
 			document.documentElement.style.setProperty("--dsh-wechat-font-scale", String(scale));
 		}
 
-		/** Apply the density mode: compact shortens session rows (and message gaps). */
+		/** Apply the list-density mode: compact shortens session list rows. */
 		function applyDensity(density) {
 			if (!document.body) return;
 			if (density === "compact") document.body.dataset.dshWechatDensity = "compact";
@@ -1335,7 +1327,7 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 /** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
 function SkinPreview({ t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
-const gap = density === "compact" ? 4 : 10;
+const gap = 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
 const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
 const canvasColor = darkSkin ? "#111113" : "#fafafa";
