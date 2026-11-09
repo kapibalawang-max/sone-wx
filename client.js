@@ -1,8 +1,8 @@
 // sone-wx — merged client bundle: dsh-wechat-skin (WeChat-style skin) +
 // dsh-brand-studio (brand editor) under one settings section.
 //
-// Skin half: tokens/structure CSS/avatars/density/tail/chat width — unchanged
-// behavior, localStorage keys stay `dsh-wechat-skin:*` for data continuity.
+// Skin half: tokens/structure CSS/avatars/density/tail/chat width.
+// localStorage keys stay `dsh-wechat-skin:*` for data continuity.
 // Brand half: brand mark/title/wordmark via /sone-wx/brand (host side), seats
 // sidebar.brand.* + conversation.hero.brand.mark, OWNED_CSS countermeasures.
 // Both halves register NO settings slots themselves; the merged apply mounts a
@@ -34,9 +34,9 @@ window.__ModuleLoader__.load({
 		/** Added only when the skin's hashed selectors still match this DSH build. */
 		const MATCH_CLASS = "dsh-wechat-match";
 		/** A few hashed classes that move when DSH changes; if none exist the skin must not hide/alter anything. */
-const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame"];
-/** Surfaces that only exist in some contexts (right rail open, tool call, subagent). */
-const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
+		const SELECTOR_PROBES = [".JoiKIa_sessionRow", ".tnXGgG_column", ".JZLxKW_card", ".PIRFFq_frame"];
+		/** Surfaces that only exist in some contexts (right rail open, tool call, subagent). */
+		const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
 		/** The streaming chat column; mutations inside it do not affect the skin's DOM work. */
 		const CHAT_AREA = ".tnXGgG_scroll, .tnXGgG_column, .kiGsTW_scrollBody, .kiGsTW_viewArea";
 		/** Fixed avatar indices for message bubbles (user / assistant). */
@@ -50,7 +50,9 @@ const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
 		const DENSITY_KEY = "dsh-wechat-skin:density";
 		const CHAT_WIDTH_KEY = "dsh-wechat-skin:chat-width";
 		const TAIL_KEY = "dsh-wechat-skin:tail";
-		const AI_AVATAR_SHOW_KEY = "dsh-wechat-skin:ai-avatar-visible";
+		const AI_AVATAR_ENABLED_KEY = "dsh-wechat-skin:ai-avatar:enabled";
+		// Legacy key for configs exported before the enabled rename
+		const AI_AVATAR_SHOW_KEY_LEGACY = "dsh-wechat-skin:ai-avatar-visible";
 		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
 		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
 		const PRESET_KEY = "dsh-wechat-skin:preset";
@@ -76,7 +78,7 @@ const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -157,9 +159,6 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-button-info-hover: var(--wc-green-hover) ;
   --dsw-alias-brand-primary: var(--wc-green) ;
   --dsw-alias-brand-text: #ffffff ;
-  --dsw-alias-interactive-bg-hover: rgba(0, 0, 0, 0.05) ;
-  --dsw-alias-interactive-bg-active: rgba(0, 0, 0, 0.08) ;
-  --dsw-alias-interactive-bg-hover-accent: rgba(7, 193, 96, 0.10) ;
   --dsw-specific-bubble: var(--wc-bubble) ;
   --dsw-alias-bg-module-platform: var(--wc-surface) ;
   --dsw-alias-bg-overlay: #ffffff ;
@@ -172,9 +171,6 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --dsw-alias-button-info-hover: var(--wc-green-hover) ;
   --dsw-alias-brand-primary: var(--wc-green) ;
   --dsw-alias-brand-text: #ffffff ;
-  --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.08) ;
-  --dsw-alias-interactive-bg-active: rgba(255, 255, 255, 0.14) ;
-  --dsw-alias-interactive-bg-hover-accent: rgba(7, 193, 96, 0.18) ;
   --dsw-specific-bubble: var(--wc-bubble) ;
   --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
   --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
@@ -1531,7 +1527,7 @@ const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
 const canvasColor = darkSkin ? "#111113" : "#fafafa";
 const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
 const outBubble = "#95ec69";
-const lh = lineHeight === "compact" ? 1.4 : lineHeight === "relaxed" ? 1.75 : 1.55;
+const lh = lineHeight === "compact" ? 1.55 : lineHeight === "relaxed" ? 1.92 : 1.72;
 const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: lh };
 const tailStyle = (color, right) => {
 const style = { position: "absolute", top: "9px", width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent" };
@@ -1807,8 +1803,8 @@ style: styles.footLeft,
 children: status.kind
 ? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
 : [
-(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot, title: contextMissing.length ? "未渲染：" + contextMissing.join(", ") : "" }),
-(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : t("fitOk") })
+(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot + " " + (contextMissing.length ? "opacity:.5" : ""), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
+(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) })
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -1934,7 +1930,7 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applyDensity(density);
 			let tail = readJson(TAIL_KEY, true) !== false;
 			applyTail(tail);
-			let aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
+			let aiAvatarVisible = readJson(AI_AVATAR_ENABLED_KEY, true) !== false;
 			applyAiAvatar(aiAvatarVisible);
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
@@ -1978,7 +1974,7 @@ scanHooks.push(composerScrollScan);
 					},
 					setAiAvatarVisible: (on) => {
 					  aiAvatarVisible = !!on;
-					  writeJson(AI_AVATAR_SHOW_KEY, aiAvatarVisible);
+					  writeJson(AI_AVATAR_ENABLED_KEY, aiAvatarVisible);
 					  applyAiAvatar(aiAvatarVisible);
 					  sync();
 					},
@@ -2070,6 +2066,38 @@ scanHooks.push(composerScrollScan);
 						if (importedDensity !== undefined && importedDensity !== "cozy" && importedDensity !== "compact") return Promise.reject(new Error("invalid config"));
 						const importedChatWidth = importedValue(CHAT_WIDTH_KEY);
 						if (importedChatWidth !== undefined && importedChatWidth !== "wide" && importedChatWidth !== "medium" && importedChatWidth !== "native") return Promise.reject(new Error("invalid config"));
+						const importedTail = importedValue(TAIL_KEY);
+						if (importedTail !== undefined && typeof importedTail !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedAiVisible = importedValue(AI_AVATAR_ENABLED_KEY);
+						const importedAiVisibleLegacy = importedValue(AI_AVATAR_SHOW_KEY_LEGACY);
+						if (importedAiVisible !== undefined && typeof importedAiVisible !== "boolean") return Promise.reject(new Error("invalid config"));
+						if (importedAiVisibleLegacy !== undefined && typeof importedAiVisibleLegacy !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedSidebarBg = importedValue(SIDEBAR_BG_KEY);
+						if (importedSidebarBg !== undefined && importedSidebarBg !== null && !/^#[0-9a-fA-F]{6}$/.test(String(importedSidebarBg))) return Promise.reject(new Error("invalid config"));
+						const importedPreset = importedValue(PRESET_KEY);
+						if (importedPreset !== undefined && importedPreset !== null && typeof importedPreset !== "string") return Promise.reject(new Error("invalid config"));
+						const importedUserAvatar = importedValue(USER_AVATAR_KEY);
+						if (importedUserAvatar !== undefined && importedUserAvatar !== null && (typeof importedUserAvatar !== "string" || importedUserAvatar.length > 200000)) return Promise.reject(new Error("invalid config"));
+						const importedAiAvatar = importedValue(AI_AVATAR_KEY);
+						if (importedAiAvatar !== undefined && importedAiAvatar !== null && (typeof importedAiAvatar !== "string" || importedAiAvatar.length > 200000)) return Promise.reject(new Error("invalid config"));
+						const importedPresets = importedValue(CUSTOM_PRESETS_KEY);
+						if (importedPresets !== undefined) {
+							if (!Array.isArray(importedPresets) || importedPresets.length > 6) return Promise.reject(new Error("invalid config"));
+							for (const p of importedPresets) {
+								if (!p || typeof p.id !== "string" || typeof p.name !== "string") return Promise.reject(new Error("invalid config"));
+								if (!(Number(p.fontLevel) >= 1 && Number(p.fontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
+								if (p.density !== "cozy" && p.density !== "compact") return Promise.reject(new Error("invalid config"));
+								if (p.chatWidth !== "wide" && p.chatWidth !== "medium" && p.chatWidth !== "native") return Promise.reject(new Error("invalid config"));
+								if (typeof p.tail !== "boolean") return Promise.reject(new Error("invalid config"));
+								if (p.sidebarBg !== null && p.sidebarBg !== undefined && !/^#[0-9a-fA-F]{6}$/.test(String(p.sidebarBg))) return Promise.reject(new Error("invalid config"));
+							}
+						}
+						const importedOrder = importedValue(SIDEBAR_ORDER_KEY);
+						if (importedOrder !== undefined && (!Array.isArray(importedOrder) || importedOrder.some((x) => typeof x !== "string"))) return Promise.reject(new Error("invalid config"));
+						// legacy enabled key migration
+						if (importedAiVisible === undefined && importedAiVisibleLegacy !== undefined) {
+							skin[AI_AVATAR_ENABLED_KEY] = JSON.stringify(importedAiVisibleLegacy);
+						}
 						try {
 							let sawSkinKey = false;
 							for (const key of CONFIG_SKIN_KEYS) {
@@ -2091,7 +2119,7 @@ scanHooks.push(composerScrollScan);
 						applyChatWidth(chatWidth);
 						sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 						applySidebarBg();
-						aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
+						aiAvatarVisible = readJson(AI_AVATAR_ENABLED_KEY, true) !== false;
 						applyAiAvatar(aiAvatarVisible);
 						applyPresetTheme(readJson(PRESET_KEY, null));
 						lineHeight = readJson(LINE_HEIGHT_KEY, "normal");
@@ -2173,7 +2201,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
-							window.localStorage.removeItem(AI_AVATAR_SHOW_KEY);
+							window.localStorage.removeItem(AI_AVATAR_ENABLED_KEY);
 							window.localStorage.removeItem(PRESET_KEY);
 window.localStorage.removeItem(LINE_HEIGHT_KEY);
 window.localStorage.removeItem(MOTION_KEY);
@@ -2255,6 +2283,7 @@ window.localStorage.removeItem(MOTION_KEY);
 					"previewOut": "可以，发过来吧",
 					"fitOk": "适配正常",
 					"fitMissing": "选择器缺失",
+					"fitContextPending": "上下文探针未渲染",
 					"exportConfig": "导出配置",
 					"importConfig": "导入配置",
 					"exported": "已导出 sone-wx-config.json",
@@ -2316,6 +2345,7 @@ window.localStorage.removeItem(MOTION_KEY);
 					"previewOut": "Sure, send it over",
 					"fitOk": "Selectors OK",
 					"fitMissing": "Selectors missing",
+					"fitContextPending": "Context probes not rendered",
 					"exportConfig": "Export",
 					"importConfig": "Import",
 					"exported": "Exported sone-wx-config.json",
@@ -2768,7 +2798,7 @@ window.localStorage.removeItem(MOTION_KEY);
       itemTitle: { fontSize: '13px', lineHeight: '20px', color: 'var(--dsw-alias-label-primary)' },
       itemHint: { fontSize: '12px', lineHeight: '16px', color: 'var(--dsw-alias-label-tertiary)' },
       itemControl: { display: 'flex', alignItems: 'center', gap: '8px', flex: 'none', minWidth: '0' },
-      blockTitle: { fontSize: '14px', fontWeight: 500, lineHeight: '22px', color: 'var(--dsw-alias-label-primary)' },
+      blockTitle: { fontSize: '13px', fontWeight: 500, lineHeight: '20px', color: 'var(--dsw-alias-label-primary)' },
       blockDesc: {
         margin: '2px 0 12px', fontSize: '12px', lineHeight: '18px',
         color: 'var(--dsw-alias-label-tertiary)'
@@ -2800,7 +2830,7 @@ window.localStorage.removeItem(MOTION_KEY);
         background: 'var(--dsw-alias-state-idle-primary, rgba(128,128,128,.3))',
         transition: 'background 250ms ease-out'
       },
-      switchOn: { background: '#07c160' },
+      switchOn: { background: 'var(--dsw-alias-state-business-primary, #07c160)' },
       switchKnob: {
         position: 'absolute', top: '2px', left: '2px', width: '16px', height: '16px',
         borderRadius: '999px', background: 'var(--dsw-alias-bg-overlay, #fff)',
@@ -3030,8 +3060,10 @@ window.localStorage.removeItem(MOTION_KEY);
                 setStatus('', '')
               },
               onKeyDown: function (event) {
-                if (event.key === 'Enter') saveTitle()
-              }
+                if (event.key === 'Enter') { event.preventDefault(); saveTitle() }
+                if (event.key === 'Escape') { title[1](snap.title); setStatus('', '') }
+              },
+              onBlur: function () { if (dirty) saveTitle() }
             }),
             h('button', {
               type: 'button',
