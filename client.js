@@ -935,7 +935,7 @@ if (rows.length > 0) sessionListPrimed = true;
 			document.documentElement.style.setProperty("--dsh-wechat-font-scale", String(scale));
 		}
 
-		/** Apply the message-density mode: compact shortens session rows and message gaps. */
+		/** Apply the density mode: compact shortens session rows (and message gaps). */
 		function applyDensity(density) {
 			if (!document.body) return;
 			if (density === "compact") document.body.dataset.dshWechatDensity = "compact";
@@ -1901,7 +1901,7 @@ scanHooks.push(composerScrollScan);
 "aiAvatarOff": "隐藏",
 					"uploadUser": "上传我的头像",
 					"uploadAi": "上传 AI 头像",
-					"densityTitle": "消息密度",
+					"densityTitle": "列表密度",
 					"densityCozy": "标准",
 					"densityCompact": "紧凑",
 					"widthTitle": "对话宽度",
@@ -1946,7 +1946,7 @@ scanHooks.push(composerScrollScan);
 "aiAvatarOff": "Hidden",
 					"uploadUser": "Upload my avatar",
 					"uploadAi": "Upload AI avatar",
-					"densityTitle": "Message density",
+					"densityTitle": "List density",
 					"densityCozy": "Cozy",
 					"densityCompact": "Compact",
 					"widthTitle": "Chat width",
