@@ -1,8 +1,8 @@
 {
   "name": "sone-wx",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）：绿色气泡、会话头像、消息密度、对话宽度、侧边栏宽度等，外加品牌标志与标题修改",
+  "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）：绿色气泡、会话头像、消息密度、对话宽度、侧边栏宽度、侧边栏背景色等，外加品牌标志与标题修改",
   "type": "module",
   "main": "./index.js",
   "exports": {

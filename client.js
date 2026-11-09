@@ -50,6 +50,9 @@ window.__ModuleLoader__.load({
 		const CHAT_WIDTH_KEY = "dsh-wechat-skin:chat-width";
 		const SIDEBAR_WIDTH_KEY = "dsh-wechat-skin:sidebar-width";
 		const TAIL_KEY = "dsh-wechat-skin:tail";
+		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
+		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
+		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** DSH three-column frame and its sidebar drag handle. */
 		const SIDEBAR_FRAME_SELECTOR = ".PIRFFq_frame";
 		const SIDEBAR_HANDLE_SELECTOR = '[data-side="sidebar"].PIRFFq_handle';
@@ -541,6 +544,33 @@ body.dsh-wc-sidebar-resizing .PIRFFq_sidebarCol > *,
 body.dsh-wc-sidebar-resizing .PIRFFq_handle[data-side="sidebar"] {
 	transition: none !important;
 }
+/* Custom sidebar fill: beats both skin palettes (light and dark). */
+html body.dsh-wc-sidebar-bg.dsh-wechat-skin-on .PIRFFq_sidebarCol {
+	background: var(--dsh-wc-sidebar-color) !important;
+}
+/* Ink follows the chosen fill so the session list stays legible. */
+html body.dsh-wc-sidebar-bg[data-dsh-wc-sidebar-ink="light"] .PIRFFq_sidebarCol {
+	--dsw-alias-label-primary: #f2f2f3;
+	--dsw-alias-label-secondary: rgba(242, 242, 243, 0.72);
+	--dsw-alias-label-tertiary: rgba(242, 242, 243, 0.5);
+}
+html body.dsh-wc-sidebar-bg[data-dsh-wc-sidebar-ink="dark"] .PIRFFq_sidebarCol {
+	--dsw-alias-label-primary: #1b1b1c;
+	--dsw-alias-label-secondary: rgba(27, 27, 28, 0.66);
+	--dsw-alias-label-tertiary: rgba(27, 27, 28, 0.45);
+}
+html body.dsh-wc-sidebar-bg[data-dsh-wc-sidebar-ink="light"] .JoiKIa_sessionRow:hover {
+	background: rgba(255, 255, 255, 0.09);
+}
+body .dsh-wc-color {
+	width: 40px;
+	height: 28px;
+	padding: 2px;
+	border: 0.5px solid var(--dsw-alias-border-l2);
+	border-radius: 6px;
+	background: transparent;
+	cursor: pointer;
+}
 		`;
 
 //#endregion
@@ -867,6 +897,38 @@ if (rows.length > 0) sessionListPrimed = true;
 		  else delete document.body.dataset.dshWechatWidth;
 		}
 
+		//#region dsh-wechat-skin: sidebar background
+		/** Sidebar fill override in #rrggbb; null keeps the skin's own colour. */
+		let sidebarBg = null;
+
+		/** Accept #rgb / #rrggbb only; anything else means "follow the skin". */
+		function normalizeHexColor(value) {
+			if (typeof value !== "string") return null;
+			const hex = value.trim();
+			const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(hex);
+			if (short) return ("#" + short[1] + short[1] + short[2] + short[2] + short[3] + short[3]).toLowerCase();
+			return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : null;
+		}
+
+		/** Point --dsh-wc-sidebar-color at the chosen fill (or drop it). */
+		function applySidebarBg() {
+			if (typeof document === "undefined" || !document.body) return;
+			const custom = sidebarBg !== null;
+			document.body.classList.toggle(SIDEBAR_BG_CLASS, custom);
+			const root = document.documentElement;
+			if (custom) {
+				root.style.setProperty("--dsh-wc-sidebar-color", sidebarBg);
+				// Keep the session list readable when the fill is far from the theme's own.
+				const n = parseInt(sidebarBg.slice(1), 16);
+				const lum = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+				document.body.dataset.dshWcSidebarInk = lum < 0.55 ? "light" : "dark";
+			} else {
+				root.style.removeProperty("--dsh-wc-sidebar-color");
+				delete document.body.dataset.dshWcSidebarInk;
+			}
+		}
+		//#endregion
+
 		//#region dsh-wechat-skin: sidebar width
 		/** Custom sidebar width in px; null follows DSH's own three-column solve. */
 		let sidebarWidth = null;
@@ -990,11 +1052,11 @@ if (rows.length > 0) sessionListPrimed = true;
 		//#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarWidth) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarWidth, initialSidebarBg) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarWidth: initialSidebarWidth, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarWidth: initialSidebarWidth, sidebarBg: initialSidebarBg, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarWidth, revision) => {
+		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg, revision) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1002,6 +1064,7 @@ if (rows.length > 0) sessionListPrimed = true;
 		        d.tail = tail;
 		        d.chatWidth = chatWidth;
 		        d.sidebarWidth = sidebarWidth;
+		        d.sidebarBg = sidebarBg;
 		        d.revision = revision;
 					}
 				}
@@ -1044,17 +1107,19 @@ if (rows.length > 0) sessionListPrimed = true;
 		};
 
 		/**
-		 * The settings row: font size + avatars + density + bubble tail + sidebar width + reset.
+		 * The settings row: font size + avatars + density + bubble tail + sidebar width + sidebar background + reset.
 		 * Buttons are class-styled (hover/active/disabled live in WECHAT_UI_CSS);
 		 * controls without visible effect while the skin is off are disabled.
-		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
+		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
 		 */
-		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 			const fontLevel = useStore((s) => s.fontLevel);
 			const density = useStore((s) => s.density);
 			const tail = useStore((s) => s.tail);
 			const chatWidth = useStore((s) => s.chatWidth);
 			const sidebarWidth = useStore((s) => s.sidebarWidth);
+			const sidebarBg = useStore((s) => s.sidebarBg);
+			const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
 			const userRef = (0, _react.useRef)(null);
 			const aiRef = (0, _react.useRef)(null);
 			const onFile = (action) => (event) => {
@@ -1212,6 +1277,29 @@ if (rows.length > 0) sessionListPrimed = true;
 					}),
 					(0, react_jsx_runtime.jsx)("div", {
 					  style: styles.title,
+					  children: t("sidebarBgTitle")
+					}),
+					(0, react_jsx_runtime.jsxs)("div", {
+					  style: styles.row,
+					  children: [
+					    (0, react_jsx_runtime.jsx)("input", {
+					      type: "color",
+					      className: "dsh-wc-color",
+					      value: sidebarBg || (darkSkin ? "#1c1c1e" : "#e6e6e8"),
+					      "aria-label": t("sidebarBgTitle"),
+					      onChange: (event) => setSidebarBg(event.target.value)
+					    }),
+					    (0, react_jsx_runtime.jsx)("button", {
+					      type: "button",
+					      className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+					      disabled: sidebarBg === null,
+					      onClick: () => setSidebarBg(null),
+					      children: t("sidebarBgReset")
+					    })
+					  ]
+					}),
+					(0, react_jsx_runtime.jsx)("div", {
+					  style: styles.title,
 					  children: t("tailTitle")
 					}),
 					(0, react_jsx_runtime.jsxs)("div", {
@@ -1319,6 +1407,8 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 				});
 			}
 
+			sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
+			applySidebarBg();
 			ensureUiStyleTag();
 			applyState();
 			scheduleScan();
@@ -1339,11 +1429,11 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 			sidebarWidth = clampSidebarWidth(readJson(SIDEBAR_WIDTH_KEY, null));
 			applySidebarWidth();
 
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarWidth);
+			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarWidth, ++revision);
+				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg, ++revision);
 			};
 			initSidebarResize(sync);
 			const sidebarScan = () => { watchSidebarFrame(); applySidebarWidth(); };
@@ -1386,6 +1476,15 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					  if (sidebarWidth === null) restoreSidebarTrack();
 					  sync();
 					},
+					setSidebarBg: (value) => {
+					  sidebarBg = normalizeHexColor(value);
+					  try {
+					    if (sidebarBg === null) window.localStorage.removeItem(SIDEBAR_BG_KEY);
+					    else window.localStorage.setItem(SIDEBAR_BG_KEY, JSON.stringify(sidebarBg));
+					  } catch (e) {}
+					  applySidebarBg();
+					  sync();
+					},
 					uploadUserAvatar: (dataUrl) => {
 						setUserAvatar(dataUrl);
 					},
@@ -1401,6 +1500,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 							window.localStorage.removeItem(TAIL_KEY);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
 							window.localStorage.removeItem(SIDEBAR_WIDTH_KEY);
+							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -1414,6 +1514,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 						tail = true; applyTail(tail);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
 						sidebarWidth = null; applySidebarWidth(); restoreSidebarTrack();
+						sidebarBg = null; applySidebarBg();
 						sync();
 					}
 				};
@@ -1436,6 +1537,8 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"sidebarTitle": "侧边栏宽度",
 					"sidebarAuto": "自动",
 					"sidebarFollow": "跟随系统",
+					"sidebarBgTitle": "侧边栏背景色",
+					"sidebarBgReset": "跟随皮肤",
 					"tailTitle": "气泡尾巴",
 					"tailOn": "开",
 					"tailOff": "关",
@@ -1464,6 +1567,8 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"sidebarTitle": "Sidebar width",
 					"sidebarAuto": "Auto",
 					"sidebarFollow": "Follow DSH",
+					"sidebarBgTitle": "Sidebar background",
+					"sidebarBgReset": "Skin default",
 					"tailTitle": "Bubble tail",
 					"tailOn": "On",
 					"tailOff": "Off",
@@ -1494,7 +1599,10 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 				restoreSidebarTrack();
 				document.body?.classList.remove(SIDEBAR_CUSTOM_CLASS);
 				document.body?.classList.remove(SIDEBAR_RESIZING_CLASS);
+				document.body?.classList.remove(SIDEBAR_BG_CLASS);
+				if (document.body) delete document.body.dataset.dshWcSidebarInk;
 				document.documentElement.style.removeProperty("--dsh-wc-sidebar-width");
+				document.documentElement.style.removeProperty("--dsh-wc-sidebar-color");
 				document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
 			}, "sone-wx: skin cleanup");
 			return { store, injected };
