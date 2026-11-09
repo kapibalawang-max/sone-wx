@@ -315,7 +315,10 @@ export function apply(ctx) {
           if (payload === null) return sendJson(res, 400, { ok: false, error: 'bad_json' })
           try {
             mkdirSync(brandDir(ctx), { recursive: true })
-            const entries = Array.isArray(payload.entries) ? payload.entries.slice(-20) : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
+            const incoming = Array.isArray(payload.entries) ? payload.entries : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
+            let previous = []
+            try { previous = JSON.parse(readFileSync(diagPath(), 'utf8')).entries ?? [] } catch { previous = [] }
+            const entries = (Array.isArray(previous) ? previous : []).concat(incoming).filter((entry) => entry && typeof entry.msg === 'string').slice(-30)
             const target = diagPath()
             const temporary = tempPath(target)
             writeFileSync(temporary, JSON.stringify({ entries }, null, 2))
