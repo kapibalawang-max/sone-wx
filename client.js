@@ -114,7 +114,8 @@ window.__ModuleLoader__.load({
   --wc-bubble-ink: #101010;
   --wc-bubble-link: #0a5c33;
   --wc-bubble-code-ink: #0a2e1a;
-  --wc-sidebar: #e6e6e8;
+  /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
+  --wc-sidebar: #eeeef0;
   --wc-sidebar-dark: #1c1c1e;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #232326;
@@ -169,8 +170,10 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* ================= frame ================= */
 body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
 /* ================= sidebar ================= */
-body.dsh-wechat-skin-on .PIRFFq_sidebarCol { background: var(--wc-sidebar); border-right: none; }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .PIRFFq_sidebarCol { background: var(--wc-sidebar-dark); }
+/* !important + html: on macOS DSH paints the sidebar with a bluish color-mix gradient
+   (specificity 0,4,1); the skin's flat WeChat fill has to outrank it. */
+html body.dsh-wechat-skin-on .PIRFFq_sidebarCol { background: var(--wc-sidebar) !important; border-right: none; }
+html body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .PIRFFq_sidebarCol { background: var(--wc-sidebar-dark) !important; }
 body.dsh-wechat-skin-on .kB3qhq_newSession { border-radius: 8px; border-color: transparent; background: #ffffff; }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .kB3qhq_newSession { background: var(--wc-overlay-dark); }
 
@@ -1285,7 +1288,7 @@ if (rows.length > 0) sessionListPrimed = true;
 					    (0, react_jsx_runtime.jsx)("input", {
 					      type: "color",
 					      className: "dsh-wc-color",
-					      value: sidebarBg || (darkSkin ? "#1c1c1e" : "#e6e6e8"),
+					      value: sidebarBg || (darkSkin ? "#1c1c1e" : "#eeeef0"),
 					      "aria-label": t("sidebarBgTitle"),
 					      onChange: (event) => setSidebarBg(event.target.value)
 					    }),
@@ -1538,7 +1541,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"sidebarAuto": "自动",
 					"sidebarFollow": "跟随系统",
 					"sidebarBgTitle": "侧边栏背景色",
-					"sidebarBgReset": "跟随皮肤",
+					"sidebarBgReset": "微信色",
 					"tailTitle": "气泡尾巴",
 					"tailOn": "开",
 					"tailOff": "关",
@@ -1568,7 +1571,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"sidebarAuto": "Auto",
 					"sidebarFollow": "Follow DSH",
 					"sidebarBgTitle": "Sidebar background",
-					"sidebarBgReset": "Skin default",
+					"sidebarBgReset": "WeChat colour",
 					"tailTitle": "Bubble tail",
 					"tailOn": "On",
 					"tailOff": "Off",
