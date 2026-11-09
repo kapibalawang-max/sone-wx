@@ -471,6 +471,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-tail="0"] .tnXGgG_column [class*="_bubbl
 /* dsh-wechat-skin settings-row buttons (always present, not gated by dsh-wechat-skin-on) */
 body .dsh-wc-btn {
 	cursor: pointer;
+	flex: none;
+	white-space: nowrap;
 	border-radius: 8px;
 	font-weight: 500;
 	font-family: inherit;
@@ -487,7 +489,7 @@ body .dsh-wc-btn-primary {
 body .dsh-wc-btn-primary:hover { background: #06ad56; }
 body .dsh-wc-btn-primary:active { background: #15ac70; }
 body .dsh-wc-btn-secondary {
-	border: 1px solid var(--dsw-alias-border-l2);
+	border: 0.5px solid var(--dsw-alias-border-l2);
 	padding: 6px 14px;
 	font-size: 13px;
 	line-height: 20px;
@@ -497,13 +499,33 @@ body .dsh-wc-btn-secondary {
 body .dsh-wc-btn-secondary:hover { background: var(--dsw-alias-interactive-bg-hover); }
 body .dsh-wc-btn-secondary:active { background: var(--dsw-alias-interactive-bg-active); }
 body .dsh-wc-btn-sm { padding: 6px 12px; font-size: 12px; line-height: 18px; }
-body .dsh-wc-fontbtn { min-width: 34px; height: 30px; padding: 0 8px; }
-body .dsh-wc-fontbtn:hover { border-color: #07c160; }
-body .dsh-wc-fontbtn-on,
-body .dsh-wc-fontbtn-on:hover {
-	border-color: #07c160;
-	color: #07c160;
-	background: rgba(7, 193, 96, 0.08);
+body .dsh-wc-seg {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px;
+	border-radius: 10px;
+	background: var(--dsw-alias-bg-layer-2, rgba(128, 128, 128, 0.1));
+}
+body .dsh-wc-seg-item {
+	height: 26px;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--dsw-alias-label-secondary);
+	font-family: inherit;
+	font-size: 12px;
+	line-height: 26px;
+	cursor: pointer;
+	transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+body .dsh-wc-seg-item:hover { color: var(--dsw-alias-label-primary); }
+body .dsh-wc-seg-item[aria-pressed="true"] {
+	background: var(--dsw-alias-bg-module-platform, #ffffff);
+	color: var(--dsw-alias-label-primary);
+	font-weight: 500;
+	box-shadow: inset 0 0 0 0.5px var(--dsw-alias-border-l2), 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 body .dsh-wc-btn[disabled] {
 	opacity: 0.45;
@@ -558,12 +580,12 @@ body .dsh-wc-panel-placeholder {
 	box-shadow: inset 0 0 0 1px rgba(7, 193, 96, 0.35);
 }
 body .dsh-wc-color {
-	width: 40px;
+	width: 44px;
 	height: 28px;
 	padding: 2px;
 	border: 0.5px solid var(--dsw-alias-border-l2);
-	border-radius: 6px;
-	background: transparent;
+	border-radius: 8px;
+	background: var(--dsw-alias-bg-module-platform);
 	cursor: pointer;
 }
 		`;
@@ -1119,43 +1141,109 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 
 		/** Inline styles for static (non-interactive) parts of the settings row. */
 		const styles = {
-			group: {
-				borderBottom: "0.5px solid var(--dsw-alias-border-l2)",
+			root: {
 				display: "flex",
 				flexDirection: "column",
-				gap: "8px",
-				padding: "16px 0"
+				gap: "16px",
+				minWidth: 0
 			},
-			title: {
+			card: {
+				border: "0.5px solid var(--dsw-alias-border-l2)",
+				borderRadius: "12px",
+				background: "var(--dsw-alias-bg-layer-2, rgba(128, 128, 128, 0.04))",
+				overflow: "hidden"
+			},
+			cardHead: {
+				padding: "14px 16px 8px"
+			},
+			cardTitle: {
 				color: "var(--dsw-alias-label-primary)",
-				fontSize: "14px",
-				fontWeight: 500,
-				lineHeight: "22px"
+				fontSize: "13px",
+				fontWeight: 600,
+				lineHeight: "20px"
 			},
-			desc: {
+			cardDesc: {
 				color: "var(--dsw-alias-label-tertiary)",
 				fontSize: "12px",
-				lineHeight: "18px"
+				lineHeight: "18px",
+				marginTop: "2px"
 			},
-			row: {
+			item: {
 				display: "flex",
 				alignItems: "center",
-				gap: "8px"
+				justifyContent: "space-between",
+				gap: "16px",
+				minHeight: "44px",
+				padding: "10px 16px",
+				flexWrap: "wrap",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
 			},
-			value: {
+			itemMain: {
+				display: "flex",
+				flexDirection: "column",
+				gap: "2px",
+				flex: "1 1 160px",
+				minWidth: 0
+			},
+			itemTitle: {
+				color: "var(--dsw-alias-label-primary)",
+				fontSize: "13px",
+				lineHeight: "20px"
+			},
+			itemHint: {
 				color: "var(--dsw-alias-label-tertiary)",
 				fontSize: "12px",
-				fontVariantNumeric: "tabular-nums",
-				lineHeight: "18px",
-				minWidth: "40px",
-				textAlign: "right"
+				lineHeight: "16px"
+			},
+			itemControl: {
+				display: "flex",
+				alignItems: "center",
+				gap: "8px",
+				flex: "none"
+			},
+			cardFoot: {
+				display: "flex",
+				justifyContent: "flex-end",
+				padding: "10px 16px 14px",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
 			}
 		};
 
+		/** One label/control line inside the skin card. */
+		function SkinRow({ title, hint, children }) {
+			return (0, react_jsx_runtime.jsxs)("div", {
+				style: styles.item,
+				children: [
+					(0, react_jsx_runtime.jsxs)("div", {
+						style: styles.itemMain,
+						children: [
+							(0, react_jsx_runtime.jsx)("div", { style: styles.itemTitle, children: title }),
+							hint ? (0, react_jsx_runtime.jsx)("div", { style: styles.itemHint, children: hint }) : null
+						]
+					}),
+					(0, react_jsx_runtime.jsx)("div", { style: styles.itemControl, children })
+				]
+			});
+		}
+
+		/** Segmented control: one row of mutually exclusive choices. */
+		function Segmented({ value, options, onChange }) {
+			return (0, react_jsx_runtime.jsx)("div", {
+				className: "dsh-wc-seg",
+				children: options.map((option) => (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "dsh-wc-seg-item",
+					"aria-pressed": value === option.value,
+					onClick: () => onChange(option.value),
+					children: option.label
+				}, String(option.value)))
+			});
+		}
+
 		/**
-		 * The settings row: font size + avatars + density + bubble tail + sidebar background + reset.
+		 * The skin card: one row per setting (label left, control right), reset in the footer.
 		 * Buttons are class-styled (hover/active/disabled live in WECHAT_UI_CSS);
-		 * controls without visible effect while the skin is off are disabled.
+		 * segmented choices share one pill so the whole group reads as a single control.
 		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
 		 */
 		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
@@ -1172,57 +1260,40 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 				if (file) downscaleImage(file).then(action).catch(() => {});
 				event.target.value = "";
 			};
-			const seg = (pressed) => "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-fontbtn" + (pressed ? " dsh-wc-fontbtn-on" : "");
+			const fontOptions = [1, 2, 3, 4, 5].map((level) => ({ value: level, label: t("fontL" + level) }));
+			const densityOptions = [
+				{ value: "cozy", label: t("densityCozy") },
+				{ value: "compact", label: t("densityCompact") }
+			];
+			const widthOptions = [
+				{ value: "wide", label: t("widthWide") },
+				{ value: "medium", label: t("widthMedium") },
+				{ value: "native", label: t("widthNative") }
+			];
+			const tailOptions = [
+				{ value: true, label: t("tailOn") },
+				{ value: false, label: t("tailOff") }
+			];
 			return (0, react_jsx_runtime.jsxs)("div", {
-				style: styles.group,
+				style: styles.card,
 				children: [
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.title,
-						children: t("title")
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.desc,
-						children: t("description")
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.title,
-						children: t("fontTitle")
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.desc,
-						children: t("fontHint")
-					}),
 					(0, react_jsx_runtime.jsxs)("div", {
-						style: styles.row,
-						children: [0, 1, 2, 3, 4].map((index) => (0, react_jsx_runtime.jsx)("button", {
-							type: "button",
-							className: seg(fontLevel === index + 1),
-							"aria-pressed": fontLevel === index + 1,
-							onClick: () => setFontLevel(index + 1),
-							children: t("fontL" + (index + 1))
-						}, "font-" + (index + 1)))
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.title,
-						children: t("avatarTitle")
-					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-						style: styles.row,
+						style: styles.cardHead,
 						children: [
-							(0, react_jsx_runtime.jsx)("input", {
-								ref: userRef,
-								type: "file",
-								accept: "image/*",
-								style: { display: "none" },
-								onChange: onFile(uploadUserAvatar)
-							}),
-							(0, react_jsx_runtime.jsx)("input", {
-								ref: aiRef,
-								type: "file",
-								accept: "image/*",
-								style: { display: "none" },
-								onChange: onFile(uploadAiAvatar)
-							}),
+							(0, react_jsx_runtime.jsx)("div", { style: styles.cardTitle, children: t("title") }),
+							(0, react_jsx_runtime.jsx)("div", { style: styles.cardDesc, children: t("description") })
+						]
+					}),
+					(0, react_jsx_runtime.jsx)(SkinRow, {
+						title: t("fontTitle"),
+						hint: t("fontHint"),
+						children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
+					}),
+					(0, react_jsx_runtime.jsxs)(SkinRow, {
+						title: t("avatarTitle"),
+						children: [
+							(0, react_jsx_runtime.jsx)("input", { ref: userRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadUserAvatar) }),
+							(0, react_jsx_runtime.jsx)("input", { ref: aiRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadAiAvatar) }),
 							(0, react_jsx_runtime.jsx)("button", {
 								type: "button",
 								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
@@ -1237,107 +1308,39 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 							})
 						]
 					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.title,
-						children: t("densityTitle")
+					(0, react_jsx_runtime.jsx)(SkinRow, {
+						title: t("densityTitle"),
+						children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
 					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-						style: styles.row,
+					(0, react_jsx_runtime.jsx)(SkinRow, {
+						title: t("widthTitle"),
+						children: (0, react_jsx_runtime.jsx)(Segmented, { value: chatWidth, options: widthOptions, onChange: setChatWidth })
+					}),
+					(0, react_jsx_runtime.jsxs)(SkinRow, {
+						title: t("sidebarBgTitle"),
 						children: [
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: seg(density === "cozy"),
-								"aria-pressed": density === "cozy",
-								onClick: () => setDensity("cozy"),
-								children: t("densityCozy")
+							(0, react_jsx_runtime.jsx)("input", {
+								type: "color",
+								className: "dsh-wc-color",
+								value: sidebarBg || (darkSkin ? "#1c1c1e" : "#eeeef0"),
+								"aria-label": t("sidebarBgTitle"),
+								onChange: (event) => setSidebarBg(event.target.value)
 							}),
 							(0, react_jsx_runtime.jsx)("button", {
 								type: "button",
-								className: seg(density === "compact"),
-								"aria-pressed": density === "compact",
-								onClick: () => setDensity("compact"),
-								children: t("densityCompact")
+								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+								disabled: sidebarBg === null,
+								onClick: () => setSidebarBg(null),
+								children: t("sidebarBgReset")
 							})
 						]
 					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.title,
-					  children: t("widthTitle")
-					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-					  style: styles.row,
-					  children: [
-					    (0, react_jsx_runtime.jsx)("button", {
-					      type: "button",
-					      className: seg(chatWidth === "wide"),
-					      "aria-pressed": chatWidth === "wide",
-					      onClick: () => setChatWidth("wide"),
-					      children: t("widthWide")
-					    }),
-					    (0, react_jsx_runtime.jsx)("button", {
-					      type: "button",
-					      className: seg(chatWidth === "medium"),
-					      "aria-pressed": chatWidth === "medium",
-					      onClick: () => setChatWidth("medium"),
-					      children: t("widthMedium")
-					    }),
-					    (0, react_jsx_runtime.jsx)("button", {
-					      type: "button",
-					      className: seg(chatWidth === "native"),
-					      "aria-pressed": chatWidth === "native",
-					      onClick: () => setChatWidth("native"),
-					      children: t("widthNative")
-					    })
-					  ]
+					(0, react_jsx_runtime.jsx)(SkinRow, {
+						title: t("tailTitle"),
+						children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
 					}),
 					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.title,
-					  children: t("sidebarBgTitle")
-					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-					  style: styles.row,
-					  children: [
-					    (0, react_jsx_runtime.jsx)("input", {
-					      type: "color",
-					      className: "dsh-wc-color",
-					      value: sidebarBg || (darkSkin ? "#1c1c1e" : "#eeeef0"),
-					      "aria-label": t("sidebarBgTitle"),
-					      onChange: (event) => setSidebarBg(event.target.value)
-					    }),
-					    (0, react_jsx_runtime.jsx)("button", {
-					      type: "button",
-					      className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-					      disabled: sidebarBg === null,
-					      onClick: () => setSidebarBg(null),
-					      children: t("sidebarBgReset")
-					    })
-					  ]
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.title,
-					  children: t("tailTitle")
-					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-						style: styles.row,
-						children: [
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: seg(tail === true),
-								"aria-pressed": tail === true,
-								onClick: () => setTail(true),
-								children: t("tailOn")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: seg(tail === false),
-								"aria-pressed": tail === false,
-								onClick: () => setTail(false),
-								children: t("tailOff")
-							})
-						]
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.row,
+						style: styles.cardFoot,
 						children: (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
 							className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
@@ -1988,16 +1991,26 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
     //#region 页面样式
 
     var S = {
-      root: { display: 'flex', flexDirection: 'column', minWidth: 0 },
-      head: { padding: '16px 0 6px' },
-      block: {
-        borderBottom: '0.5px solid var(--dsw-alias-border-l2)',
-        padding: '14px 0', boxSizing: 'border-box'
+      root: { display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 },
+      head: { padding: '0 2px' },
+      card: {
+        border: '0.5px solid var(--dsw-alias-border-l2)',
+        borderRadius: '12px',
+        background: 'var(--dsw-alias-bg-layer-2, rgba(128,128,128,.04))',
+        overflow: 'hidden'
       },
-      blockHead: { display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' },
+      item: {
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: '16px', minHeight: '44px', padding: '10px 16px', boxSizing: 'border-box',
+        borderTop: '0.5px solid var(--dsw-alias-border-l2)', flexWrap: 'wrap'
+      },
+      itemMain: { display: 'flex', flexDirection: 'column', gap: '2px', flex: '1 1 160px', minWidth: '0' },
+      itemTitle: { fontSize: '13px', lineHeight: '20px', color: 'var(--dsw-alias-label-primary)' },
+      itemHint: { fontSize: '12px', lineHeight: '16px', color: 'var(--dsw-alias-label-tertiary)' },
+      itemControl: { display: 'flex', alignItems: 'center', gap: '8px', flex: 'none', minWidth: '0' },
       blockTitle: { fontSize: '14px', fontWeight: 500, lineHeight: '22px', color: 'var(--dsw-alias-label-primary)' },
       blockDesc: {
-        margin: '0 0 10px', fontSize: '12px', lineHeight: '18px',
+        margin: '2px 0 12px', fontSize: '12px', lineHeight: '18px',
         color: 'var(--dsw-alias-label-tertiary)'
       },
       row: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
@@ -2010,7 +2023,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
       previewImg: { display: 'block', maxWidth: '36px', maxHeight: '36px', objectFit: 'contain' },
       previewEmpty: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)' },
       input: {
-        flex: '1 1 200px', minWidth: '0', height: '32px', padding: '0 10px', boxSizing: 'border-box',
+        flex: '0 1 240px', minWidth: '0', height: '32px', padding: '0 10px', boxSizing: 'border-box',
         border: '0.5px solid var(--dsw-alias-border-l2)', borderRadius: '8px',
         background: 'var(--dsw-alias-bg-base, transparent)',
         color: 'var(--dsw-alias-label-primary)', fontFamily: 'inherit', fontSize: '13px', outline: 'none'
@@ -2175,115 +2188,113 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
       var wordSrc = imageUrl('wordmark')
 
       var children = [h('div', { style: S.head, key: 'head' },
-        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('pageTitle'))),
-        h('p', { style: Object.assign({}, S.blockDesc, { margin: 0 }) }, t('intro')))]
+        h('div', { style: S.blockTitle }, t('pageTitle')),
+        h('div', { style: S.blockDesc, margin: '2px 0 0' }, t('intro')))]
 
       if (!snap.loaded) {
         children.push(h('div', { style: S.hint, key: 'loading' }, t('loading')))
       }
 
-      children.push(h('div', { style: S.block, key: 'mark' },
-        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('mark'))),
-        h('p', { style: S.blockDesc }, t('markDesc')),
-        h('div', { style: S.row },
-          h('div', { style: S.preview, title: t('preview') },
-            markSrc === null
-              ? h('span', { style: S.previewEmpty }, t('notSet'))
-              : h('img', { src: markSrc, alt: '', style: S.previewImg, draggable: false })),
-          h(UploadButton, {
-            kind: 'mark',
-            label: markSrc === null ? t('upload') : t('replace'),
-            disabled: !snap.loaded,
-            onError: function (detail) {
-              setStatus('err', detail)
-            }
-          }),
-          markSrc === null ? null : h('button', {
-            type: 'button', style: S.ghost, onClick: function () {
-              removeMark('mark')
-            }
-          }, t('remove'))
-        )))
-
-      children.push(h('div', { style: S.block, key: 'title' },
-        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('title'))),
-        h('p', { style: S.blockDesc }, t('titleDesc')),
-        h('div', { style: S.row },
-          h('input', {
-            style: S.input,
-            value: title[0],
-            maxLength: MAX_TITLE,
-            placeholder: t('titlePlaceholder'),
-            onChange: function (event) {
-              title[1](event.target.value)
-              setStatus('', '')
-            },
-            onKeyDown: function (event) {
-              if (event.key === 'Enter') saveTitle()
-            }
-          }),
-          h('button', {
-            type: 'button',
-            className: 'dsh-wc-btn dsh-wc-btn-primary',
-            disabled: !dirty,
-            onClick: saveTitle
-          }, t('save'))
-        )))
-
-      children.push(h('div', { style: S.block, key: 'wordmark' },
-        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('wordmark'))),
-        h('p', { style: S.blockDesc }, t('wordmarkDesc')),
-        h('div', { style: S.switchRow },
-          h(Switch, {
-            checked: snap.wordmarkImage,
-            label: t('wordmark'),
-            onChange: toggleWordmark
-          }),
-          wordSrc === null
-            ? h(UploadButton, {
-              kind: 'wordmark',
-              label: t('upload'),
+      children.push(h('div', { style: S.card, key: 'rows' },
+        h('div', { style: S.item },
+          h('div', { style: S.itemMain },
+            h('div', { style: S.itemTitle }, t('mark')),
+            h('div', { style: S.itemHint }, t('markDesc'))),
+          h('div', { style: S.itemControl },
+            h('div', { style: S.preview, title: t('preview') },
+              markSrc === null
+                ? h('span', { style: S.previewEmpty }, t('notSet'))
+                : h('img', { src: markSrc, alt: '', style: S.previewImg, draggable: false })),
+            h(UploadButton, {
+              kind: 'mark',
+              label: markSrc === null ? t('upload') : t('replace'),
               disabled: !snap.loaded,
               onError: function (detail) {
                 setStatus('err', detail)
               }
-            })
-            : h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '10px', minWidth: 0 } },
-              h('img', {
-                src: wordSrc, alt: '', draggable: false,
-                style: { display: 'block', height: '18px', maxWidth: '160px', objectFit: 'contain' }
-              }),
-              h(UploadButton, {
+            }),
+            markSrc === null ? null : h('button', {
+              type: 'button', style: S.ghost, onClick: function () {
+                removeMark('mark')
+              }
+            }, t('remove')))),
+        h('div', { style: S.item },
+          h('div', { style: S.itemMain },
+            h('div', { style: S.itemTitle }, t('title')),
+            h('div', { style: S.itemHint }, t('titleDesc'))),
+          h('div', { style: S.itemControl },
+            h('input', {
+              style: S.input,
+              value: title[0],
+              maxLength: MAX_TITLE,
+              placeholder: t('titlePlaceholder'),
+              onChange: function (event) {
+                title[1](event.target.value)
+                setStatus('', '')
+              },
+              onKeyDown: function (event) {
+                if (event.key === 'Enter') saveTitle()
+              }
+            }),
+            h('button', {
+              type: 'button',
+              className: 'dsh-wc-btn dsh-wc-btn-primary',
+              disabled: !dirty,
+              onClick: saveTitle
+            }, t('save')))),
+        h('div', { style: S.item },
+          h('div', { style: S.itemMain },
+            h('div', { style: S.itemTitle }, t('wordmark')),
+            h('div', { style: S.itemHint }, t('wordmarkDesc'))),
+          h('div', { style: S.itemControl },
+            h(Switch, {
+              checked: snap.wordmarkImage,
+              label: t('wordmark'),
+              onChange: toggleWordmark
+            }),
+            wordSrc === null
+              ? h(UploadButton, {
                 kind: 'wordmark',
-                label: t('replace'),
+                label: t('upload'),
                 disabled: !snap.loaded,
                 onError: function (detail) {
                   setStatus('err', detail)
                 }
-              }),
-              h('button', {
-                type: 'button', style: S.ghost, onClick: function () {
-                  removeMark('wordmark')
-                }
-              }, t('remove')))
-        )
-      ))
+              })
+              : h('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 } },
+                h('img', {
+                  src: wordSrc, alt: '', draggable: false,
+                  style: { display: 'block', height: '18px', maxWidth: '140px', objectFit: 'contain' }
+                }),
+                h(UploadButton, {
+                  kind: 'wordmark',
+                  label: t('replace'),
+                  disabled: !snap.loaded,
+                  onError: function (detail) {
+                    setStatus('err', detail)
+                  }
+                }),
+                h('button', {
+                  type: 'button', style: S.ghost, onClick: function () {
+                    removeMark('wordmark')
+                  }
+                }, t('remove'))))),
+        h('div', { style: S.item },
+          h('div', { style: S.itemMain },
+            h('div', { style: S.itemTitle }, t('hero')),
+            h('div', { style: S.itemHint }, t('heroDesc'))),
+          h('div', { style: S.itemControl },
+            h(Switch, {
+              checked: snap.heroMark,
+              label: t('hero'),
+              onChange: toggleHero
+            })))))
 
-      children.push(h('div', { style: S.block, key: 'hero' },
-        h('div', { style: S.blockHead }, h('span', { style: S.blockTitle }, t('hero'))),
-        h('p', { style: S.blockDesc }, t('heroDesc')),
-        h(Switch, {
-          checked: snap.heroMark,
-          label: t('hero'),
-          onChange: toggleHero
-        })
-      ))
-
-      children.push(h('div', { style: S.row, key: 'status' },
+      children.push(h('div', { style: S.status, key: 'status' },
         status[0].kind === 'err'
-          ? h('span', { style: Object.assign({}, S.status, S.err) }, status[0].detail)
+          ? h('span', { style: S.err }, status[0].detail)
           : status[0].kind === 'ok'
-            ? h('span', { style: Object.assign({}, S.status, S.ok) }, status[0].detail)
+            ? h('span', { style: S.ok }, status[0].detail)
             : null))
 
       return h('div', { style: S.root, 'aria-label': t('pageTitle') }, children)
@@ -2392,7 +2403,7 @@ if (!props.actions || typeof props.actions !== "object") missing.push("actions")
 }
 return (0, react_jsx_runtime.jsx)(SoneWxBoundary, {
 children: (0, react_jsx_runtime.jsxs)("div", {
-style: { display: "flex", flexDirection: "column", gap: 20 },
+style: { display: "flex", flexDirection: "column", gap: 16 },
 children: [
 missing.length === 0 ? null : (0, react_jsx_runtime.jsxs)("div", {
 style: { padding: "10px 12px", border: "1px solid rgba(230,167,0,0.5)", borderRadius: 8, fontSize: 12 },
