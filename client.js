@@ -604,7 +604,9 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */
 body.dsh-wechat-skin-on { --wc-hover: var(--wc-hover); --wc-hover-accent: var(--wc-hover-accent); }
-body.dsh-wechat-skin-on .Dv5QdW_panel { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
+/* Paint only when open: the panel is a full-height overlay that stays translated
+   off-canvas when closed, so an always-on background shows as a slab over chat. */
+body.dsh-wechat-skin-on .Dv5QdW_panel[data-sidebar-right-open] { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
 body.dsh-wechat-skin-on .Dv5QdW_panelBody { padding: 10px 12px; }
 body.dsh-wechat-skin-on .Dv5QdW_tabTitle { font-size: 13px; font-weight: 600; }
 body.dsh-wechat-skin-on .Dv5QdW_tabBody { font-size: 12.5px; }
