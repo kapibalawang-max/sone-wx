@@ -2002,6 +2002,11 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
         background: 'var(--dsw-alias-bg-layer-2, rgba(128,128,128,.04))',
         overflow: 'hidden'
       },
+      itemFirst: {
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: '16px', minHeight: '44px', padding: '10px 16px', boxSizing: 'border-box',
+        flexWrap: 'wrap'
+      },
       item: {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: '16px', minHeight: '44px', padding: '10px 16px', boxSizing: 'border-box',
@@ -2190,16 +2195,14 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
       var markSrc = imageUrl('mark')
       var wordSrc = imageUrl('wordmark')
 
-      var children = [h('div', { style: S.head, key: 'head' },
-        h('div', { style: S.blockTitle }, t('pageTitle')),
-        h('div', { style: S.blockDesc, margin: '2px 0 0' }, t('intro')))]
+      var children = []
 
       if (!snap.loaded) {
         children.push(h('div', { style: S.hint, key: 'loading' }, t('loading')))
       }
 
       children.push(h('div', { style: S.card, key: 'rows' },
-        h('div', { style: S.item },
+        h('div', { style: S.itemFirst },
           h('div', { style: S.itemMain },
             h('div', { style: S.itemTitle }, t('mark')),
             h('div', { style: S.itemHint }, t('markDesc'))),
