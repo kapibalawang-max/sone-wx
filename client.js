@@ -1903,6 +1903,8 @@ const scheme = themeSvc && typeof themeSvc.getTheme === "function"
 // are seen so a slow first render cannot leave the skin half-off, while a DSH
 // upgrade that renames every class still disables the gated rules.
 if (!matchLatched && selectorsMatch()) matchLatched = true;
+const _swMissing = SELECTOR_PROBES.filter((sel) => !document.querySelector(sel));
+console.info("[sone-wx] selectors", _swMissing.length ? "missing: " + _swMissing.join(", ") : "OK");
 document.body.classList.add(BODY_CLASS);
 if (matchLatched) document.body.classList.add(MATCH_CLASS);
 document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";

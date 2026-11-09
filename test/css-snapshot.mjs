@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const src = fs.readFileSync(path.join(__dirname, '..', 'client.js'), 'utf8');
+const m = src.match(/const WECHAT_CSS = `([\s\S]*?)`\s*;?\s*\n/);
+if (!m) { console.error('WECHAT_CSS not found'); process.exit(1); }
+const css = m[1];
+const snapPath = path.join(__dirname, 'wechat-css.snapshot.json');
+const prev = fs.existsSync(snapPath) ? JSON.parse(fs.readFileSync(snapPath, 'utf8')) : null;
+const data = { length: css.length, hash: Buffer.from(css).toString('base64').slice(0, 32), lines: css.split('\n').length };
+if (process.argv.includes('--write') || !prev) {
+  fs.writeFileSync(snapPath, JSON.stringify({ ...data, css }, null, 2) + '\n');
+  console.log('snapshot written', data);
+} else {
+  const changed = prev.length !== data.length || prev.css !== css;
+  console.log(changed ? 'DIFF' : 'OK', { prev: { length: prev.length, lines: prev.lines }, curr: data });
+  if (changed) process.exit(2);
+}
