@@ -51,6 +51,7 @@ window.__ModuleLoader__.load({
 		const AI_AVATAR_SHOW_KEY = "dsh-wechat-skin:ai-avatar-visible";
 		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
 		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
+		const PRESET_KEY = "dsh-wechat-skin:preset";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
 		const SIDEBAR_ORDER_KEY = "dsh-wechat-skin:sidebar-order";
@@ -65,12 +66,12 @@ window.__ModuleLoader__.load({
 		const THEME_PRESETS = [
 			{ id: "wechat", fontLevel: 3, density: "cozy", chatWidth: "wide", tail: true, sidebarBg: null },
 			{ id: "compact", fontLevel: 2, density: "compact", chatWidth: "medium", tail: true, sidebarBg: null },
-			{ id: "paper", fontLevel: 3, density: "cozy", chatWidth: "medium", tail: false, sidebarBg: "#f7f3ec" }
+			{ id: "paper", fontLevel: 3, density: "cozy", chatWidth: "medium", tail: false, sidebarBg: null }
 		];
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_SHOW_KEY, PRESET_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -172,6 +173,22 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
   --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
 }
+
+/* ================= paper preset ================= */
+/* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
+  --wc-sidebar: #efe8da;
+  --wc-surface: #f2ece0;
+  --wc-border-light: #e3dac8;
+  --wc-bubble: #ded3ba;
+  --wc-bubble-ink: #3a3325;
+  --wc-bubble-link: #6b4f1d;
+  --wc-bubble-code-ink: #3a3325;
+  --dsw-alias-bg-base: #faf6ee;
+  --dsw-alias-bg-module-platform: #f2ece0;
+  --dsw-specific-bubble: #ded3ba;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) .kiGsTW_header { background: #faf6ee; }
 
 /* ================= frame ================= */
 body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
@@ -955,6 +972,13 @@ if (rows.length > 0) sessionListPrimed = true;
 			return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : null;
 		}
 
+/** Theme-level preset marker (drives palette overrides in CSS). */
+function applyPresetTheme(id) {
+if (typeof document === "undefined" || !document.body) return;
+if (id) document.body.dataset.dshWechatPreset = id;
+else delete document.body.dataset.dshWechatPreset;
+}
+
 		/** Point --dsh-wc-sidebar-color at the chosen fill (or drop it). */
 		function applySidebarBg() {
 			if (typeof document === "undefined" || !document.body) return;
@@ -1659,6 +1683,7 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
+			applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
 			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible);
 			let bound = null;
 			let revision = 0;
@@ -1731,6 +1756,13 @@ scanHooks.push(composerScrollScan);
 							if (sidebarBg === null) window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							else window.localStorage.setItem(SIDEBAR_BG_KEY, JSON.stringify(sidebarBg));
 						} catch (e) {}
+
+						const presetId = preset.id === "paper" ? "paper" : null;
+						try {
+							if (presetId === null) window.localStorage.removeItem(PRESET_KEY);
+							else window.localStorage.setItem(PRESET_KEY, JSON.stringify(presetId));
+						} catch (e) {}
+						applyPresetTheme(presetId);
 						applySidebarBg();
 						sync();
 					},
@@ -1784,6 +1816,7 @@ scanHooks.push(composerScrollScan);
 						applySidebarBg();
 						aiAvatarVisible = readJson(AI_AVATAR_SHOW_KEY, true) !== false;
 						applyAiAvatar(aiAvatarVisible);
+						applyPresetTheme(readJson(PRESET_KEY, null) === "paper" ? "paper" : null);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -1836,6 +1869,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
 							window.localStorage.removeItem(AI_AVATAR_SHOW_KEY);
+							window.localStorage.removeItem(PRESET_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -1850,6 +1884,7 @@ scanHooks.push(composerScrollScan);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
 						aiAvatarVisible = true; applyAiAvatar(aiAvatarVisible);
 						sidebarBg = null; applySidebarBg();
+						applyPresetTheme(null);
 						sync();
 					}
 				};
