@@ -132,7 +132,6 @@ const CONTEXT_PROBES = [".Dv5QdW_panel", ".UHhYua_root", "._3j1mRa_node"];
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
   --wc-overlay-dark: #2f2f31;
-  --wc-code-bg: #202022;
   --wc-border-light: #e0e0e0;
   --wc-border-dark: #303033;
   --wc-avatar-user-a: #ffb37b;
@@ -179,6 +178,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --dsw-specific-bubble: var(--wc-bubble) ;
   --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
   --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
+  --wc-code-bg: #202022 ;
 }
 
 /* ================= paper preset ================= */
@@ -374,7 +374,7 @@ body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal])::b
    card on dark (WeChat-dark style), so replies read as a bubble in both schemes. */
 body.dsh-wechat-skin-on.dsh-wechat-match .XNZzAa_body {
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  border: 0.5px solid var(--wc-border-light);
   border-radius: 8px;
   padding: 10px 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
