@@ -436,6 +436,11 @@ body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] { background: var(
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"]:hover,
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i]:hover { background: var(--wc-stop-hover); }
 body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-green); color: #ffffff; }
+/* a custom (dragged) height must be filled by the text area, not left as blank space */
+body.dsh-wechat-skin-on .JZLxKW_card[data-dsh-composer-h="1"] .JZLxKW_grow {
+  flex: 1 1 auto; min-height: 0; display: flex;
+}
+body.dsh-wechat-skin-on .JZLxKW_card[data-dsh-composer-h="1"] .JZLxKW_scroll { flex: 1 1 auto; max-height: none; }
 /* thin scrollbar + soft fade for long drafts */
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar { width: 6px; }
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar-thumb {
@@ -859,26 +864,27 @@ row.dataset.dshAvatar = value;
 		}		//#endregion
 
 		/** Long drafts: fade the scroll area's clipped edge(s) instead of hard-cutting. */
-function updateComposerFade(view) {
-const canScroll = view.scrollHeight - view.clientHeight > 2;
-if (!canScroll) { delete view.dataset.dshFade; return; }
-const atTop = view.scrollTop <= 1;
-const atBottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 1;
-if (atTop && atBottom) delete view.dataset.dshFade;
-else view.dataset.dshFade = atTop ? "bottom" : atBottom ? "top" : "both";
-}
-function composerScrollScan() {
-const view = document.querySelector(".JZLxKW_scroll");
-if (!view) return;
-if (!view.dataset.dshFadeBound) {
-view.dataset.dshFadeBound = "1";
-view.addEventListener("scroll", () => updateComposerFade(view), { passive: true });
-}
-updateComposerFade(view);
-}
+		function updateComposerFade(view) {
+			const canScroll = view.scrollHeight - view.clientHeight > 2;
+			if (!canScroll) { delete view.dataset.dshFade; return; }
+			const atTop = view.scrollTop <= 1;
+			const atBottom = view.scrollTop + view.clientHeight >= view.scrollHeight - 1;
+			if (atTop && atBottom) delete view.dataset.dshFade;
+			else view.dataset.dshFade = atTop ? "bottom" : atBottom ? "top" : "both";
+		}
+		function composerScrollScan() {
+			const view = document.querySelector(".JZLxKW_scroll");
+			if (!view) return;
+			if (!view.dataset.dshFadeBound) {
+				view.dataset.dshFadeBound = "1";
+				view.addEventListener("scroll", () => updateComposerFade(view), { passive: true });
+			}
+			updateComposerFade(view);
+		}
 
-/** Composer drag-to-resize via document-level delegation (survives re-renders).
-		    Drag the input box's TOP border up, or its BOTTOM border down, to resize. */
+		/** Composer drag-to-resize via document-level delegation (survives re-renders).
+		    The composer is docked to the bottom, so only the TOP edge can move: drag it
+		    up to make the box taller, down to shrink it. Double-click either edge resets. */
 		let composerResizeCleanup = null;
 		function initComposerResize() {
 			const root = document.documentElement;
@@ -886,14 +892,20 @@ updateComposerFade(view);
 			root.dataset.dshResizeDelegated = "1";
 
 			let dragging = false;
-			let fromTop = false;
 			let startY = 0;
 			let startH = 0;
+			let hoverCursor = false;
+
+			const clearCursor = () => {
+				if (hoverCursor) { document.body.style.cursor = ""; hoverCursor = false; }
+			};
 			composerResizeCleanup = () => {
 				document.removeEventListener("pointerdown", onPointerDown);
 				document.removeEventListener("pointermove", onPointerMove);
 				document.removeEventListener("pointerup", onPointerUp);
 				document.removeEventListener("dblclick", onDblClick);
+				window.removeEventListener("resize", onWindowResize);
+				clearCursor();
 				delete root.dataset.dshResizeDelegated;
 			};
 
@@ -901,7 +913,15 @@ updateComposerFade(view);
 			const applyHeight = (card, height) => {
 				card.style.height = height + "px";
 				card.style.setProperty("--dsh-composer-text-max-height", Math.max(40, height - 64) + "px");
+				card.dataset.dshComposerH = "1";
 				writeJson(COMPOSER_H_KEY, height);
+			};
+			const dropHeight = (card) => {
+				card.style.removeProperty("height");
+				card.style.removeProperty("--dsh-composer-text-max-height");
+				delete card.dataset.dshComposerH;
+				delete card.dataset.dshHeightRestored;
+				try { window.localStorage.removeItem(COMPOSER_H_KEY); } catch (e) {}
 			};
 
 			// restore the persisted height whenever a card appears
@@ -914,38 +934,50 @@ updateComposerFade(view);
 				card.dataset.dshHeightRestored = "1";
 			};
 
+			const nearTopEdge = (card, y) => {
+				const rect = card.getBoundingClientRect();
+				return y >= rect.top - 8 && y <= rect.top + 10;
+			};
+
 			const onPointerDown = (event) => {
 				if (!skinOn()) return;
 				const card = document.querySelector(".JZLxKW_card");
 				if (!card) return;
 				if (event.target.closest && event.target.closest("button, select, input, a, textarea")) return;
-				const rect = card.getBoundingClientRect();
-				const atTop = event.clientY >= rect.top - 8 && event.clientY <= rect.top + 10;
-				const atBottom = event.clientY >= rect.bottom - 10 && event.clientY <= rect.bottom + 8;
-				if (!atTop && !atBottom) return;
+				if (!nearTopEdge(card, event.clientY)) return;
 				dragging = true;
-				fromTop = atTop;
 				startY = event.clientY;
-				startH = rect.height;
+				startH = card.getBoundingClientRect().height;
 				event.preventDefault();
 				document.body.style.cursor = "ns-resize";
 			};
 
 			const onPointerMove = (event) => {
-				if (!dragging) return;
+				if (!dragging) {
+					if (!skinOn()) { clearCursor(); return; }
+					const card = document.querySelector(".JZLxKW_card");
+					const near = !!card && nearTopEdge(card, event.clientY)
+						&& !(event.target.closest && event.target.closest("button, select, input, a, textarea"));
+					if (near !== hoverCursor) {
+						hoverCursor = near;
+						document.body.style.cursor = near ? "ns-resize" : "";
+					}
+					return;
+				}
 				const card = document.querySelector(".JZLxKW_card");
 				if (!card) return;
-				const delta = fromTop ? (startY - event.clientY) : (event.clientY - startY);
+				const delta = startY - event.clientY;
 				const height = Math.min(Math.max(startH + delta, 64), Math.round(window.innerHeight * 0.6));
 				applyHeight(card, height);
 			};
 
 			const onPointerUp = () => {
+				if (!dragging) return;
 				dragging = false;
-				document.body.style.cursor = "";
+				clearCursor();
 			};
 
-			// Double-click the composer's top/bottom edge to drop the custom height.
+			// Double-click either edge to drop the custom height.
 			const onDblClick = (event) => {
 				if (!skinOn()) return;
 				const card = document.querySelector(".JZLxKW_card");
@@ -954,16 +986,22 @@ updateComposerFade(view);
 				const nearTop = event.clientY >= rect.top - 10 && event.clientY <= rect.top + 12;
 				const nearBottom = event.clientY >= rect.bottom - 12 && event.clientY <= rect.bottom + 10;
 				if (!nearTop && !nearBottom) return;
-				card.style.removeProperty("height");
-				card.style.removeProperty("--dsh-composer-text-max-height");
-				delete card.dataset.dshHeightRestored;
-				try { window.localStorage.removeItem(COMPOSER_H_KEY); } catch (e) {}
+				dropHeight(card);
+			};
+
+			const onWindowResize = () => {
+				const card = document.querySelector(".JZLxKW_card");
+				if (!card || card.dataset.dshComposerH !== "1") return;
+				const current = Number.parseFloat(card.style.height) || 0;
+				const max = Math.round(window.innerHeight * 0.6);
+				if (current > max) applyHeight(card, max);
 			};
 
 			document.addEventListener("pointerdown", onPointerDown);
 			document.addEventListener("pointermove", onPointerMove);
 			document.addEventListener("pointerup", onPointerUp);
 			document.addEventListener("dblclick", onDblClick);
+			window.addEventListener("resize", onWindowResize);
 
 			restoreHeight();
 		}
