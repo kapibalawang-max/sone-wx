@@ -48,21 +48,10 @@ window.__ModuleLoader__.load({
 		const AI_AVATAR_KEY = "dsh-wechat-skin:ai-avatar";
 		const DENSITY_KEY = "dsh-wechat-skin:density";
 		const CHAT_WIDTH_KEY = "dsh-wechat-skin:chat-width";
-		const SIDEBAR_WIDTH_KEY = "dsh-wechat-skin:sidebar-width";
 		const TAIL_KEY = "dsh-wechat-skin:tail";
 		/** Custom sidebar fill (null = the skin's own light/dark sidebar colour). */
 		const SIDEBAR_BG_KEY = "dsh-wechat-skin:sidebar-bg";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
-		/** DSH three-column frame and its sidebar drag handle. */
-		const SIDEBAR_FRAME_SELECTOR = ".PIRFFq_frame";
-		const SIDEBAR_HANDLE_SELECTOR = '[data-side="sidebar"].PIRFFq_handle';
-		/** Body classes for the custom-width mode and for a live drag. */
-		const SIDEBAR_CUSTOM_CLASS = "dsh-wc-sidebar-custom";
-		const SIDEBAR_RESIZING_CLASS = "dsh-wc-sidebar-resizing";
-		/** Custom sidebar width range in px (DSH's own contract is 264–420). */
-		const SIDEBAR_MIN = 200;
-		const SIDEBAR_MAX = 440;
-		const SIDEBAR_DEFAULT = 280;
 		/** Font-size scale per level; level 3 = 1.0 (the original size). */
 		const FONT_SCALES = { 1: 0.8, 2: 0.9, 3: 1.0, 4: 1.1, 5: 1.25 };
 		/** WeChat palette accents. */
@@ -519,34 +508,6 @@ body .dsh-wc-btn[disabled]:active {
 	border-color: var(--dsw-alias-border-l2);
 	color: var(--dsw-alias-label-secondary);
 }
-/* Sidebar width slider (settings row) */
-body .dsh-wc-range {
-	accent-color: #07c160;
-	background: transparent;
-	cursor: pointer;
-	flex: 1 1 auto;
-	height: 18px;
-	margin: 0;
-	min-width: 0;
-}
-/* Custom width: park DSH's own sidebar handle on our track edge. */
-body.dsh-wc-sidebar-custom .PIRFFq_handle[data-side="sidebar"] {
-	left: var(--dsh-wc-sidebar-width) !important;
-}
-/* The sidebar root keeps an inline width from DSH; follow the custom track. */
-body.dsh-wc-sidebar-custom .PIRFFq_frame:not([data-sidebar-collapsed]):not([data-sidebar-drawer]) .PIRFFq_sidebarCol > * {
-	width: var(--dsh-wc-sidebar-width) !important;
-}
-body.dsh-wc-sidebar-resizing,
-body.dsh-wc-sidebar-resizing * {
-	cursor: col-resize !important;
-	user-select: none !important;
-}
-/* DSH animates width/left; the drag must track the pointer, not the easing curve. */
-body.dsh-wc-sidebar-resizing .PIRFFq_sidebarCol > *,
-body.dsh-wc-sidebar-resizing .PIRFFq_handle[data-side="sidebar"] {
-	transition: none !important;
-}
 /* Custom sidebar fill: beats both skin palettes (light and dark). */
 html body.dsh-wc-sidebar-bg.dsh-wechat-skin-on .PIRFFq_sidebarCol {
 	background: var(--dsh-wc-sidebar-color) !important;
@@ -932,141 +893,19 @@ if (rows.length > 0) sessionListPrimed = true;
 		}
 		//#endregion
 
-		//#region dsh-wechat-skin: sidebar width
-		/** Custom sidebar width in px; null follows DSH's own three-column solve. */
-		let sidebarWidth = null;
-		/** The track DSH itself last solved (restored when the override is cleared). */
-		let nativeSidebarTrack = null;
-		/** Frame watcher: DSH rewrites the inline grid tracks on every layout render. */
-		let sidebarFrameObserver = null;
-		let sidebarDragCleanup = null;
-		/** The track this plugin last wrote, so only DSH's own writes update the native baseline. */
-		let lastAppliedTrack = null;
-
-		/** Clamp a requested width into the skin's supported range (null = follow DSH). */
-		function clampSidebarWidth(value) {
-			if (value === null || value === undefined || value === "") return null;
-			const px = Math.round(Number(value));
-			if (!Number.isFinite(px)) return null;
-			return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, px));
-		}
-
-		/** Replace the frame's first (sidebar) grid track; centre and right tracks stay. */
-		function setSidebarTrack(frame, px) {
-			const raw = frame.style.gridTemplateColumns || "";
-			const match = /^\s*(\d+(?:\.\d+)?)px/.exec(raw);
-			if (!match || Math.abs(Number(match[1]) - px) < 0.5) return;
-			frame.style.gridTemplateColumns = raw.replace(/^\s*\d+(?:\.\d+)?px/, px + "px");
-			lastAppliedTrack = px;
-		}
-
-		/** Read the frame's sidebar track as currently rendered. */
-		function readSidebarTrack(frame) {
-			const match = /^\s*(\d+(?:\.\d+)?)px/.exec(frame.style.gridTemplateColumns || "");
-			return match ? Number(match[1]) : null;
-		}
-
-		/** Hand the frame back to the width DSH solved on its own. */
-		function restoreSidebarTrack() {
-			const frame = document.querySelector(SIDEBAR_FRAME_SELECTOR);
-			if (!frame || nativeSidebarTrack === null || nativeSidebarTrack <= 60) return;
-			if (frame.hasAttribute("data-sidebar-collapsed") || frame.hasAttribute("data-sidebar-drawer")) return;
-			setSidebarTrack(frame, nativeSidebarTrack);
-		}
-
-		/** Apply the stored width: body class, handle position, frame track. */
-		function applySidebarWidth() {
-			if (typeof document === "undefined" || !document.body) return;
-			const custom = sidebarWidth !== null;
-			document.body.classList.toggle(SIDEBAR_CUSTOM_CLASS, custom);
-			const root = document.documentElement;
-			if (custom) root.style.setProperty("--dsh-wc-sidebar-width", sidebarWidth + "px");
-			else root.style.removeProperty("--dsh-wc-sidebar-width");
-			const frame = document.querySelector(SIDEBAR_FRAME_SELECTOR);
-			if (!frame || !custom) return;
-			// The rail, the drawer overlay and macOS's hidden track keep DSH's own width.
-			if (frame.hasAttribute("data-sidebar-collapsed") || frame.hasAttribute("data-sidebar-drawer")) return;
-			const track = readSidebarTrack(frame);
-			if (track !== null && (lastAppliedTrack === null || Math.abs(track - lastAppliedTrack) >= 0.5)) nativeSidebarTrack = track;
-			setSidebarTrack(frame, sidebarWidth);
-		}
-
-		/** Re-apply after DSH re-renders the frame's inline grid tracks. */
-		function watchSidebarFrame() {
-			const frame = document.querySelector(SIDEBAR_FRAME_SELECTOR);
-			if (!frame) return;
-			if (sidebarFrameObserver && sidebarFrameObserver.__frame === frame) return;
-			if (sidebarFrameObserver) sidebarFrameObserver.disconnect();
-			sidebarFrameObserver = new MutationObserver(() => applySidebarWidth());
-			sidebarFrameObserver.__frame = frame;
-			try {
-				sidebarFrameObserver.observe(frame, { attributes: true, attributeFilter: ["style", "data-sidebar-collapsed", "data-sidebar-drawer"] });
-			} catch (e) {}
-		}
-
-		/**
-		 * Take over the native sidebar handle while a custom width is set: the
-		 * capture-phase listener stops DSH's own drag so the width stays ours.
-		 * @param onCommit - called after a drag ends so the settings store syncs.
-		 */
-		function initSidebarResize(onCommit) {
-			if (sidebarDragCleanup || typeof document === "undefined") return;
-			const onPointerDown = (event) => {
-				if (sidebarWidth === null || event.button !== 0) return;
-				const target = event.target;
-				const handle = target && target.closest ? target.closest(SIDEBAR_HANDLE_SELECTOR) : null;
-				if (!handle) return;
-				const frame = handle.closest(SIDEBAR_FRAME_SELECTOR);
-				if (!frame || frame.hasAttribute("data-sidebar-collapsed")) return;
-				event.preventDefault();
-				event.stopPropagation();
-				const startX = event.clientX;
-				const base = sidebarWidth;
-				let pending = base;
-				let raf = 0;
-				const onMove = (moveEvent) => {
-					pending = clampSidebarWidth(base + (moveEvent.clientX - startX));
-					if (raf) return;
-					raf = requestAnimationFrame(() => {
-						raf = 0;
-						sidebarWidth = pending;
-						applySidebarWidth();
-					});
-				};
-				const finish = () => {
-					document.removeEventListener("pointermove", onMove, true);
-					document.removeEventListener("pointerup", finish, true);
-					document.removeEventListener("pointercancel", finish, true);
-					if (raf) { cancelAnimationFrame(raf); raf = 0; }
-					document.body.classList.remove(SIDEBAR_RESIZING_CLASS);
-					sidebarWidth = clampSidebarWidth(pending);
-					applySidebarWidth();
-					writeJson(SIDEBAR_WIDTH_KEY, sidebarWidth);
-					if (typeof onCommit === "function") onCommit();
-				};
-				document.body.classList.add(SIDEBAR_RESIZING_CLASS);
-				document.addEventListener("pointermove", onMove, true);
-				document.addEventListener("pointerup", finish, true);
-				document.addEventListener("pointercancel", finish, true);
-			};
-			document.addEventListener("pointerdown", onPointerDown, true);
-			sidebarDragCleanup = () => document.removeEventListener("pointerdown", onPointerDown, true);
-		}
-		//#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarWidth, initialSidebarBg) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarWidth: initialSidebarWidth, sidebarBg: initialSidebarBg, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg, revision) => {
+		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, revision) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
 		        d.density = density;
 		        d.tail = tail;
 		        d.chatWidth = chatWidth;
-		        d.sidebarWidth = sidebarWidth;
 		        d.sidebarBg = sidebarBg;
 		        d.revision = revision;
 					}
@@ -1110,17 +949,16 @@ if (rows.length > 0) sessionListPrimed = true;
 		};
 
 		/**
-		 * The settings row: font size + avatars + density + bubble tail + sidebar width + sidebar background + reset.
+		 * The settings row: font size + avatars + density + bubble tail + sidebar background + reset.
 		 * Buttons are class-styled (hover/active/disabled live in WECHAT_UI_CSS);
 		 * controls without visible effect while the skin is off are disabled.
-		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
+		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
 		 */
 		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 			const fontLevel = useStore((s) => s.fontLevel);
 			const density = useStore((s) => s.density);
 			const tail = useStore((s) => s.tail);
 			const chatWidth = useStore((s) => s.chatWidth);
-			const sidebarWidth = useStore((s) => s.sidebarWidth);
 			const sidebarBg = useStore((s) => s.sidebarBg);
 			const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
 			const userRef = (0, _react.useRef)(null);
@@ -1245,36 +1083,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					      "aria-pressed": chatWidth === "native",
 					      onClick: () => setChatWidth("native"),
 					      children: t("widthNative")
-					    })
-					  ]
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.title,
-					  children: t("sidebarTitle")
-					}),
-					(0, react_jsx_runtime.jsxs)("div", {
-					  style: styles.row,
-					  children: [
-					    (0, react_jsx_runtime.jsx)("input", {
-					      type: "range",
-					      className: "dsh-wc-range",
-					      min: SIDEBAR_MIN,
-					      max: SIDEBAR_MAX,
-					      step: 4,
-					      value: sidebarWidth === null ? SIDEBAR_DEFAULT : sidebarWidth,
-					      "aria-label": t("sidebarTitle"),
-					      onChange: (event) => setSidebarWidth(event.target.value)
-					    }),
-					    (0, react_jsx_runtime.jsx)("span", {
-					      style: styles.value,
-					      children: sidebarWidth === null ? t("sidebarAuto") : sidebarWidth + "px"
-					    }),
-					    (0, react_jsx_runtime.jsx)("button", {
-					      type: "button",
-					      className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-					      disabled: sidebarWidth === null,
-					      onClick: () => setSidebarWidth(null),
-					      children: t("sidebarFollow")
 					    })
 					  ]
 					}),
@@ -1429,18 +1237,12 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
-			sidebarWidth = clampSidebarWidth(readJson(SIDEBAR_WIDTH_KEY, null));
-			applySidebarWidth();
-
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg);
+			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarWidth, sidebarBg, ++revision);
+				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, ++revision);
 			};
-			initSidebarResize(sync);
-			const sidebarScan = () => { watchSidebarFrame(); applySidebarWidth(); };
-			scanHooks.push(sidebarScan);
 			const injected = (actions) => {
 				bound = actions;
 				sync();
@@ -1469,16 +1271,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					  applyChatWidth(chatWidth);
 					  sync();
 					},
-					setSidebarWidth: (value) => {
-					  sidebarWidth = clampSidebarWidth(value);
-					  try {
-					    if (sidebarWidth === null) window.localStorage.removeItem(SIDEBAR_WIDTH_KEY);
-					    else window.localStorage.setItem(SIDEBAR_WIDTH_KEY, JSON.stringify(sidebarWidth));
-					  } catch (e) {}
-					  applySidebarWidth();
-					  if (sidebarWidth === null) restoreSidebarTrack();
-					  sync();
-					},
 					setSidebarBg: (value) => {
 					  sidebarBg = normalizeHexColor(value);
 					  try {
@@ -1502,7 +1294,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 							window.localStorage.removeItem(DENSITY_KEY);
 							window.localStorage.removeItem(TAIL_KEY);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
-							window.localStorage.removeItem(SIDEBAR_WIDTH_KEY);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
@@ -1516,7 +1307,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 						density = "cozy"; applyDensity(density);
 						tail = true; applyTail(tail);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
-						sidebarWidth = null; applySidebarWidth(); restoreSidebarTrack();
 						sidebarBg = null; applySidebarBg();
 						sync();
 					}
@@ -1537,9 +1327,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"widthWide": "全宽",
 					"widthMedium": "适中",
 					"widthNative": "官方",
-					"sidebarTitle": "侧边栏宽度",
-					"sidebarAuto": "自动",
-					"sidebarFollow": "跟随系统",
 					"sidebarBgTitle": "侧边栏背景色",
 					"sidebarBgReset": "微信色",
 					"tailTitle": "气泡尾巴",
@@ -1567,9 +1354,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"widthWide": "Full",
 					"widthMedium": "Medium",
 					"widthNative": "Native",
-					"sidebarTitle": "Sidebar width",
-					"sidebarAuto": "Auto",
-					"sidebarFollow": "Follow DSH",
 					"sidebarBgTitle": "Sidebar background",
 					"sidebarBgReset": "WeChat colour",
 					"tailTitle": "Bubble tail",
@@ -1594,17 +1378,8 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS); if (document.body) { delete document.body.dataset.dshWechatDark; delete document.body.dataset.dshWechatDensity; delete document.body.dataset.dshWechatTail; delete document.body.dataset.dshWechatWidth; }
 				observer?.disconnect();
 				if (composerResizeCleanup) { composerResizeCleanup(); composerResizeCleanup = null; }
-				if (sidebarDragCleanup) { sidebarDragCleanup(); sidebarDragCleanup = null; }
-				sidebarFrameObserver?.disconnect();
-				sidebarFrameObserver = null;
-				const hookIndex = scanHooks.indexOf(sidebarScan);
-				if (hookIndex >= 0) scanHooks.splice(hookIndex, 1);
-				restoreSidebarTrack();
-				document.body?.classList.remove(SIDEBAR_CUSTOM_CLASS);
-				document.body?.classList.remove(SIDEBAR_RESIZING_CLASS);
 				document.body?.classList.remove(SIDEBAR_BG_CLASS);
 				if (document.body) delete document.body.dataset.dshWcSidebarInk;
-				document.documentElement.style.removeProperty("--dsh-wc-sidebar-width");
 				document.documentElement.style.removeProperty("--dsh-wc-sidebar-color");
 				document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
 			}, "sone-wx: skin cleanup");
