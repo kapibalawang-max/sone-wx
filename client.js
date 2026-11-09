@@ -542,8 +542,20 @@ body.dsh-wc-panel-dragging * {
 body.dsh-wc-panel-dragging .kB3qhq_panelRow * {
 	pointer-events: none;
 }
-body .dsh-wc-panel-drag-source {
-	opacity: 0.5;
+body .dsh-wc-panel-ghost {
+	border-radius: 10px;
+	opacity: 0.97;
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
+	background: var(--dsw-alias-bg-module-platform, #ffffff);
+	outline: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.1));
+}
+body .dsh-wc-panel-ghost * {
+	pointer-events: none;
+}
+body .dsh-wc-panel-placeholder {
+	border-radius: 10px;
+	background: rgba(7, 193, 96, 0.1);
+	box-shadow: inset 0 0 0 1px rgba(7, 193, 96, 0.35);
 }
 body .dsh-wc-color {
 	width: 40px;
@@ -913,143 +925,185 @@ if (rows.length > 0) sessionListPrimed = true;
 		//#endregion
 
 
-		//#region dsh-wechat-skin: sidebar entry order
-		/** Preferred panel order (labels, first = topmost); empty = DSH's own order. */
-		let sidebarOrder = [];
-		/** Installed drag listener teardown (settings section owns its lifetime). */
-		let panelDragCleanup = null;
+//#region dsh-wechat-skin: sidebar entry order
+/** Preferred panel order (labels, first = topmost); empty = DSH's own order. */
+let sidebarOrder = [];
+/** Installed drag listener teardown. */
+let panelDragCleanup = null;
 
-		/** Top-level entries of the panel list: the wrapper element, its row and accessible label. */
-		function panelEntries(list) {
-			const host = list || (typeof document !== "undefined" ? document.querySelector(PANEL_LIST_SELECTOR) : null);
-			if (!host) return [];
-			return Array.prototype.slice.call(host.children).map((el) => {
-				const row = el.matches && el.matches(PANEL_ROW_SELECTOR) ? el : (el.querySelector ? el.querySelector(PANEL_ROW_SELECTOR) : null);
-				if (!row) return null;
-				const label = row.getAttribute("aria-label") || "";
-				return label ? { el, row, label } : null;
-			}).filter(Boolean);
-		}
+/** Top-level entries of the panel list: the wrapper element, its row and accessible label. */
+function panelEntries(list) {
+const host = list || (typeof document !== "undefined" ? document.querySelector(PANEL_LIST_SELECTOR) : null);
+if (!host) return [];
+return Array.prototype.slice.call(host.children).map((el) => {
+const row = el.matches && el.matches(PANEL_ROW_SELECTOR) ? el : (el.querySelector ? el.querySelector(PANEL_ROW_SELECTOR) : null);
+if (!row) return null;
+const label = row.getAttribute("aria-label") || "";
+return label ? { el, row, label } : null;
+}).filter(Boolean);
+}
 
-		/** Labels in the order the user currently sees. */
-		function currentPanelLabels() {
-			const entries = panelEntries();
-			if (sidebarOrder.length === 0) return entries.map((entry) => entry.label);
-			const known = entries.filter((entry) => sidebarOrder.indexOf(entry.label) >= 0)
-				.sort((a, b) => sidebarOrder.indexOf(a.label) - sidebarOrder.indexOf(b.label));
-			const rest = entries.filter((entry) => sidebarOrder.indexOf(entry.label) < 0);
-			return known.concat(rest).map((entry) => entry.label);
-		}
+/** Labels in the order the user currently sees. */
+function currentPanelLabels() {
+const entries = panelEntries();
+if (sidebarOrder.length === 0) return entries.map((entry) => entry.label);
+const known = entries.filter((entry) => sidebarOrder.indexOf(entry.label) >= 0)
+.sort((a, b) => sidebarOrder.indexOf(a.label) - sidebarOrder.indexOf(b.label));
+const rest = entries.filter((entry) => sidebarOrder.indexOf(entry.label) < 0);
+return known.concat(rest).map((entry) => entry.label);
+}
 
-		/** Unique, non-empty label list. */
-		function normalizePanelOrder(list) {
-			if (!Array.isArray(list)) return [];
-			const seen = Object.create(null);
-			const out = [];
-			for (const item of list) {
-				if (typeof item !== "string" || !item || seen[item]) continue;
-				seen[item] = true;
-				out.push(item);
-			}
-			return out;
-		}
+/** Unique, non-empty label list. */
+function normalizePanelOrder(list) {
+if (!Array.isArray(list)) return [];
+const seen = Object.create(null);
+const out = [];
+for (const item of list) {
+if (typeof item !== "string" || !item || seen[item]) continue;
+seen[item] = true;
+out.push(item);
+}
+return out;
+}
 
-		/** Paint the stored order with flex `order`, leaving DSH's DOM untouched. */
-		function applyPanelOrder() {
-			const entries = panelEntries();
-			if (entries.length === 0) return;
-			if (sidebarOrder.length === 0) {
-				for (const entry of entries) entry.el.style.removeProperty("order");
-				return;
-			}
-			let tail = sidebarOrder.length;
-			for (const entry of entries) {
-				const index = sidebarOrder.indexOf(entry.label);
-				entry.el.style.setProperty("order", String(index >= 0 ? index : tail++));
-			}
-		}
+/** Paint the stored order with flex `order`, leaving DSH's DOM untouched. */
+function applyPanelOrder() {
+const entries = panelEntries();
+if (entries.length === 0) return;
+if (sidebarOrder.length === 0) {
+for (const entry of entries) entry.el.style.removeProperty("order");
+return;
+}
+let tail = sidebarOrder.length;
+for (const entry of entries) {
+const index = sidebarOrder.indexOf(entry.label);
+entry.el.style.setProperty("order", String(index >= 0 ? index : tail++));
+}
+}
 
-		/** Persist + repaint + notify the settings row. */
-		function setPanelOrder(list, notify) {
-			sidebarOrder = normalizePanelOrder(list);
-			try {
-				if (sidebarOrder.length === 0) window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
-				else window.localStorage.setItem(SIDEBAR_ORDER_KEY, JSON.stringify(sidebarOrder));
-			} catch (e) {}
-			applyPanelOrder();
-			if (typeof notify === "function") notify();
-		}
+/** Persist + repaint. */
+function setPanelOrder(list) {
+sidebarOrder = normalizePanelOrder(list);
+try {
+if (sidebarOrder.length === 0) window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
+else window.localStorage.setItem(SIDEBAR_ORDER_KEY, JSON.stringify(sidebarOrder));
+} catch (e) {}
+applyPanelOrder();
+}
 
-		/** Drag a sidebar entry to reorder it; CSS order only, so React keeps the DOM. */
-		function initPanelDrag(notify) {
-			if (panelDragCleanup || typeof document === "undefined") return;
-			let drag = null;
-			const onMove = (event) => {
-				if (!drag) return;
-				if (!drag.moved) {
-					if (Math.abs(event.clientY - drag.startY) < 5 && Math.abs(event.clientX - drag.startX) < 5) return;
-					drag.moved = true;
-					document.body.classList.add(PANEL_DRAGGING_CLASS);
-					drag.entry.el.classList.add(PANEL_DRAG_SOURCE_CLASS);
-				}
-				event.preventDefault();
-				const entries = panelEntries(drag.list);
-				const without = entries.map((entry) => entry.label).filter((label) => label !== drag.entry.label);
-				let index = 0;
-				for (const entry of entries) {
-					if (entry.label === drag.entry.label) continue;
-					const rect = entry.el.getBoundingClientRect();
-					if (event.clientY > rect.top + rect.height / 2) index += 1;
-				}
-				without.splice(Math.min(index, without.length), 0, drag.entry.label);
-				drag.preview = without;
-				sidebarOrder = without;
-				applyPanelOrder();
-			};
-			const finish = (event) => {
-				if (!drag) return;
-				const state = drag;
-				drag = null;
-				state.entry.el.classList.remove(PANEL_DRAG_SOURCE_CLASS);
-				document.body.classList.remove(PANEL_DRAGGING_CLASS);
-				document.removeEventListener("pointermove", onMove, true);
-				document.removeEventListener("pointerup", finish, true);
-				document.removeEventListener("pointercancel", finish, true);
-				if (!state.moved) return;
-				if (event && event.type === "pointercancel") {
-					sidebarOrder = state.original;
-					applyPanelOrder();
-					return;
-				}
-				const swallow = (clickEvent) => { clickEvent.stopPropagation(); clickEvent.preventDefault(); };
-				document.addEventListener("click", swallow, true);
-				setTimeout(() => document.removeEventListener("click", swallow, true), 0);
-				setPanelOrder(state.preview || currentPanelLabels(), notify);
-			};
-			const onPointerDown = (event) => {
-				if (event.button !== 0) return;
-				const row = event.target && event.target.closest ? event.target.closest(PANEL_ROW_SELECTOR) : null;
-				if (!row) return;
-				const list = row.closest(PANEL_LIST_SELECTOR);
-				if (!list) return;
-				const entry = panelEntries(list).find((item) => item.row === row || item.el.contains(row));
-				if (!entry) return;
-				drag = { entry, list, startX: event.clientX, startY: event.clientY, moved: false, original: sidebarOrder.slice(), preview: null };
-				document.addEventListener("pointermove", onMove, true);
-				document.addEventListener("pointerup", finish, true);
-				document.addEventListener("pointercancel", finish, true);
-			};
-			document.addEventListener("pointerdown", onPointerDown, true);
-			panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDown, true);
-		}
-		//#endregion
+/** Panel children sorted by their on-screen position, optionally skipping one entry. */
+function visualPanelItems(list, skipEl) {
+return Array.prototype.slice.call(list.children)
+.filter((el) => el !== skipEl)
+.map((el) => {
+const row = el.matches && el.matches(PANEL_ROW_SELECTOR) ? el : (el.querySelector ? el.querySelector(PANEL_ROW_SELECTOR) : null);
+return { el, label: row ? (row.getAttribute("aria-label") || "") : "" };
+})
+.filter((item) => item.label)
+.sort((a, b) => a.el.getBoundingClientRect().top - b.el.getBoundingClientRect().top);
+}
+
+/**
+ * Drag a sidebar entry to reorder it. The row lifts into a fixed ghost that
+ * follows the pointer, a translucent placeholder holds the drop slot, and
+ * nothing is committed until pointerup.
+ */
+function initPanelDrag() {
+if (panelDragCleanup || typeof document === "undefined") return;
+let drag = null;
+
+function finish(event) {
+if (!drag) return;
+const state = drag;
+drag = null;
+document.removeEventListener("pointermove", onMove, true);
+document.removeEventListener("pointerup", finish, true);
+document.removeEventListener("pointercancel", finish, true);
+document.body.classList.remove(PANEL_DRAGGING_CLASS);
+if (!state.moved) return;
+if (!event || event.type !== "pointercancel") {
+const labels = visualPanelItems(state.list, state.entry.el).map((item) => item.label);
+labels.splice(Math.min(state.index, labels.length), 0, state.entry.label);
+setPanelOrder(labels);
+} else {
+applyPanelOrder();
+}
+state.entry.el.classList.remove(PANEL_DRAG_SOURCE_CLASS);
+state.entry.el.style.removeProperty("display");
+if (state.ghost && state.ghost.parentNode) state.ghost.parentNode.removeChild(state.ghost);
+if (state.placeholder && state.placeholder.parentNode) state.placeholder.parentNode.removeChild(state.placeholder);
+const swallow = (clickEvent) => { clickEvent.stopPropagation(); clickEvent.preventDefault(); };
+document.addEventListener("click", swallow, true);
+setTimeout(() => document.removeEventListener("click", swallow, true), 0);
+}
+
+function onMove(event) {
+if (!drag) return;
+if (!drag.moved) {
+if (Math.abs(event.clientY - drag.startY) < 4 && Math.abs(event.clientX - drag.startX) < 4) return;
+drag.moved = true;
+const rect = drag.rect;
+const ghost = drag.entry.el.cloneNode(true);
+ghost.className = (ghost.className ? ghost.className + " " : "") + "dsh-wc-panel-ghost";
+ghost.style.position = "fixed";
+ghost.style.left = rect.left + "px";
+ghost.style.width = rect.width + "px";
+ghost.style.height = rect.height + "px";
+ghost.style.top = rect.top + "px";
+ghost.style.margin = "0";
+ghost.style.pointerEvents = "none";
+const placeholder = document.createElement("div");
+placeholder.className = "dsh-wc-panel-placeholder";
+placeholder.style.height = rect.height + "px";
+placeholder.style.width = "100%";
+placeholder.style.flex = "0 0 auto";
+drag.ghost = ghost;
+drag.placeholder = placeholder;
+drag.entry.el.style.display = "none";
+drag.entry.el.classList.add(PANEL_DRAG_SOURCE_CLASS);
+drag.list.appendChild(placeholder);
+document.body.appendChild(ghost);
+document.body.classList.add(PANEL_DRAGGING_CLASS);
+}
+event.preventDefault();
+if (drag.ghost) drag.ghost.style.top = (event.clientY - drag.grabDy) + "px";
+const others = visualPanelItems(drag.list, drag.entry.el);
+let index = others.length;
+for (let i = 0; i < others.length; i++) {
+const rect = others[i].el.getBoundingClientRect();
+if (event.clientY < rect.top + rect.height / 2) { index = i; break; }
+}
+drag.index = index;
+for (let i = 0; i < others.length; i++) others[i].el.style.setProperty("order", String(i < index ? i : i + 1));
+drag.placeholder.style.setProperty("order", String(index));
+}
+
+function onPointerDown(event) {
+if (event.button !== 0) return;
+const row = event.target && event.target.closest ? event.target.closest(PANEL_ROW_SELECTOR) : null;
+if (!row) return;
+const list = row.closest(PANEL_LIST_SELECTOR);
+if (!list) return;
+const entry = panelEntries(list).find((item) => item.row === row || item.el.contains(row));
+if (!entry) return;
+const rect = row.getBoundingClientRect();
+drag = { entry, list, startX: event.clientX, startY: event.clientY, grabDy: event.clientY - rect.top, rect, moved: false, index: 0, ghost: null, placeholder: null };
+document.addEventListener("pointermove", onMove, true);
+document.addEventListener("pointerup", finish, true);
+document.addEventListener("pointercancel", finish, true);
+}
+
+document.addEventListener("pointerdown", onPointerDown, true);
+panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDown, true);
+}
+//#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg, initialSidebarOrder) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, sidebarOrder: initialSidebarOrder, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, sidebarOrder, revision) => {
+		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, revision) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1057,7 +1111,6 @@ if (rows.length > 0) sessionListPrimed = true;
 		        d.tail = tail;
 		        d.chatWidth = chatWidth;
 		        d.sidebarBg = sidebarBg;
-		        d.sidebarOrder = sidebarOrder;
 		        d.revision = revision;
 					}
 				}
@@ -1089,25 +1142,6 @@ if (rows.length > 0) sessionListPrimed = true;
 				alignItems: "center",
 				gap: "8px"
 			},
-			column: {
-				display: "flex",
-				flexDirection: "column",
-				gap: "6px"
-			},
-			orderRow: {
-				alignItems: "center",
-				display: "flex",
-				gap: "8px"
-			},
-			orderName: {
-				color: "var(--dsw-alias-label-primary)",
-				flex: "1 1 auto",
-				fontSize: "13px",
-				minWidth: 0,
-				overflow: "hidden",
-				textOverflow: "ellipsis",
-				whiteSpace: "nowrap"
-			},
 			value: {
 				color: "var(--dsw-alias-label-tertiary)",
 				fontSize: "12px",
@@ -1124,22 +1158,12 @@ if (rows.length > 0) sessionListPrimed = true;
 		 * controls without visible effect while the skin is off are disabled.
 		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
 		 */
-		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, setSidebarOrder, listSidebarPanels, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 			const fontLevel = useStore((s) => s.fontLevel);
 			const density = useStore((s) => s.density);
 			const tail = useStore((s) => s.tail);
 			const chatWidth = useStore((s) => s.chatWidth);
 			const sidebarBg = useStore((s) => s.sidebarBg);
-			const sidebarOrder = useStore((s) => s.sidebarOrder) || [];
-			const panelLabels = typeof listSidebarPanels === "function" ? listSidebarPanels() : [];
-			const movePanel = (index, delta) => {
-				const to = index + delta;
-				if (to < 0 || to >= panelLabels.length || typeof setSidebarOrder !== "function") return;
-				const next = panelLabels.slice();
-				const moved = next.splice(index, 1)[0];
-				next.splice(to, 0, moved);
-				setSidebarOrder(next);
-			};
 			const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
 			const userRef = (0, _react.useRef)(null);
 			const aiRef = (0, _react.useRef)(null);
@@ -1265,45 +1289,6 @@ if (rows.length > 0) sessionListPrimed = true;
 					      children: t("widthNative")
 					    })
 					  ]
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.title,
-					  children: t("orderTitle")
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.column,
-					  children: panelLabels.map((label, index) => (0, react_jsx_runtime.jsxs)("div", {
-					    style: styles.orderRow,
-					    children: [
-					      (0, react_jsx_runtime.jsx)("span", { style: styles.orderName, children: label }),
-					      (0, react_jsx_runtime.jsx)("button", {
-					        type: "button",
-					        className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-					        disabled: index === 0,
-					        "aria-label": t("orderUp"),
-					        onClick: () => movePanel(index, -1),
-					        children: "↑"
-					      }),
-					      (0, react_jsx_runtime.jsx)("button", {
-					        type: "button",
-					        className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-					        disabled: index === panelLabels.length - 1,
-					        "aria-label": t("orderDown"),
-					        onClick: () => movePanel(index, 1),
-					        children: "↓"
-					      })
-					    ]
-					  }, label))
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-					  style: styles.row,
-					  children: (0, react_jsx_runtime.jsx)("button", {
-					    type: "button",
-					    className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-					    disabled: sidebarOrder.length === 0,
-					    onClick: () => { if (typeof setSidebarOrder === "function") setSidebarOrder([]); },
-					    children: t("orderReset")
-					  })
 					}),
 					(0, react_jsx_runtime.jsx)("div", {
 					  style: styles.title,
@@ -1458,13 +1443,13 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, sidebarOrder);
+			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, sidebarOrder, ++revision);
+				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, ++revision);
 			};
-			initPanelDrag(sync);
+			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
 			const injected = (actions) => {
 				bound = actions;
@@ -1503,10 +1488,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					  applySidebarBg();
 					  sync();
 					},
-					setSidebarOrder: (list) => {
-					  setPanelOrder(list, sync);
-					},
-					listSidebarPanels: () => currentPanelLabels(),
 					uploadUserAvatar: (dataUrl) => {
 						setUserAvatar(dataUrl);
 					},
@@ -1536,7 +1517,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 						tail = true; applyTail(tail);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
 						sidebarBg = null; applySidebarBg();
-						sidebarOrder = []; applyPanelOrder();
 						sync();
 					}
 				};
@@ -1556,10 +1536,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"widthWide": "全宽",
 					"widthMedium": "适中",
 					"widthNative": "官方",
-					"orderTitle": "侧边栏入口顺序",
-					"orderUp": "上移",
-					"orderDown": "下移",
-					"orderReset": "恢复默认顺序",
 					"sidebarBgTitle": "侧边栏背景色",
 					"sidebarBgReset": "微信色",
 					"tailTitle": "气泡尾巴",
@@ -1587,10 +1563,6 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"widthWide": "Full",
 					"widthMedium": "Medium",
 					"widthNative": "Native",
-					"orderTitle": "Sidebar entry order",
-					"orderUp": "Move up",
-					"orderDown": "Move down",
-					"orderReset": "Reset order",
 					"sidebarBgTitle": "Sidebar background",
 					"sidebarBgReset": "WeChat colour",
 					"tailTitle": "Bubble tail",
