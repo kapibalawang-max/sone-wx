@@ -1201,6 +1201,15 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 				gap: "8px",
 				flex: "none"
 			},
+			itemFirst: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "space-between",
+				gap: "16px",
+				minHeight: "44px",
+				padding: "10px 16px",
+				flexWrap: "wrap"
+			},
 			cardFoot: {
 				display: "flex",
 				justifyContent: "flex-end",
@@ -1210,9 +1219,9 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 		};
 
 		/** One label/control line inside the skin card. */
-		function SkinRow({ title, hint, children }) {
+		function SkinRow({ title, hint, first, children }) {
 			return (0, react_jsx_runtime.jsxs)("div", {
-				style: styles.item,
+				style: first ? styles.itemFirst : styles.item,
 				children: [
 					(0, react_jsx_runtime.jsxs)("div", {
 						style: styles.itemMain,
@@ -1277,15 +1286,9 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 			return (0, react_jsx_runtime.jsxs)("div", {
 				style: styles.card,
 				children: [
-					(0, react_jsx_runtime.jsxs)("div", {
-						style: styles.cardHead,
-						children: [
-							(0, react_jsx_runtime.jsx)("div", { style: styles.cardTitle, children: t("title") }),
-							(0, react_jsx_runtime.jsx)("div", { style: styles.cardDesc, children: t("description") })
-						]
-					}),
 					(0, react_jsx_runtime.jsx)(SkinRow, {
 						title: t("fontTitle"),
+						first: true,
 						hint: t("fontHint"),
 						children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
 					}),
