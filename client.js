@@ -61,6 +61,16 @@ window.__ModuleLoader__.load({
 		const PANEL_DRAG_SOURCE_CLASS = "dsh-wc-panel-drag-source";
 		/** Font-size scale per level; level 3 = 1.0 (the original size). */
 		const FONT_SCALES = { 1: 0.8, 2: 0.9, 3: 1.0, 4: 1.1, 5: 1.25 };
+		/** Theme presets: one click sets a coherent set of skin values. */
+		const THEME_PRESETS = [
+			{ id: "wechat", fontLevel: 3, density: "cozy", chatWidth: "wide", tail: true, sidebarBg: null },
+			{ id: "compact", fontLevel: 2, density: "compact", chatWidth: "medium", tail: true, sidebarBg: null },
+			{ id: "paper", fontLevel: 3, density: "cozy", chatWidth: "medium", tail: false, sidebarBg: "#f7f3ec" }
+		];
+		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
+		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
+		/** Skin-side localStorage keys included in an exported config. */
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, COMPOSER_H_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -112,10 +122,10 @@ window.__ModuleLoader__.load({
   --wc-bubble-code-ink: #0a2e1a;
   /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
   --wc-sidebar: #eeeef0;
-  --wc-sidebar-dark: #1c1c1e;
+  --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
-  --wc-surface-dark: #232326;
-  --wc-overlay-dark: #2a2a2d;
+  --wc-surface-dark: #252527;
+  --wc-overlay-dark: #2f2f31;
   --wc-border-light: #e0e0e0;
   --wc-border-dark: #303033;
   --wc-avatar-user-a: #ffb37b;
@@ -527,6 +537,25 @@ body .dsh-wc-seg-item[aria-pressed="true"] {
 	font-weight: 500;
 	box-shadow: inset 0 0 0 0.5px var(--dsw-alias-border-l2), 0 1px 2px rgba(0, 0, 0, 0.12);
 }
+body .dsh-wc-swatch {
+	width: 22px;
+	height: 22px;
+	flex: none;
+	padding: 0;
+	border: 0.5px solid var(--dsw-alias-border-l2);
+	border-radius: 999px;
+	cursor: pointer;
+}
+body .dsh-wc-swatch[aria-pressed="true"] {
+	box-shadow: 0 0 0 1.5px #07c160;
+}
+body .dsh-wc-seg-item:focus-visible,
+body .dsh-wc-btn:focus-visible,
+body .dsh-wc-swatch:focus-visible,
+body .dsh-wc-color:focus-visible {
+	outline: 2px solid rgba(7, 193, 96, 0.5);
+	outline-offset: 2px;
+}
 body .dsh-wc-btn[disabled] {
 	opacity: 0.45;
 	cursor: not-allowed;
@@ -790,6 +819,7 @@ row.dataset.dshAvatar = value;
 				document.removeEventListener("pointerdown", onPointerDown);
 				document.removeEventListener("pointermove", onPointerMove);
 				document.removeEventListener("pointerup", onPointerUp);
+				document.removeEventListener("dblclick", onDblClick);
 				delete root.dataset.dshResizeDelegated;
 			};
 
@@ -841,9 +871,25 @@ row.dataset.dshAvatar = value;
 				document.body.style.cursor = "";
 			};
 
+			// Double-click the composer's top/bottom edge to drop the custom height.
+			const onDblClick = (event) => {
+				if (!skinOn()) return;
+				const card = document.querySelector(".JZLxKW_card");
+				if (!card) return;
+				const rect = card.getBoundingClientRect();
+				const nearTop = event.clientY >= rect.top - 10 && event.clientY <= rect.top + 12;
+				const nearBottom = event.clientY >= rect.bottom - 12 && event.clientY <= rect.bottom + 10;
+				if (!nearTop && !nearBottom) return;
+				card.style.removeProperty("height");
+				card.style.removeProperty("--dsh-composer-text-max-height");
+				delete card.dataset.dshHeightRestored;
+				try { window.localStorage.removeItem(COMPOSER_H_KEY); } catch (e) {}
+			};
+
 			document.addEventListener("pointerdown", onPointerDown);
 			document.addEventListener("pointermove", onPointerMove);
 			document.addEventListener("pointerup", onPointerUp);
+			document.addEventListener("dblclick", onDblClick);
 
 			restoreHeight();
 		}
@@ -1212,8 +1258,38 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 			},
 			cardFoot: {
 				display: "flex",
-				justifyContent: "flex-end",
+				alignItems: "center",
+				justifyContent: "space-between",
+				gap: "12px",
 				padding: "10px 16px 14px",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)",
+				flexWrap: "wrap"
+			},
+			footLeft: {
+				display: "flex",
+				alignItems: "center",
+				gap: "6px",
+				minWidth: 0,
+				fontSize: "12px",
+				lineHeight: "16px",
+				color: "var(--dsw-alias-label-tertiary)"
+			},
+			footRight: {
+				display: "flex",
+				alignItems: "center",
+				gap: "8px",
+				flex: "none"
+			},
+			dot: {
+				width: "6px",
+				height: "6px",
+				borderRadius: "999px",
+				flex: "none",
+				background: "#07c160"
+			},
+			dotWarn: { background: "#ffc53d" },
+			previewBlock: {
+				padding: "12px 16px",
 				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
 			}
 		};
@@ -1249,111 +1325,248 @@ panelDragCleanup = () => document.removeEventListener("pointerdown", onPointerDo
 			});
 		}
 
-		/**
-		 * The skin card: one row per setting (label left, control right), reset in the footer.
-		 * Buttons are class-styled (hover/active/disabled live in WECHAT_UI_CSS);
-		 * segmented choices share one pill so the whole group reads as a single control.
-		 * @param props - composed Settings slot props (t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore).
-		 */
-		function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
-			const fontLevel = useStore((s) => s.fontLevel);
-			const density = useStore((s) => s.density);
-			const tail = useStore((s) => s.tail);
-			const chatWidth = useStore((s) => s.chatWidth);
-			const sidebarBg = useStore((s) => s.sidebarBg);
-			const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
-			const userRef = (0, _react.useRef)(null);
-			const aiRef = (0, _react.useRef)(null);
-			const onFile = (action) => (event) => {
-				const file = event.target.files && event.target.files[0];
-				if (file) downscaleImage(file).then(action).catch(() => {});
-				event.target.value = "";
-			};
-			const fontOptions = [1, 2, 3, 4, 5].map((level) => ({ value: level, label: t("fontL" + level) }));
-			const densityOptions = [
-				{ value: "cozy", label: t("densityCozy") },
-				{ value: "compact", label: t("densityCompact") }
-			];
-			const widthOptions = [
-				{ value: "wide", label: t("widthWide") },
-				{ value: "medium", label: t("widthMedium") },
-				{ value: "native", label: t("widthNative") }
-			];
-			const tailOptions = [
-				{ value: true, label: t("tailOn") },
-				{ value: false, label: t("tailOff") }
-			];
-			return (0, react_jsx_runtime.jsxs)("div", {
-				style: styles.card,
-				children: [
-					(0, react_jsx_runtime.jsx)(SkinRow, {
-						title: t("fontTitle"),
-						first: true,
-						hint: t("fontHint"),
-						children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
-					}),
-					(0, react_jsx_runtime.jsxs)(SkinRow, {
-						title: t("avatarTitle"),
-						children: [
-							(0, react_jsx_runtime.jsx)("input", { ref: userRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadUserAvatar) }),
-							(0, react_jsx_runtime.jsx)("input", { ref: aiRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadAiAvatar) }),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-								onClick: () => userRef.current && userRef.current.click(),
-								children: t("uploadUser")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-								onClick: () => aiRef.current && aiRef.current.click(),
-								children: t("uploadAi")
-							})
-						]
-					}),
-					(0, react_jsx_runtime.jsx)(SkinRow, {
-						title: t("densityTitle"),
-						children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
-					}),
-					(0, react_jsx_runtime.jsx)(SkinRow, {
-						title: t("widthTitle"),
-						children: (0, react_jsx_runtime.jsx)(Segmented, { value: chatWidth, options: widthOptions, onChange: setChatWidth })
-					}),
-					(0, react_jsx_runtime.jsxs)(SkinRow, {
-						title: t("sidebarBgTitle"),
-						children: [
-							(0, react_jsx_runtime.jsx)("input", {
-								type: "color",
-								className: "dsh-wc-color",
-								value: sidebarBg || (darkSkin ? "#1c1c1e" : "#eeeef0"),
-								"aria-label": t("sidebarBgTitle"),
-								onChange: (event) => setSidebarBg(event.target.value)
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-								disabled: sidebarBg === null,
-								onClick: () => setSidebarBg(null),
-								children: t("sidebarBgReset")
-							})
-						]
-					}),
-					(0, react_jsx_runtime.jsx)(SkinRow, {
-						title: t("tailTitle"),
-						children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						style: styles.cardFoot,
-						children: (0, react_jsx_runtime.jsx)("button", {
-							type: "button",
-							className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-							onClick: () => resetSkin && resetSkin(),
-							children: t("reset")
-						})
-					})
-				]
-			});
-		}
+/** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
+function SkinPreview({ t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin }) {
+const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
+const gap = density === "compact" ? 4 : 10;
+const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
+const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
+const canvasColor = darkSkin ? "#111113" : "#fafafa";
+const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
+const outBubble = "#95ec69";
+const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: 1.5 };
+const tailStyle = (color, right) => {
+const style = { position: "absolute", top: "9px", width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent" };
+if (right) { style.right = "-5px"; style.borderLeft = "6px solid " + color; }
+else { style.left = "-5px"; style.borderRight = "6px solid " + color; }
+return style;
+};
+return (0, react_jsx_runtime.jsxs)("div", {
+style: { display: "flex", borderRadius: "10px", overflow: "hidden", border: "0.5px solid var(--dsw-alias-border-l2)" },
+children: [
+(0, react_jsx_runtime.jsx)("div", {
+style: { width: "76px", flex: "none", background: sidebarColor, padding: "8px 6px", display: "flex", flexDirection: "column", gap: "6px" },
+children: [0, 1, 2, 3].map((index) => (0, react_jsx_runtime.jsx)("div", {
+style: { height: "14px", borderRadius: "4px", background: index === 0 ? "rgba(7,193,96,0.22)" : darkSkin ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }
+}, "s" + index))
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: { flex: "1 1 auto", minWidth: 0, background: canvasColor, padding: "10px 12px", display: "flex", flexDirection: "column", gap: gap },
+children: [
+(0, react_jsx_runtime.jsxs)("div", {
+style: Object.assign({}, bubbleBase, { alignSelf: "flex-start", background: inBubble, color: darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a", border: darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)" }),
+children: [
+tail ? (0, react_jsx_runtime.jsx)("span", { style: tailStyle(inBubble, false) }) : null,
+t("previewIn")
+]
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: Object.assign({}, bubbleBase, { alignSelf: "flex-end", background: outBubble, color: "#101010" }),
+children: [
+tail ? (0, react_jsx_runtime.jsx)("span", { style: tailStyle(outBubble, true) }) : null,
+t("previewOut")
+]
+})
+]
+})
+]
+});
+}
+
+/**
+ * The skin card: presets and a live preview on top, then one row per setting,
+ * with a fit check and config tools in the footer.
+ * @param props - composed Settings slot props.
+ */
+function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, applyPreset, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+const fontLevel = useStore((s) => s.fontLevel);
+const density = useStore((s) => s.density);
+const tail = useStore((s) => s.tail);
+const chatWidth = useStore((s) => s.chatWidth);
+const sidebarBg = useStore((s) => s.sidebarBg);
+const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
+const userRef = (0, _react.useRef)(null);
+const aiRef = (0, _react.useRef)(null);
+const importRef = (0, _react.useRef)(null);
+const presetPair = (0, _react.useState)(null);
+const statusPair = (0, _react.useState)({ kind: "", detail: "" });
+const presetId = presetPair[0];
+const setPresetId = presetPair[1];
+const status = statusPair[0];
+const setStatus = statusPair[1];
+const missing = SELECTOR_PROBES.filter((selector) => {
+try { return document.querySelector(selector) === null; } catch (error) { return true; }
+});
+const onFile = (action) => (event) => {
+const file = event.target.files && event.target.files[0];
+if (file) downscaleImage(file).then(action).catch(() => {});
+event.target.value = "";
+};
+const runExport = () => {
+if (!exportConfig) return;
+exportConfig().then((payload) => {
+const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+const url = URL.createObjectURL(blob);
+const anchor = document.createElement("a");
+anchor.href = url;
+anchor.download = "sone-wx-config.json";
+document.body.appendChild(anchor);
+anchor.click();
+anchor.remove();
+setTimeout(() => URL.revokeObjectURL(url), 1000);
+setStatus({ kind: "ok", detail: t("exported") });
+}).catch((error) => setStatus({ kind: "err", detail: String((error && error.message) || error) }));
+};
+const runImport = (event) => {
+const file = event.target.files && event.target.files[0];
+event.target.value = "";
+if (!file || !importConfig) return;
+const reader = new FileReader();
+reader.onload = () => {
+let payload = null;
+try { payload = JSON.parse(String(reader.result || "{}")); } catch (error) {
+setStatus({ kind: "err", detail: t("importBad") });
+return;
+}
+importConfig(payload).then(() => {
+setPresetId(null);
+setStatus({ kind: "ok", detail: t("imported") });
+}).catch(() => setStatus({ kind: "err", detail: t("importBad") }));
+};
+reader.readAsText(file);
+};
+const fontOptions = [1, 2, 3, 4, 5].map((level) => ({ value: level, label: t("fontL" + level) }));
+const densityOptions = [
+{ value: "cozy", label: t("densityCozy") },
+{ value: "compact", label: t("densityCompact") }
+];
+const widthOptions = [
+{ value: "wide", label: t("widthWide") },
+{ value: "medium", label: t("widthMedium") },
+{ value: "native", label: t("widthNative") }
+];
+const tailOptions = [
+{ value: true, label: t("tailOn") },
+{ value: false, label: t("tailOff") }
+];
+const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) }));
+return (0, react_jsx_runtime.jsxs)("div", {
+style: styles.card,
+children: [
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("presetTitle"),
+first: true,
+hint: t("presetHint"),
+children: (0, react_jsx_runtime.jsx)(Segmented, {
+value: presetId,
+options: presetOptions,
+onChange: (id) => {
+setPresetId(id);
+if (applyPreset) applyPreset(id);
+}
+})
+}),
+(0, react_jsx_runtime.jsx)("div", {
+style: styles.previewBlock,
+children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("fontTitle"),
+hint: t("fontHint"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
+}),
+(0, react_jsx_runtime.jsxs)(SkinRow, {
+title: t("avatarTitle"),
+children: [
+(0, react_jsx_runtime.jsx)("input", { ref: userRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadUserAvatar) }),
+(0, react_jsx_runtime.jsx)("input", { ref: aiRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFile(uploadAiAvatar) }),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => userRef.current && userRef.current.click(),
+children: t("uploadUser")
+}),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => aiRef.current && aiRef.current.click(),
+children: t("uploadAi")
+})
+]
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("densityTitle"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("widthTitle"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: chatWidth, options: widthOptions, onChange: setChatWidth })
+}),
+(0, react_jsx_runtime.jsxs)(SkinRow, {
+title: t("sidebarBgTitle"),
+children: [
+SIDEBAR_SWATCHES.map((swatch) => (0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-swatch",
+"aria-label": swatch,
+"aria-pressed": (sidebarBg || null) === swatch,
+style: { background: swatch },
+onClick: () => setSidebarBg(swatch)
+}, swatch)),
+(0, react_jsx_runtime.jsx)("input", {
+type: "color",
+className: "dsh-wc-color",
+value: sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0"),
+"aria-label": t("sidebarBgTitle"),
+onChange: (event) => setSidebarBg(event.target.value)
+})
+]
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("tailTitle"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: styles.cardFoot,
+children: [
+(0, react_jsx_runtime.jsxs)("div", {
+style: styles.footLeft,
+children: status.kind
+? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
+: [
+(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : styles.dot }),
+(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : t("fitOk") })
+]
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: styles.footRight,
+children: [
+(0, react_jsx_runtime.jsx)("input", { ref: importRef, type: "file", accept: "application/json,.json", style: { display: "none" }, onChange: runImport }),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: runExport,
+children: t("exportConfig")
+}),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => importRef.current && importRef.current.click(),
+children: t("importConfig")
+}),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => resetSkin && resetSkin(),
+children: t("reset")
+})
+]
+})
+]
+})
+]
+});
+}
 		//#endregion
 
 		//#region dsh-wechat-skin: client plugin body
@@ -1494,6 +1707,112 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					  applySidebarBg();
 					  sync();
 					},
+					applyPreset: (id) => {
+						const preset = THEME_PRESETS.find((item) => item.id === id);
+						if (!preset) return;
+						fontLevel = preset.fontLevel;
+						writeJson(FONT_LEVEL_KEY, fontLevel);
+						applyFontLevel(fontLevel);
+						density = preset.density;
+						writeJson(DENSITY_KEY, density);
+						applyDensity(density);
+						tail = preset.tail;
+						writeJson(TAIL_KEY, tail);
+						applyTail(tail);
+						chatWidth = preset.chatWidth;
+						writeJson(CHAT_WIDTH_KEY, chatWidth);
+						applyChatWidth(chatWidth);
+						sidebarBg = normalizeHexColor(preset.sidebarBg);
+						try {
+							if (sidebarBg === null) window.localStorage.removeItem(SIDEBAR_BG_KEY);
+							else window.localStorage.setItem(SIDEBAR_BG_KEY, JSON.stringify(sidebarBg));
+						} catch (e) {}
+						applySidebarBg();
+						sync();
+					},
+					exportConfig: () => {
+						const skin = {};
+						try {
+							for (const key of CONFIG_SKIN_KEYS) {
+								const value = window.localStorage.getItem(key);
+								if (value !== null) skin[key] = value;
+							}
+						} catch (e) {}
+						const payload = { app: "sone-wx", version: 1, exportedAt: new Date().toISOString(), skin, brand: null, images: {} };
+						const toDataUrl = (blob) => new Promise((resolve) => {
+							const reader = new FileReader();
+							reader.onload = () => resolve(String(reader.result || ""));
+							reader.onerror = () => resolve("");
+							reader.readAsDataURL(blob);
+						});
+						return fetch("/sone-wx/brand").then((response) => response.json()).then((brand) => {
+							payload.brand = {
+								title: brand && typeof brand.title === "string" ? brand.title : "",
+								wordmarkImage: !!(brand && brand.wordmarkImage),
+								heroMark: !brand || brand.heroMark !== false
+							};
+							const present = { mark: !!(brand && brand.mark), wordmark: !!(brand && brand.wordmark) };
+							return Promise.all(["mark", "wordmark"].filter((kind) => present[kind]).map((kind) =>
+								fetch("/sone-wx/brand/" + kind).then((response) => response.blob()).then(toDataUrl).then((dataUrl) => { payload.images[kind] = dataUrl; }).catch(() => {})
+							));
+						}).catch(() => {}).then(() => payload);
+					},
+					importConfig: (payload) => {
+						if (!payload || typeof payload !== "object") return Promise.reject(new Error("invalid config"));
+						const skin = payload.skin && typeof payload.skin === "object" ? payload.skin : {};
+						try {
+							for (const key of CONFIG_SKIN_KEYS) {
+								if (Object.prototype.hasOwnProperty.call(skin, key) && typeof skin[key] === "string") window.localStorage.setItem(key, skin[key]);
+								else window.localStorage.removeItem(key);
+							}
+						} catch (e) {}
+						fontLevel = Number(readJson(FONT_LEVEL_KEY, 3));
+						if (!(fontLevel >= 1 && fontLevel <= 5)) fontLevel = 3;
+						applyFontLevel(fontLevel);
+						density = readJson(DENSITY_KEY, "cozy") === "compact" ? "compact" : "cozy";
+						applyDensity(density);
+						tail = readJson(TAIL_KEY, true) !== false;
+						applyTail(tail);
+						chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
+						if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
+						applyChatWidth(chatWidth);
+						sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
+						applySidebarBg();
+						const userAvatar = readJson(USER_AVATAR_KEY, null);
+						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
+						const aiAvatar = readJson(AI_AVATAR_KEY, null);
+						if (typeof aiAvatar === "string" && aiAvatar) setAiAvatar(aiAvatar);
+						sidebarOrder = normalizePanelOrder(readJson(SIDEBAR_ORDER_KEY, []));
+						applyPanelOrder();
+						sync();
+						const brand = payload.brand && typeof payload.brand === "object" ? payload.brand : null;
+						const images = payload.images && typeof payload.images === "object" ? payload.images : {};
+						const jobs = [];
+						["mark", "wordmark"].forEach((kind) => {
+							const dataUrl = images[kind];
+							if (typeof dataUrl !== "string" || dataUrl.indexOf("data:") !== 0) return;
+							const mime = dataUrl.slice(5, dataUrl.indexOf(";"));
+							const comma = dataUrl.indexOf(",");
+							const binary = atob(dataUrl.slice(comma + 1));
+							const bytes = new Uint8Array(binary.length);
+							for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+							jobs.push(fetch("/sone-wx/brand/" + kind, { method: "PUT", headers: { "content-type": mime }, body: new Blob([bytes], { type: mime }) }).catch(() => {}));
+						});
+						if (brand) {
+							jobs.push(fetch("/sone-wx/brand", {
+								method: "POST",
+								headers: { "content-type": "application/json" },
+								body: JSON.stringify({
+									title: typeof brand.title === "string" ? brand.title : "",
+									wordmarkImage: brand.wordmarkImage === true,
+									heroMark: brand.heroMark !== false
+								})
+							}).catch(() => {}));
+						}
+						return Promise.all(jobs).then(() => {
+							try { window.dispatchEvent(new CustomEvent("sone-wx:brand-reload")); } catch (e) {}
+						});
+					},
 					uploadUserAvatar: (dataUrl) => {
 						setUserAvatar(dataUrl);
 					},
@@ -1554,7 +1873,21 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"fontL3": "标准",
 					"fontL4": "较大",
 					"fontL5": "大",
-					"reset": "恢复默认皮肤设置"
+					"reset": "恢复默认",
+					"presetTitle": "主题预设",
+					"presetHint": "一次套用一组搭配",
+					"preset_wechat": "微信",
+					"preset_compact": "紧凑",
+					"preset_paper": "纸张",
+					"previewIn": "今天有空吗？帮我看看这份方案",
+					"previewOut": "可以，发过来吧",
+					"fitOk": "适配正常",
+					"fitMissing": "选择器缺失",
+					"exportConfig": "导出配置",
+					"importConfig": "导入配置",
+					"exported": "已导出 sone-wx-config.json",
+					"imported": "已导入并应用",
+					"importBad": "文件格式不对"
 				},
 				en: {
 					"title": "WeChat Skin",
@@ -1581,7 +1914,21 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 					"fontL3": "M",
 					"fontL4": "L",
 					"fontL5": "XL",
-					"reset": "Reset skin settings"
+					"reset": "Reset",
+					"presetTitle": "Presets",
+					"presetHint": "Applies a matching set at once",
+					"preset_wechat": "WeChat",
+					"preset_compact": "Compact",
+					"preset_paper": "Paper",
+					"previewIn": "Free today? Can you look at this proposal?",
+					"previewOut": "Sure, send it over",
+					"fitOk": "Selectors OK",
+					"fitMissing": "Selectors missing",
+					"exportConfig": "Export",
+					"importConfig": "Import",
+					"exported": "Exported sone-wx-config.json",
+					"imported": "Imported and applied",
+					"importBad": "Unreadable file"
 				}
 			}), "sone-wx: skin dictionaries");
 
@@ -1645,6 +1992,9 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
         saved: '已保存',
         loading: '正在读取品牌配置…',
         notSet: '未设置',
+        resetBrand: '恢复默认品牌',
+        resetHint: '清空标题与图片，回到内置 SONE 标志',
+        resetDone: '已恢复默认品牌',
         typeError: '只接受 PNG、SVG 或 WebP 图片。',
         sizeError: '图片超过 2 MB。',
         badImage: '图片内容与声明的类型不一致。',
@@ -1673,6 +2023,9 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
         saved: 'Saved',
         loading: 'Loading brand settings…',
         notSet: 'Not set',
+        resetBrand: 'Reset brand',
+        resetHint: 'Clears the title and images back to the built-in SONE mark',
+        resetDone: 'Brand reset to default',
         typeError: 'Only PNG, SVG or WebP images are accepted.',
         sizeError: 'The image is larger than 2 MB.',
         badImage: 'The image content does not match its declared type.',
@@ -2058,6 +2411,10 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
       switchKnobOn: { transform: 'translateX(14px)' },
       switchRow: { display: 'flex', alignItems: 'center', gap: '10px' },
       status: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)', minWidth: '0', wordBreak: 'break-all' },
+      foot: {
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+        padding: '10px 16px 14px', borderTop: '0.5px solid var(--dsw-alias-border-l2)', flexWrap: 'wrap'
+      },
       ok: { color: 'var(--dsw-alias-state-success-primary)' },
       err: { color: 'var(--dsw-alias-state-error-primary)' },
       hint: { fontSize: '12px', color: 'var(--dsw-alias-label-tertiary)' }
@@ -2192,6 +2549,18 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
         }).catch(reportError)
       }
 
+      function resetBrand() {
+        Promise.all([
+          removeImage('mark').catch(function () {}),
+          removeImage('wordmark').catch(function () {})
+        ]).then(function () {
+          return post({ title: '', wordmarkImage: false, heroMark: true })
+        }).then(function () {
+          setStatus('ok', t('resetDone'))
+          load()
+        }).catch(reportError)
+      }
+
       var markSrc = imageUrl('mark')
       var wordSrc = imageUrl('wordmark')
 
@@ -2294,7 +2663,15 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
               checked: snap.heroMark,
               label: t('hero'),
               onChange: toggleHero
-            })))))
+            }))),
+        h('div', { style: S.foot },
+          h('span', { style: S.hint }, t('resetHint')),
+          h('button', {
+            type: 'button',
+            className: 'dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm',
+            disabled: !snap.loaded,
+            onClick: resetBrand
+          }, t('resetBrand')))))
 
       children.push(h('div', { style: S.status, key: 'status' },
         status[0].kind === 'err'
@@ -2325,6 +2702,9 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 
           load()
 
+          var onBrandReload = function () { load() }
+          window.addEventListener('sone-wx:brand-reload', onBrandReload)
+
           var offLocale = null
           var locale = typeof ctx.get === 'function' ? ctx.get('locale') : null
           if (locale && typeof locale.subscribe === 'function') {
@@ -2335,6 +2715,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
             if (typeof offLocale === 'function') offLocale()
             for (var i = 0; i < offDicts.length; i++) offDicts[i]()
             translateRef = null
+            window.removeEventListener('sone-wx:brand-reload', onBrandReload)
             style.remove()
             for (var name in seats) {
               if (seats[name]) {
