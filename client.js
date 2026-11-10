@@ -77,6 +77,7 @@ window.__ModuleLoader__.load({
 		const FONT_FAMILY_KEY = "dsh-wechat-skin:font-family";
 		const CONTRAST_KEY = "dsh-wechat-skin:contrast";
 		const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape";
+		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -97,7 +98,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -1182,6 +1183,8 @@ body .dsh-wc-color {
 
 		//#region dsh-wechat-skin: avatars + composer (DOM enhancement)
 		let avatarMap = readJson(AVATAR_MAP_KEY, {});
+		/** Sidebar avatar artwork: "identicon" (default) or "initial". */
+		let avatarStyle = "identicon";
 
 		/** Deterministic avatar index from a title — stable across reloads. */
 		function avatarIndexForTitle(title) {
@@ -1199,14 +1202,43 @@ body .dsh-wc-color {
 
 		/** Generate a deterministic colored-initial SVG avatar (no third-party photos). */
 		function generatedAvatar(title, seed) {
-			/* Neutral chip, coloured initial: the hue only identifies, it never paints
-			   the whole tile (12 hues at 54% / 36% keep 5.2–10.2:1 on the chip). */
+			if (avatarStyle === "initial") return initialAvatar(title, seed);
+			return identiconAvatar(title, seed);
+		}
+
+		/** Neutral chip, coloured initial: the hue identifies without painting the tile. */
+		function initialAvatar(title, seed) {
 			const AVATAR_HUES = [352, 12, 28, 200, 214, 228, 242, 258, 274, 292, 312, 332];
 			const hue = AVATAR_HUES[Math.abs(seed) % AVATAR_HUES.length];
 			const initial = escapeXml(Array.from(title.trim())[0] || "?");
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
 				+ '<rect width="128" height="128" rx="30" fill="#f2f2f3"/>'
 				+ '<text x="64" y="86" font-size="60" text-anchor="middle" fill="hsl(' + hue + ',54%,36%)" font-family="Microsoft YaHei, Segoe UI, sans-serif">' + initial + '</text></svg>';
+			return "data:image/svg+xml," + encodeURIComponent(svg);
+		}
+
+		/** 5×5 mirror-symmetric dot grid from the title hash; single green, no letters. */
+		function identiconAvatar(title, seed) {
+			let h = (Math.abs(seed) * 2654435761 + 2166136261) >>> 0;
+			const text = String(title);
+			for (let i = 0; i < text.length; i += 1) {
+				h = (Math.imul(h ^ text.charCodeAt(i), 16777619)) >>> 0;
+			}
+			let cells = "";
+			for (let y = 0; y < 5; y += 1) {
+				for (let x = 0; x < 3; x += 1) {
+					if ((h >>> (y * 3 + x)) & 1) {
+						const rect = (cx) => '<rect x="' + (cx * 22 + 3) + '" y="' + (y * 22 + 3) + '" width="18" height="18" rx="4"/>';
+						cells += rect(x);
+						if (x < 2) cells += rect(4 - x);
+					}
+				}
+			}
+			/* An empty grid (very small h) would read as a blank tile; always show the centre. */
+			if (cells === "") cells = '<rect x="47" y="47" width="18" height="18" rx="4"/>';
+			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
+				+ '<rect width="128" height="128" rx="30" fill="#f2f2f3"/>'
+				+ '<g fill="hsl(152,28%,42%)">' + cells + '</g></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
@@ -1460,6 +1492,19 @@ const mode = value === "circle" || value === "square" ? value : "rounded";
 document.body.dataset.dshWcAvatarShape = mode;
 }
 
+/** Sidebar avatar artwork: dot-grid identicon (default) or coloured initial. */
+function applyAvatarStyle(value) {
+const mode = value === "initial" ? "initial" : "identicon";
+avatarStyle = mode;
+if (typeof document === "undefined" || !document.body) return;
+document.body.dataset.dshWcAvatarStyle = mode;
+if (typeof document.querySelectorAll !== "function") return;
+for (const row of document.querySelectorAll(".JoiKIa_sessionRow")) {
+const title = titleOf(row);
+if (title) assignRowAvatar(row, title);
+}
+}
+
 /** User-saved presets, newest first. */
 function readCustomPresets() {
 const list = readJson(CUSTOM_PRESETS_KEY, []);
@@ -1682,11 +1727,11 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape) {
+		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape) => {
+		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1701,6 +1746,7 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 		        d.fontFamily = fontFamily;
 		        d.contrast = contrast;
 		        d.avatarShape = avatarShape;
+		        d.avatarStyle = avatarStyle;
 		        d.revision = revision;
 					}
 				}
@@ -1971,7 +2017,7 @@ children: t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
 const density = useStore((s) => s.density);
@@ -1996,6 +2042,7 @@ const reduceMotion = useStore((s) => s.reduceMotion);
 const fontFamily = useStore((s) => s.fontFamily) || "system";
 const contrast = useStore((s) => s.contrast) || "normal";
 const avatarShape = useStore((s) => s.avatarShape) || "rounded";
+const avatarStyle = useStore((s) => s.avatarStyle) || "identicon";
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -2110,6 +2157,10 @@ const avatarShapeOptions = [
 { value: "rounded", label: t("avatarShapeRounded") },
 { value: "circle", label: t("avatarShapeCircle") },
 { value: "square", label: t("avatarShapeSquare") }
+];
+const avatarStyleOptions = [
+{ value: "identicon", label: t("avatarStyleIdenticon") },
+{ value: "initial", label: t("avatarStyleInitial") }
 ];
 const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) })).concat(customPresets.map((preset) => ({ value: preset.id, label: preset.name })));
 return (0, react_jsx_runtime.jsxs)("div", {
@@ -2236,6 +2287,12 @@ children: (0, react_jsx_runtime.jsx)(Segmented, { value: userAvatarVisible, opti
 title: t("avatarShapeTitle"),
 onReset: () => { if (setAvatarShape) setAvatarShape("rounded"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: avatarShape, options: avatarShapeOptions, onChange: (value) => { if (setAvatarShape) setAvatarShape(value); } })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("avatarStyleTitle"),
+hint: t("avatarStyleHint"),
+onReset: () => { if (setAvatarStyle) setAvatarStyle("identicon"); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: avatarStyle, options: avatarStyleOptions, onChange: (value) => { if (setAvatarStyle) setAvatarStyle(value); } })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("densityTitle"),
@@ -2465,11 +2522,13 @@ applyTextFontLevel(textFontLevel);
 			let avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
 			if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
 			applyAvatarShape(avatarShape);
-			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape);
+			let avatarArt = readJson(AVATAR_STYLE_KEY, "identicon") === "initial" ? "initial" : "identicon";
+			applyAvatarStyle(avatarArt);
+			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape);
+				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -2674,6 +2733,8 @@ scanHooks.push(composerScrollScan);
 						avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
 						if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
 						applyAvatarShape(avatarShape);
+						avatarArt = readJson(AVATAR_STYLE_KEY, "identicon") === "initial" ? "initial" : "identicon";
+						applyAvatarStyle(avatarArt);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -2745,6 +2806,12 @@ scanHooks.push(composerScrollScan);
 					applyAvatarShape(avatarShape);
 					sync();
 					},
+					setAvatarStyle: (value) => {
+					avatarArt = value === "initial" ? "initial" : "identicon";
+					writeJson(AVATAR_STYLE_KEY, avatarArt);
+					applyAvatarStyle(avatarArt);
+					sync();
+					},
 					savePreset: (name) => {
 					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, textFontLevel, density, chatWidth, sidebarBg };
 					const list = readCustomPresets();
@@ -2798,6 +2865,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 						fontFamily = "system"; applyFontFamily(fontFamily);
 						contrast = "normal"; applyContrast(false);
 						avatarShape = "rounded"; applyAvatarShape(avatarShape);
+						window.localStorage.removeItem(AVATAR_STYLE_KEY);
+						avatarArt = "identicon"; applyAvatarStyle(avatarArt);
 						sync();
 					}
 				};
@@ -2848,6 +2917,10 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "avatarShapeRounded": "圆角方形",
 "avatarShapeCircle": "正圆",
 "avatarShapeSquare": "方形",
+"avatarStyleTitle": "头像图案",
+"avatarStyleHint": "点阵按会话标题生成，同色单绿",
+"avatarStyleIdenticon": "点阵",
+"avatarStyleInitial": "首字",
 "presetSave": "存为预设",
 "presetDelete": "删除预设",
 "presetMine": "我的预设",
@@ -2932,6 +3005,10 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "avatarShapeRounded": "Rounded",
 "avatarShapeCircle": "Circle",
 "avatarShapeSquare": "Square",
+"avatarStyleTitle": "Avatar artwork",
+"avatarStyleHint": "Dot grid, generated from the session title",
+"avatarStyleIdenticon": "Dot grid",
+"avatarStyleInitial": "Initial",
 "presetSave": "Save preset",
 "presetDelete": "Delete preset",
 "presetMine": "My preset",
