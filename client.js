@@ -975,6 +975,7 @@ body .dsh-wc-btn-sm { padding: 4px 12px; font-size: var(--wc-fs-sm); line-height
 /* settings search + per-row reset */
 body .dsh-wc-search { display: flex; align-items: center; gap: 8px; }
 body .dsh-wc-search-input {
+box-sizing: border-box;
 flex: 1 1 auto; min-width: 0; height: var(--wc-control-h); padding: 0 10px;
 border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-btn);
 background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-primary);
