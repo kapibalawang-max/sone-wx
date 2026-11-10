@@ -73,6 +73,9 @@ window.__ModuleLoader__.load({
 		const PRESET_KEY = "dsh-wechat-skin:preset";
 		const LINE_HEIGHT_KEY = "dsh-wechat-skin:line-height";
 		const MOTION_KEY = "dsh-wechat-skin:reduced-motion";
+		const FONT_FAMILY_KEY = "dsh-wechat-skin:font-family";
+		const CONTRAST_KEY = "dsh-wechat-skin:contrast";
+		const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -93,7 +96,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -155,6 +158,8 @@ window.__ModuleLoader__.load({
   --wc-overlay-dark: #2f2f31;
   --wc-border-light: #e0e0e0;
   --wc-border-dark: #303033;
+  --wc-scroll-thumb: rgba(0, 0, 0, 0.18);
+  --wc-scroll-thumb-hover: rgba(0, 0, 0, 0.30);
   --wc-avatar-user-a: #ffb37b;
   --wc-avatar-user-b: #f97316;
   --wc-avatar-sel-a: #58c98e;
@@ -167,7 +172,7 @@ window.__ModuleLoader__.load({
   --wc-btn-idle-ink: #9b9b9b;
   --wc-sched-badge: #3b82f6;
   --wc-code-bg: #f7f7f7;
-  /* 字阶：五档，全部随字号档位等比缩放；clamp 保底，极小/极大档不塌陷也不撑破 */
+  /* 字阶：四档（12/13/15/18），全部随字号档位等比缩放；clamp 保底，任何档位都不低于 12px */
   --wc-text-xl: 18px;
   --wc-text-lg: 15px;
   --wc-text-md: 13px;
@@ -218,6 +223,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
   --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
   --wc-code-bg: #2b2b2d ;
+  --wc-scroll-thumb: rgba(255, 255, 255, 0.22);
+  --wc-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
 }
 
 /* ================= paper preset ================= */
@@ -239,6 +246,46 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --wc-code-bg: #f4eee2;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) .kiGsTW_header { background: #faf6ee; }
+
+/* ================= input surface: selection, scrollbars, typeface ================= */
+body.dsh-wechat-skin-on ::selection { background: color-mix(in srgb, var(--wc-green, #07c160) 24%, transparent); color: inherit; }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] ::selection { background: color-mix(in srgb, var(--wc-green, #07c160) 34%, transparent); }
+body.dsh-wechat-skin-on, body.dsh-wechat-skin-on * { scrollbar-width: thin; scrollbar-color: var(--wc-scroll-thumb) transparent; }
+body.dsh-wechat-skin-on ::-webkit-scrollbar { width: 10px; height: 10px; }
+body.dsh-wechat-skin-on ::-webkit-scrollbar-track { background: transparent; }
+body.dsh-wechat-skin-on ::-webkit-scrollbar-thumb {
+  background: var(--wc-scroll-thumb); border-radius: 999px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+body.dsh-wechat-skin-on ::-webkit-scrollbar-thumb:hover { background: var(--wc-scroll-thumb-hover); background-clip: padding-box; }
+
+/* typeface: the host exposes --dsw-font-family but never defines it, so the skin owns the fallback */
+body.dsh-wechat-skin-on { font-family: var(--dsw-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif); }
+/* typeface presets: system keeps the host stack untouched */
+body.dsh-wechat-skin-on[data-dsh-wc-font-family="wechat"] {
+  --dsw-font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-font-family="serif"] {
+  --dsw-font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+}
+
+/* avatar shape: rounded square is the WeChat original */
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="circle"] .JoiKIa_sessionRow { --wc-av-radius: 50%; }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="square"] .JoiKIa_sessionRow { --wc-av-radius: 2px; }
+
+/* high contrast: darker secondary text and borders */
+body.dsh-wechat-skin-on[data-dsh-wc-contrast="high"] {
+  --wc-border-light: rgba(0, 0, 0, 0.28);
+  --dsw-alias-border-l2: rgba(0, 0, 0, 0.16);
+  --dsw-alias-label-secondary: #3b3b3d;
+  --dsw-alias-label-tertiary: #4a4a4c;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"][data-dsh-wc-contrast="high"] {
+  --wc-border-light: rgba(255, 255, 255, 0.34);
+  --dsw-alias-border-l2: rgba(255, 255, 255, 0.20);
+  --dsw-alias-label-secondary: #e8e8ea;
+  --dsw-alias-label-tertiary: #d2d2d6;
+}
 
 /* ================= frame ================= */
 body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
@@ -1354,6 +1401,26 @@ if (typeof document === "undefined" || !document.body) return;
 document.body.dataset.dshWcReduceMotion = on ? "1" : "0";
 }
 
+/** Font family: system keeps the host stack, wechat mimics PingFang, serif for long reads. */
+function applyFontFamily(value) {
+if (typeof document === "undefined" || !document.body) return;
+const mode = value === "wechat" || value === "serif" ? value : "system";
+document.body.dataset.dshWcFontFamily = mode;
+}
+
+/** High-contrast text and borders. */
+function applyContrast(on) {
+if (typeof document === "undefined" || !document.body) return;
+document.body.dataset.dshWcContrast = on ? "high" : "normal";
+}
+
+/** Sidebar avatar shape: rounded square (WeChat), circle, or square. */
+function applyAvatarShape(value) {
+if (typeof document === "undefined" || !document.body) return;
+const mode = value === "circle" || value === "square" ? value : "rounded";
+document.body.dataset.dshWcAvatarShape = mode;
+}
+
 /** User-saved presets, newest first. */
 function readCustomPresets() {
 const list = readJson(CUSTOM_PRESETS_KEY, []);
@@ -1576,11 +1643,11 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion) => {
+		      sync: (d, enabled, fontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1591,6 +1658,9 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 		        d.aiAvatar = aiAvatar;
 		        d.lineHeight = lineHeight;
 		        d.reduceMotion = reduceMotion;
+		        d.fontFamily = fontFamily;
+		        d.contrast = contrast;
+		        d.avatarShape = avatarShape;
 		        d.revision = revision;
 					}
 				}
@@ -1832,7 +1902,7 @@ children: t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const density = useStore((s) => s.density);
 const userAvatarVisible = useStore((s) => s.userAvatar);
@@ -1851,6 +1921,9 @@ const status = statusPair[0];
 const setStatus = statusPair[1];
 const lineHeight = useStore((s) => s.lineHeight);
 const reduceMotion = useStore((s) => s.reduceMotion);
+const fontFamily = useStore((s) => s.fontFamily) || "system";
+const contrast = useStore((s) => s.contrast) || "normal";
+const avatarShape = useStore((s) => s.avatarShape) || "rounded";
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -1952,6 +2025,20 @@ const motionOptions = [
 { value: false, label: t("motionFull") },
 { value: true, label: t("motionReduced") }
 ];
+const fontFamilyOptions = [
+{ value: "system", label: t("fontFamilySystem") },
+{ value: "wechat", label: t("fontFamilyWechat") },
+{ value: "serif", label: t("fontFamilySerif") }
+];
+const contrastOptions = [
+{ value: "normal", label: t("contrastNormal") },
+{ value: "high", label: t("contrastHigh") }
+];
+const avatarShapeOptions = [
+{ value: "rounded", label: t("avatarShapeRounded") },
+{ value: "circle", label: t("avatarShapeCircle") },
+{ value: "square", label: t("avatarShapeSquare") }
+];
 const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) })).concat(customPresets.map((preset) => ({ value: preset.id, label: preset.name })));
 return (0, react_jsx_runtime.jsxs)("div", {
 ref: listRef,
@@ -2026,6 +2113,11 @@ hint: t("fontHint"),
 onReset: () => setFontLevel(3), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
 }),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("fontFamilyTitle"),
+onReset: () => { if (setFontFamily) setFontFamily("system"); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontFamily, options: fontFamilyOptions, onChange: (value) => { if (setFontFamily) setFontFamily(value); } })
+}),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupMessage"), children: [
 (0, react_jsx_runtime.jsxs)(SkinRow, {
@@ -2058,6 +2150,11 @@ title: t("userAvatarTitle"),
 hint: t("userAvatarHint"),
 onReset: () => setUserAvatarVisible(true), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: userAvatarVisible, options: userAvatarOptions, onChange: setUserAvatarVisible })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("avatarShapeTitle"),
+onReset: () => { if (setAvatarShape) setAvatarShape("rounded"); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: avatarShape, options: avatarShapeOptions, onChange: (value) => { if (setAvatarShape) setAvatarShape(value); } })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("densityTitle"),
@@ -2105,6 +2202,12 @@ title: t("motionTitle"),
 hint: t("motionHint"),
 onReset: () => { if (setReduceMotion) setReduceMotion(false); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: reduceMotion, options: motionOptions, onChange: (value) => { if (setReduceMotion) setReduceMotion(value); } })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("contrastTitle"),
+hint: t("contrastHint"),
+onReset: () => { if (setContrast) setContrast("normal"); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: contrast, options: contrastOptions, onChange: (value) => { if (setContrast) setContrast(value); } })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -2259,11 +2362,19 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applyLineHeight(lineHeight);
 			let reduceMotion = readJson(MOTION_KEY, false) === true;
 			applyReducedMotion(reduceMotion);
-			const store = createStore(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion);
+			let fontFamily = readJson(FONT_FAMILY_KEY, "system");
+			if (fontFamily !== "wechat" && fontFamily !== "serif") fontFamily = "system";
+			applyFontFamily(fontFamily);
+			let contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
+			applyContrast(contrast === "high");
+			let avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
+			if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
+			applyAvatarShape(avatarShape);
+			const store = createStore(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion);
+				bound?.sync(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -2448,6 +2559,14 @@ setUserAvatarVisible: (on) => {
 						applyLineHeight(lineHeight);
 						reduceMotion = readJson(MOTION_KEY, false) === true;
 						applyReducedMotion(reduceMotion);
+						fontFamily = readJson(FONT_FAMILY_KEY, "system");
+						if (fontFamily !== "wechat" && fontFamily !== "serif") fontFamily = "system";
+						applyFontFamily(fontFamily);
+						contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
+						applyContrast(contrast === "high");
+						avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
+						if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
+						applyAvatarShape(avatarShape);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -2501,6 +2620,24 @@ setUserAvatarVisible: (on) => {
 					applyReducedMotion(reduceMotion);
 					sync();
 					},
+					setFontFamily: (value) => {
+					fontFamily = value === "wechat" || value === "serif" ? value : "system";
+					writeJson(FONT_FAMILY_KEY, fontFamily);
+					applyFontFamily(fontFamily);
+					sync();
+					},
+					setContrast: (value) => {
+					contrast = value === "high" ? "high" : "normal";
+					writeJson(CONTRAST_KEY, contrast);
+					applyContrast(contrast === "high");
+					sync();
+					},
+					setAvatarShape: (value) => {
+					avatarShape = value === "circle" || value === "square" ? value : "rounded";
+					writeJson(AVATAR_SHAPE_KEY, avatarShape);
+					applyAvatarShape(avatarShape);
+					sync();
+					},
 					savePreset: (name) => {
 					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, density, chatWidth, sidebarBg };
 					const list = readCustomPresets();
@@ -2531,6 +2668,9 @@ setUserAvatarVisible: (on) => {
 							window.localStorage.removeItem(PRESET_KEY);
 window.localStorage.removeItem(LINE_HEIGHT_KEY);
 window.localStorage.removeItem(MOTION_KEY);
+window.localStorage.removeItem(FONT_FAMILY_KEY);
+window.localStorage.removeItem(CONTRAST_KEY);
+window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -2548,6 +2688,9 @@ window.localStorage.removeItem(MOTION_KEY);
 						applyPresetTheme(null);
 						lineHeight = "normal"; applyLineHeight(lineHeight);
 						reduceMotion = false; applyReducedMotion(reduceMotion);
+						fontFamily = "system"; applyFontFamily(fontFamily);
+						contrast = "normal"; applyContrast(false);
+						avatarShape = "rounded"; applyAvatarShape(avatarShape);
 						sync();
 					}
 				};
@@ -2586,6 +2729,18 @@ window.localStorage.removeItem(MOTION_KEY);
 "motionHint": "关闭皮肤的过渡与动画，跟随系统辅助功能设置",
 "motionFull": "完整",
 "motionReduced": "减少",
+"fontFamilyTitle": "字体",
+"fontFamilySystem": "系统默认",
+"fontFamilyWechat": "微信体",
+"fontFamilySerif": "宋体",
+"contrastTitle": "高对比度",
+"contrastHint": "加深正文、次要文字与边框，适合强光或外接显示器",
+"contrastNormal": "标准",
+"contrastHigh": "高对比",
+"avatarShapeTitle": "头像形状",
+"avatarShapeRounded": "圆角方形",
+"avatarShapeCircle": "正圆",
+"avatarShapeSquare": "方形",
 "presetSave": "存为预设",
 "presetDelete": "删除预设",
 "presetMine": "我的预设",
@@ -2654,6 +2809,18 @@ window.localStorage.removeItem(MOTION_KEY);
 "motionHint": "Turn off skin transitions and animations; follows the system setting",
 "motionFull": "Full",
 "motionReduced": "Reduced",
+"fontFamilyTitle": "Typeface",
+"fontFamilySystem": "System",
+"fontFamilyWechat": "WeChat",
+"fontFamilySerif": "Serif",
+"contrastTitle": "High contrast",
+"contrastHint": "Darker text and borders for bright rooms and external displays",
+"contrastNormal": "Normal",
+"contrastHigh": "High",
+"avatarShapeTitle": "Avatar shape",
+"avatarShapeRounded": "Rounded",
+"avatarShapeCircle": "Circle",
+"avatarShapeSquare": "Square",
 "presetSave": "Save preset",
 "presetDelete": "Delete preset",
 "presetMine": "My preset",

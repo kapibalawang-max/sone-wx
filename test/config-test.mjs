@@ -13,6 +13,8 @@ const KEY = {
   AI_AVATAR_ENABLED_KEY: 'dsh-wechat-skin:ai-avatar:enabled', AI_AVATAR_SHOW_KEY_LEGACY: 'dsh-wechat-skin:ai-avatar-visible',
   PRESET_KEY: 'dsh-wechat-skin:preset',
   LINE_HEIGHT_KEY: 'dsh-wechat-skin:line-height', MOTION_KEY: 'dsh-wechat-skin:reduced-motion',
+  FONT_FAMILY_KEY: 'dsh-wechat-skin:font-family', CONTRAST_KEY: 'dsh-wechat-skin:contrast',
+  AVATAR_SHAPE_KEY: 'dsh-wechat-skin:avatar-shape',
   CUSTOM_PRESETS_KEY: 'dsh-wechat-skin:presets',
   COMPOSER_H_KEY: 'dsh-wechat-skin:composer-height'
 };
@@ -23,6 +25,7 @@ const localStorage = {
   removeItem: (k) => store.delete(k)
 };
 let sidebarBg = null, fontLevel = 3, density = 'cozy', userAvatarVisible = true, chatWidth = 'wide', sidebarOrder = [];
+let fontFamily = 'system', contrast = 'normal', avatarShape = 'rounded';
 const calls = [];
 const sandbox = {
   window: { localStorage, dispatchEvent: (e) => calls.push(['event', e.type]), localStorageSet: null },
@@ -57,6 +60,9 @@ const sandbox = {
   applyPresetTheme: (v) => { calls.push(['preset', v]); },
   applyLineHeight: (v) => { calls.push(['lineHeight', v]); },
   applyReducedMotion: (v) => { calls.push(['motion', v]); },
+  applyFontFamily: (v) => { calls.push(['fontFamily', v]); },
+  applyContrast: (v) => { calls.push(['contrast', v]); },
+  applyAvatarShape: (v) => { calls.push(['avatarShape', v]); },
   readCustomPresets: () => { const raw = localStorage.getItem('dsh-wechat-skin:presets'); try { const v = raw === null ? [] : JSON.parse(raw); return Array.isArray(v) ? v : []; } catch (e) { return []; } },
   aiAvatar: true,
   applyPanelOrder: () => { calls.push(['order', sidebarOrder.join(',')]); },
@@ -69,7 +75,10 @@ const sandbox = {
   get userAvatarVisible() { return userAvatarVisible; }, set userAvatarVisible(v) { userAvatarVisible = v; },
   get chatWidth() { return chatWidth; }, set chatWidth(v) { chatWidth = v; },
   get sidebarBg() { return sidebarBg; }, set sidebarBg(v) { sidebarBg = v; },
-  get sidebarOrder() { return sidebarOrder; }, set sidebarOrder(v) { sidebarOrder = v; }
+  get sidebarOrder() { return sidebarOrder; }, set sidebarOrder(v) { sidebarOrder = v; },
+  get fontFamily() { return fontFamily; }, set fontFamily(v) { fontFamily = v; },
+  get contrast() { return contrast; }, set contrast(v) { contrast = v; },
+  get avatarShape() { return avatarShape; }, set avatarShape(v) { avatarShape = v; }
 };
 // fetch mock
 const brandState = { title: 'SONE', wordmarkImage: true, heroMark: false, mark: { set: true }, wordmark: null };
@@ -126,6 +135,9 @@ calls.length = 0;
 const imp = JSON.parse(JSON.stringify(payload));
 imp.skin[KEY.FONT_LEVEL_KEY] = JSON.stringify(1);
 imp.skin[KEY.SIDEBAR_BG_KEY] = JSON.stringify('#abcdef');
+imp.skin[KEY.FONT_FAMILY_KEY] = JSON.stringify('serif');
+imp.skin[KEY.CONTRAST_KEY] = JSON.stringify('high');
+imp.skin[KEY.AVATAR_SHAPE_KEY] = JSON.stringify('circle');
 delete imp.skin[KEY.USER_AVATAR_ENABLED_KEY];
 imp.brand = { title: 'NEW', wordmarkImage: false, heroMark: true };
 await api.importConfig(imp);
@@ -135,6 +147,7 @@ ok(localStorage.getItem(KEY.USER_AVATAR_ENABLED_KEY) === null, 'import keeps abs
 ok(calls.some((c) => c[0] === 'fetch' && c[1] === 'POST' && c[2] === '/sone-wx/brand'), 'import posts brand');
 ok(calls.some((c) => c[0] === 'event' && c[1] === 'sone-wx:brand-reload'), 'import dispatches reload');
 ok(calls.some((c) => c[0] === 'userAvatar' && c[1] === true), 'import restores user avatar');
+ok(fontFamily === 'serif' && contrast === 'high' && avatarShape === 'circle', 'import applies new settings');
 await api.importConfig(null).then(() => ok(false, 'null should reject')).catch(() => ok(true, 'null rejects'));
 
 // custom presets
