@@ -60,7 +60,7 @@ eq('warning dot', `${m.warning.w}/${m.warning.bg}`, '9px/rgb(255, 197, 61)');
 eq('error dot', m.error.bg, 'rgb(255, 107, 107)');
 eq('done has no badge', m.done.display, 'none');
 eq('idle has no badge', m.noBadgeForIdle, 'true');
-eq('selected row is WeChat green', m.selectedRowBg, 'rgb(82, 173, 120)');
+eq('selected row is WeChat green', m.selectedRowBg, 'rgb(76, 159, 111)');
 eq('selected badge sits on white disc', m.selectedBadgeBg, 'rgb(255, 255, 255)');
 eq('selected title is white', m.selectedTitleColor, 'rgb(255, 255, 255)');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');
