@@ -895,7 +895,7 @@ body .dsh-wc-btn-secondary:hover { background: var(--dsw-alias-interactive-bg-ho
 body .dsh-wc-btn-secondary:active { background: var(--dsw-alias-interactive-bg-active); }
 body .dsh-wc-btn-sm { padding: 6px 12px; font-size: var(--wc-fs-sm); line-height: 1.4; }
 /* settings search + per-row reset */
-body .dsh-wc-search { display: flex; align-items: center; gap: 8px; padding: 12px 16px 0; }
+body .dsh-wc-search { display: flex; align-items: center; gap: 8px; }
 body .dsh-wc-search-input {
 flex: 1 1 auto; min-width: 0; height: 28px; padding: 0 10px;
 border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-btn);
@@ -916,6 +916,25 @@ opacity: 0; transition: opacity 250ms ease-out, background-color 250ms ease-out;
 body .dsh-wc-row:hover .dsh-wc-reset, body .dsh-wc-reset:focus-visible { opacity: 1; }
 body .dsh-wc-reset:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
 body .dsh-wc-empty { padding: 18px 16px; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: var(--wc-fs-sm); }
+/* one settings section = one card */
+body .dsh-wc-group {
+border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+border-radius: 12px;
+background: var(--dsw-alias-bg-module-platform, #ffffff);
+overflow: hidden;
+}
+body .dsh-wc-group-title {
+padding: 14px 16px 2px;
+color: var(--dsw-alias-label-tertiary);
+font-size: var(--wc-fs-sm);
+font-weight: 600;
+line-height: 18px;
+}
+body .dsh-wc-group > .dsh-wc-row:first-child,
+body .dsh-wc-group-body > .dsh-wc-row:first-child { border-top: none !important; }
+body .dsh-wc-row { transition: background-color 250ms ease-out; }
+@media (hover: hover) { body .dsh-wc-row:hover { background: var(--dsw-alias-interactive-bg-hover); } }
+@media (prefers-reduced-motion: reduce) { body .dsh-wc-row { transition: none; } }
 body .dsh-wc-seg {
 	display: inline-flex;
 	align-items: center;
@@ -1588,10 +1607,10 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 				minWidth: 0
 			},
 			card: {
-				border: "0.5px solid var(--dsw-alias-border-l2)",
-				borderRadius: "12px",
-				background: "var(--dsw-alias-bg-layer-2, rgba(128, 128, 128, 0.04))",
-				overflow: "hidden"
+				display: "flex",
+				flexDirection: "column",
+				gap: "12px",
+				minWidth: 0
 			},
 			cardHead: {
 				padding: "14px 16px 8px"
@@ -1638,8 +1657,10 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 			itemControl: {
 				display: "flex",
 				alignItems: "center",
+				justifyContent: "flex-end",
 				gap: "8px",
-				flex: "none"
+				flex: "none",
+				marginLeft: "auto"
 			},
 			itemFirst: {
 				display: "flex",
@@ -1655,8 +1676,10 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 				alignItems: "center",
 				justifyContent: "space-between",
 				gap: "12px",
-				padding: "10px 16px 14px",
-				borderTop: "0.5px solid var(--dsw-alias-border-l2)",
+				padding: "12px 16px",
+				border: "0.5px solid var(--dsw-alias-border-l2)",
+				borderRadius: "12px",
+				background: "var(--dsw-alias-bg-layer-2, rgba(128, 128, 128, 0.04))",
 				flexWrap: "wrap"
 			},
 			footLeft: {
@@ -1683,8 +1706,7 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 			},
 			dotWarn: { background: "#ffc53d" },
 			previewBlock: {
-				padding: "12px 16px",
-				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
+				padding: "2px 16px 14px"
 			},
 			groupTitle: {
 				padding: "14px 16px 6px",
@@ -1722,6 +1744,17 @@ children: "\u21ba"
 }) : null
 ]
 })
+				]
+			});
+		}
+
+		/** A titled card that groups related rows (one section = one card). */
+		function Group({ title, children }) {
+			return (0, react_jsx_runtime.jsxs)("div", {
+				className: "dsh-wc-group",
+				children: [
+					title ? (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-group-title", children: title }) : null,
+					(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-group-body", children })
 				]
 			});
 		}
@@ -1843,17 +1876,10 @@ const hit = !q || String(rowEl.textContent || "").toLowerCase().indexOf(q) !== -
 rowEl.style.display = hit ? "" : "none";
 if (hit) visibleCount += 1;
 });
-// 分组标题在其下所有行都被过滤掉时一并隐藏
-const kids = Array.prototype.slice.call(root.children);
-kids.forEach((child, index) => {
-if (!child.classList || !child.classList.contains("dsh-wc-grouptitle")) return;
-let visible = false;
-for (let j = index + 1; j < kids.length; j++) {
-const sib = kids[j];
-if (sib.classList && sib.classList.contains("dsh-wc-grouptitle")) break;
-if (sib.classList && sib.classList.contains("dsh-wc-row") && sib.style.display !== "none") { visible = true; break; }
-}
-child.style.display = visible ? "" : "none";
+// 一张分组卡里没有可见行时，整张卡一起隐藏
+Array.prototype.slice.call(root.querySelectorAll(".dsh-wc-group")).forEach((card) => {
+const hitRow = Array.prototype.slice.call(card.querySelectorAll(".dsh-wc-row")).some((rowEl) => rowEl.style.display !== "none");
+card.style.display = hitRow ? "" : "none";
 });
 setNoHit(Boolean(q) && visibleCount === 0);
 }, [searchQuery]);
@@ -1955,6 +1981,7 @@ children: t("searchClear")
 ]
 }),
 noHit ? (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-empty", children: t("noMatch") }) : null,
+(0, react_jsx_runtime.jsxs)("div", { className: "dsh-wc-group", children: [
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("presetTitle"),
 first: true,
@@ -1995,14 +2022,16 @@ children: t("presetDelete")
 style: styles.previewBlock,
 children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
 }),
-(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupAppearance") }),
+] }),
+(0, react_jsx_runtime.jsxs)(Group, { title: t("groupAppearance"), children: [
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("fontTitle"),
 hint: t("fontHint"),
 onReset: () => setFontLevel(3), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
 }),
-(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupMessage") }),
+] }),
+(0, react_jsx_runtime.jsxs)(Group, { title: t("groupMessage"), children: [
 (0, react_jsx_runtime.jsxs)(SkinRow, {
 title: t("avatarTitle"),
 children: [
@@ -2033,7 +2062,8 @@ title: t("densityTitle"),
 onReset: () => setDensity("cozy"), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
 }),
-(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupLayout") }),
+] }),
+(0, react_jsx_runtime.jsxs)(Group, { title: t("groupLayout"), children: [
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("widthTitle"),
 onReset: () => setChatWidth("wide"), resetLabel: t("rowReset"),
@@ -2071,13 +2101,15 @@ title: t("tailTitle"),
 onReset: () => setTail(true), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
 }),
-(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupAssist") }),
+] }),
+(0, react_jsx_runtime.jsxs)(Group, { title: t("groupAssist"), children: [
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("motionTitle"),
 hint: t("motionHint"),
 onReset: () => { if (setReduceMotion) setReduceMotion(false); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: reduceMotion, options: motionOptions, onChange: (value) => { if (setReduceMotion) setReduceMotion(value); } })
 }),
+] }),
 (0, react_jsx_runtime.jsxs)("div", {
 style: styles.cardFoot,
 children: [

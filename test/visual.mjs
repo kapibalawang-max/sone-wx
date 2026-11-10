@@ -66,15 +66,34 @@ console.log(a)</code></pre>
     </div>
   </div>`,
   'settings-light': `<div style="width:560px;padding:16px;background:#fff">
-    <div class="dsh-wc-settings">
-      <div class="dsh-wc-search"><input class="dsh-wc-search-input" placeholder="搜索设置"><button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">清除</button></div>
-      <div class="dsh-wc-row"><span class="dsh-wc-label">字号</span>
-        <span class="dsh-wc-seg"><button class="dsh-wc-seg-btn">小</button><button class="dsh-wc-seg-btn dsh-wc-seg-on">标准</button><button class="dsh-wc-seg-btn">大</button></span></div>
-      <div class="dsh-wc-row"><span class="dsh-wc-label">侧栏背景</span>
-        <span class="dsh-wc-swatch" style="background:#4c9f6f"></span><span class="dsh-wc-swatch" style="background:#8e8e93"></span></div>
-      <div class="dsh-wc-row"><span class="dsh-wc-label">用图片代替标题</span><button class="dsh-wc-switch" role="switch" aria-checked="true"></button></div>
-      <div class="dsh-wc-row"><span class="dsh-wc-label">AI 头像</span>
-        <span><button class="dsh-wc-btn dsh-wc-btn-primary dsh-wc-btn-sm">上传</button> <button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">恢复默认</button></span></div>
+    <div class="dsh-wc-search"><input class="dsh-wc-search-input" placeholder="搜索设置"><button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">清除</button></div>
+    <div class="dsh-wc-group" style="margin-top:12px">
+      <div class="dsh-wc-group-title">预设</div>
+      <div class="dsh-wc-group-body">
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px">
+          <span style="font-size:13px;color:#1a1a1a">主题预设</span>
+          <span class="dsh-wc-seg"><button class="dsh-wc-seg-item">微信</button><button class="dsh-wc-seg-item" aria-pressed="true">纸张</button></span>
+        </div>
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px;border-top:0.5px solid #e6e6e6">
+          <span style="font-size:13px;color:#1a1a1a">字体大小</span>
+          <span class="dsh-wc-seg"><button class="dsh-wc-seg-item">小</button><button class="dsh-wc-seg-item" aria-pressed="true">标准</button><button class="dsh-wc-seg-item">大</button></span>
+        </div>
+      </div>
+    </div>
+    <div class="dsh-wc-group" style="margin-top:12px">
+      <div class="dsh-wc-group-title">消息</div>
+      <div class="dsh-wc-group-body">
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px">
+          <span style="font-size:13px;color:#1a1a1a">AI 头像</span>
+          <span style="display:flex;align-items:center;gap:8px"><button class="dsh-wc-switch" role="switch" aria-checked="true"></button><button class="dsh-wc-reset" style="opacity:1">↺</button></span>
+        </div>
+      </div>
+    </div>
+    <div class="dsh-wc-group" style="margin-top:12px;background:rgba(128,128,128,0.04);padding:12px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <span style="font-size:12px;color:#8c8c8c">适配正常</span>
+        <button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">导出</button>
+      </div>
     </div>
   </div>`,
 }
