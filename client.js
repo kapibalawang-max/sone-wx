@@ -531,6 +531,24 @@ body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="user"],
 body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"] {
   animation: dsh-wechat-in 320ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
+/* Plugin glyph: one clockwise turn when the row is pointed at. The turn ends at
+   exactly 360deg, so the resting pose is identical to the start and leaving
+   mid-turn cannot spin the icon backwards. The "more" row (aria-haspopup) keeps
+   its static icon — it opens a menu rather than switching panels. */
+body.dsh-wechat-skin-on .kB3qhq_panelGlyph {
+  display: inline-flex;
+  transform-origin: 50% 50%;
+}
+@media (hover: hover) {
+  body.dsh-wechat-skin-on .kB3qhq_panelRow:not([aria-haspopup]):hover .kB3qhq_panelGlyph {
+    animation: dsh-wc-glyph-turn 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+}
+@keyframes dsh-wc-glyph-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* The sent bubble pops in a touch more than the reply. */
 body.dsh-wechat-skin-on [data-chat-flow-kind="user"] [class*="_bubble_"] {
   animation: dsh-wechat-pop 300ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
