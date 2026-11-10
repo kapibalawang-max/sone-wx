@@ -1199,14 +1199,14 @@ body .dsh-wc-color {
 
 		/** Generate a deterministic colored-initial SVG avatar (no third-party photos). */
 		function generatedAvatar(title, seed) {
-			/* Muted chip: 26% saturation paper with a deep same-hue initial (≈7.5:1).
-			   Hues are ordered so neighbouring rows never land on the same family. */
+			/* Neutral chip, coloured initial: the hue only identifies, it never paints
+			   the whole tile (12 hues at 54% / 36% keep 5.2–10.2:1 on the chip). */
 			const AVATAR_HUES = [352, 12, 28, 200, 214, 228, 242, 258, 274, 292, 312, 332];
 			const hue = AVATAR_HUES[Math.abs(seed) % AVATAR_HUES.length];
 			const initial = escapeXml(Array.from(title.trim())[0] || "?");
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',26%,92%)"/>'
-				+ '<text x="64" y="86" font-size="60" text-anchor="middle" fill="hsl(' + hue + ',38%,33%)" font-family="Microsoft YaHei, Segoe UI, sans-serif">' + initial + '</text></svg>';
+				+ '<rect width="128" height="128" rx="30" fill="#f2f2f3"/>'
+				+ '<text x="64" y="86" font-size="60" text-anchor="middle" fill="hsl(' + hue + ',54%,36%)" font-family="Microsoft YaHei, Segoe UI, sans-serif">' + initial + '</text></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
