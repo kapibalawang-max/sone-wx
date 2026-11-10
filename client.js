@@ -130,8 +130,10 @@ window.__ModuleLoader__.load({
   --wc-bubble-code-ink: #0a2e1a;
   /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
   --wc-sidebar: #eeeef0;
-  /* selected session row: WeChat brand green */
-  --wc-sel-bg: #4c9f6f;
+  /* selected session row: light lime with dark ink (white text is unreadable on it) */
+  --wc-sel-bg: #a9ea7a;
+  --wc-sel-ink: #14301f;
+  --wc-sel-ink-dim: rgba(20, 48, 31, 0.62);
   --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
@@ -189,7 +191,9 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
-  --wc-sel-bg: #3f8760;
+  --wc-sel-bg: #2f5c3f;
+  --wc-sel-ink: #ffffff;
+  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
   --dsw-alias-state-business-primary: var(--wc-green) ;
   --dsw-alias-state-business-tertiary: #16281f ;
   --dsw-alias-state-success-primary: var(--wc-green) ;
@@ -207,7 +211,9 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
-  --wc-sel-bg: #4c9f6f;
+  --wc-sel-bg: #c9e39b;
+  --wc-sel-ink: #2b3a1e;
+  --wc-sel-ink-dim: rgba(43, 58, 30, 0.62);
   --wc-surface: #f2ece0;
   --wc-border-light: #e3dac8;
   --wc-bubble: #ded3ba;
@@ -250,7 +256,7 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected {
   --wc-row-bg: var(--wc-sel-bg);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot {
-  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px color-mix(in srgb, var(--wc-sel-ink) 28%, transparent);
 }
 /* sessions with an active scheduled task: clock badge on the avatar's bottom-left */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow [data-session-schedule-mark] {
@@ -314,9 +320,9 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_title {
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover { background: var(--wc-sel-bg); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 600; color: #ffffff; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 600; color: var(--wc-sel-ink); }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_time,
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_rowResting { color: rgba(255, 255, 255, 0.8); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_rowResting { color: var(--wc-sel-ink-dim); }
 /* green selected row: the status badge needs a light disc so the arc stays visible */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state] + span {
   background: #ffffff; box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
