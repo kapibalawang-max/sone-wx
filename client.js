@@ -1219,25 +1219,72 @@ body .dsh-wc-color {
 
 		/** Head-and-shoulders bust: neck joins shoulders, tint and pose come from the title. */
 		/**
-		 * Ten muted backgrounds with a same-family figure. Explicit hex rather than a
-		 * generated hue keeps every tile inside the palette instead of drifting.
+		 * Twelve muted backgrounds with a same-family figure. Each row is [bg, fg, topic]:
+		 * the topic word is what a session has to be about for this pair to win.
 		 */
 		const AVATAR_PALETTE = [
-			["#eef1f4", "#8a93a3"], // slate
-			["#eaf5ee", "#5f8f74"], // green
-			["#e9f2f8", "#5b7fa0"], // steel blue
-			["#f3eff8", "#83709f"], // iris
-			["#f7f0e8", "#a08256"], // sand
-			["#f8eeee", "#a47070"], // clay
-			["#eaf5f4", "#5c8f8b"], // teal
-			["#f6eef2", "#a3758c"], // plum
-			["#eef0f7", "#6b76a3"], // indigo
-			["#f7f2e8", "#8d8558"], // olive
+			["#eef1f4", "#8a93a3", "default"],   // slate
+			["#eaf5ee", "#5f8f74", "life"],      // green
+			["#e9f2f8", "#5b7fa0", "data"],      // steel
+			["#f3eff8", "#83709f", "design"],    // iris
+			["#f7f0e8", "#a08256", "writing"],   // sand
+			["#f8eeee", "#a47070", "repair"],    // clay
+			["#eaf5f4", "#5c8f8b", "team"],      // teal
+			["#f6eef2", "#a3758c", "creative"],  // plum
+			["#eef0f7", "#6b76a3", "code"],      // indigo
+			["#f7f2e8", "#8d8558", "ops"],       // olive
+			["#fbf2e2", "#b4863f", "money"],     // amber
+			["#f2f0ec", "#8a857c", "archive"],   // linen
 		];
+		/**
+		 * Topic words, most specific first. A session titled "修复登录态过期" is a repair,
+		 * not a login task, so the repair row is checked before anything generic.
+		 */
+		const AVATAR_TOPICS = [
+			["money", ["支付", "财务", "账单", "预算", "发票", "费用", "收入", "结算", "对账", "billing", "payment", "invoice", "budget", "finance"]],
+			["design", ["设计", "视觉", "样式", "配色", "排版", "交互", "图标", "原型", "界面", "页面", "改版", "design", "ui", "ux", "style", "layout", "figma"]],
+			["code", ["开发", "代码", "工程", "接口", "部署", "脚本", "构建", "重构", "迁移", "联调", "api", "code", "deploy", "build", "refactor", "migrate"]],
+			["data", ["数据", "统计", "报表", "指标", "图表", "分析", "评测", "对比", "data", "report", "metric", "chart", "analysis", "benchmark"]],
+			["ops", ["运维", "监控", "日志", "性能", "容量", "巡检", "缓存", "ops", "monitor", "log", "perf", "capacity"]],
+			["repair", ["修复", "故障", "报错", "异常", "崩溃", "回滚", "缺陷", "bug", "fix", "crash", "error", "incident", "regression"]],
+			["archive", ["归档", "历史", "回顾", "整理", "清理", "备份", "archive", "history", "review", "cleanup", "backup"]],
+			["writing", ["文档", "笔记", "写作", "文案", "报告", "草稿", "知识", "说明", "doc", "note", "write", "draft", "readme"]],
+			["team", ["会议", "沟通", "协作", "同步", "讨论", "评审", "团队", "例会", "meeting", "sync", "team", "standup"]],
+			["creative", ["创意", "灵感", "音乐", "视频", "内容", "策划", "故事", "插画", "idea", "creative", "music", "video", "content"]],
+			["life", ["生活", "旅行", "出行", "健身", "健康", "饮食", "家庭", "清单", "周末", "life", "travel", "health", "plan", "weekend"]],
+		];
+
 		function titleHash(text) {
 			let h = 2166136261;
 			for (const ch of String(text)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
 			return h >>> 0;
+		}
+		/** Palettes the title's topic points at, or null when no word matches. */
+		function paletteForTopic(title) {
+			const text = String(title).toLowerCase();
+			for (const [topic, words] of AVATAR_TOPICS) {
+				for (const word of words) {
+					if (text.includes(word)) {
+						const row = AVATAR_PALETTE.findIndex((item) => item[2] === topic);
+						if (row >= 0) return AVATAR_PALETTE[row];
+					}
+				}
+			}
+			return null;
+		}
+		function silhouetteAvatar(title, seed) {
+			const base = titleHash(title);
+			const h = (base ^ Math.imul(Math.abs(seed) + 1, 2654435761)) >>> 0;
+			const [bg, fg] = paletteForTopic(title) || AVATAR_PALETTE[base % AVATAR_PALETTE.length];
+			const headX = 58 + ((h >>> 3) % 13);
+			const headR = 20 + ((h >>> 7) % 5);
+			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
+				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath></defs>'
+				+ '<rect width="128" height="128" rx="30" fill="' + bg + '"/>'
+				+ '<g clip-path="url(#c)" fill="' + fg + '">'
+				+ '<circle cx="' + headX + '" cy="46" r="' + headR + '"/>'
+				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
+			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 		function silhouetteAvatar(title, seed) {
 			const base = titleHash(title);
