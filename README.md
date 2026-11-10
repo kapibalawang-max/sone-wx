@@ -16,6 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.21.2 助手回复不跟随正文档：宿主 Markdown 用 `font: var(--dsw-font-markdown-base)` 简写，而简写里的 `var(--dsw-font-family)` 一直没定义 → 整条 `font` 声明在计算时失效，正文回落到继承的 16px，字号 token 再好也传不下去。现在皮肤在 body 上定义 `--dsw-font-family`（三种字体各自一套）并给 `._markdown_rve47_5` 显式钉 `font-size: var(--wc-body-lg)`，回复正文、列表、引用与表格一起跟随正文档。
 - 2026-11-10 v1.21.1 修正文字号点了没反应：`setTextFontLevel` 被插进 `setDensity` 的函数体，变成标签语句（label），返回对象里根本没有这个 setter，点分段控件等于空调用。已挪回对象属性，同时补 `body.dsh-wechat-skin-on .XNZzAa_body` 的字号与行高（此前助手正文继承宿主 14px，只有发送气泡跟着正文档走），现在助手回复、气泡、代码块、表格一起缩放。
   - 新增 test/injected-setters-test.mjs：把 injected 的对象字面量真正求值，逐个断言 21 个 setter 都是可调用函数——这类「语法合法但属性丢失」的错 node --check 与 CSS 测试都抓不到。
   - type-scale-test 增加助手正文缩放断言（11 项）。

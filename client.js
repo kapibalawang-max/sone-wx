@@ -266,7 +266,10 @@ body.dsh-wechat-skin-on ::-webkit-scrollbar-thumb {
 body.dsh-wechat-skin-on ::-webkit-scrollbar-thumb:hover { background: var(--wc-scroll-thumb-hover); background-clip: padding-box; }
 
 /* typeface: the host exposes --dsw-font-family but never defines it, so the skin owns the fallback */
-body.dsh-wechat-skin-on { font-family: var(--dsw-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif); }
+body.dsh-wechat-skin-on {
+  --dsw-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--dsw-font-family);
+}
 /* typeface presets: system keeps the host stack untouched */
 body.dsh-wechat-skin-on[data-dsh-wc-font-family="wechat"] {
   --dsw-font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -538,6 +541,12 @@ body.dsh-wechat-skin-on.dsh-wechat-match .XNZzAa_body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   position: relative;
   min-width: 40px;
+  font-size: var(--wc-body-lg);
+  line-height: calc(var(--wc-body-lg) * var(--wc-line-height, 1.6));
+}
+/* markdown 正文：宿主用 font: var(--dsw-font-markdown-base) 简写，字号走 --dsh-content-font-size；
+   这里再显式钉一次正文档，避免宿主派生 token 被别的皮肤/主题覆盖时正文不跟随 */
+body.dsh-wechat-skin-on ._markdown_rve47_5 {
   font-size: var(--wc-body-lg);
   line-height: calc(var(--wc-body-lg) * var(--wc-line-height, 1.6));
 }
