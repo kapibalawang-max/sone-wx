@@ -1217,20 +1217,36 @@ body .dsh-wc-color {
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
-		/** Head-and-shoulders figure on a pale tint: reads as a person, carries no text. */
+		/** Head-and-shoulders bust: neck joins shoulders, tint and pose come from the title. */
 		function silhouetteAvatar(title, seed) {
 			const AVATAR_HUES = [352, 12, 28, 200, 214, 228, 242, 258, 274, 292, 312, 332];
 			const h = ((Math.abs(seed) * 2654435761) ^ 2166136261) >>> 0;
 			const hue = AVATAR_HUES[(h + title.length * 7) % AVATAR_HUES.length];
-			const headX = 58 + ((h >>> 3) % 13);
-			const headR = 20 + ((h >>> 7) % 5);
-			const shade = 48 + ((h >>> 11) % 8);
+			const headX = 63 + ((h >>> 11) % 5) - 2;
+			const headRx = 18 + ((h >>> 15) % 3);
+			const headRy = 20 + ((h >>> 19) % 3);
+			const shoulderL = 16 + ((h >>> 3) % 6);
+			const shoulderR = 112 - ((h >>> 7) % 6);
+			const neckHalf = 11 + ((h >>> 23) % 3);
+			const neckTop = 58;
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath></defs>'
-				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',30%,90%)"/>'
-				+ '<g clip-path="url(#c)" fill="hsl(' + hue + ',26%,' + shade + '%)">'
-				+ '<circle cx="' + headX + '" cy="46" r="' + headR + '"/>'
-				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
+				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath>'
+				+ '<linearGradient id="bg" x1="0" y1="0" x2="0.7" y2="1">'
+				+ '<stop offset="0" stop-color="hsl(' + hue + ',34%,95%)"/><stop offset="1" stop-color="hsl(' + hue + ',30%,86%)"/></linearGradient>'
+				+ '<linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">'
+				+ '<stop offset="0" stop-color="hsl(' + hue + ',26%,62%)"/><stop offset="1" stop-color="hsl(' + hue + ',28%,44%)"/></linearGradient></defs>'
+				+ '<rect width="128" height="128" rx="30" fill="url(#bg)"/>'
+				+ '<g clip-path="url(#c)" fill="url(#fg)">'
+				+ '<ellipse cx="' + headX + '" cy="42" rx="' + headRx + '" ry="' + headRy + '"/>'
+				+ '<path d="M ' + shoulderL + ' 128'
+				+ ' C ' + shoulderL + ' 104 ' + (shoulderL + 16) + ' 90 ' + (64 - neckHalf) + ' 84'
+				+ ' L ' + (64 - neckHalf) + ' ' + (neckTop + 4)
+				+ ' Q ' + (64 - neckHalf) + ' ' + neckTop + ' ' + (64 - neckHalf + 4) + ' ' + neckTop
+				+ ' L ' + (64 + neckHalf - 4) + ' ' + neckTop
+				+ ' Q ' + (64 + neckHalf) + ' ' + neckTop + ' ' + (64 + neckHalf) + ' ' + (neckTop + 4)
+				+ ' L ' + (64 + neckHalf) + ' 84'
+				+ ' C ' + (shoulderR - 16) + ' 90 ' + shoulderR + ' 104 ' + shoulderR + ' 128 Z"/>'
+				+ '</g></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
