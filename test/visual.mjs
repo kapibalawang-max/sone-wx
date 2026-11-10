@@ -109,7 +109,11 @@ console.log(a)</code></pre>
     <div class="dsh-wc-group" style="margin-top:12px;background:rgba(128,128,128,0.04);padding:12px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <span style="font-size:12px;color:#8c8c8c">适配正常</span>
-        <button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">导出</button>
+        <span style="display:flex;gap:8px"><button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">导出</button><button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">导入</button></span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding-top:10px;border-top:0.5px solid rgba(0,0,0,0.12)">
+        <span style="font-size:12px;color:#8c8c8c">清除全部外观设置，不可撤销</span>
+        <button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">恢复默认</button>
       </div>
     </div>
   </div>`,

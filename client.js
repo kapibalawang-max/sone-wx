@@ -151,8 +151,8 @@ window.__ModuleLoader__.load({
   --wc-sidebar: #eeeef0;
   /* selected session row: WeChat deep green with white text */
   --wc-sel-bg: #4c9f6f;
-  --wc-sel-ink: #ffffff;
-  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
+  --wc-sel-ink: #0a2e1a;
+  --wc-sel-ink-dim: rgba(10, 46, 26, 0.72);
   --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
@@ -165,8 +165,20 @@ window.__ModuleLoader__.load({
   --wc-avatar-user-b: #f97316;
   --wc-avatar-sel-a: #58c98e;
   --wc-avatar-sel-b: #2fae6d;
-  --wc-dot-warning: #ffc53d;
-  --wc-dot-error: #ff6b6b;
+  --wc-dot-warning: #d97706;
+  --wc-dot-error: #dc2626;
+  /* semantic colour source: fill vs ink. brand-ink reaches 5.2:1 on white. */
+  --wc-brand: var(--wc-green);
+  --wc-brand-hover: var(--wc-green-hover);
+  --wc-brand-press: #0a7d43;
+  --wc-brand-ink: #0a7d43;
+  --wc-link: #0a7d43;
+  --wc-ink-2: var(--dsw-alias-label-secondary, #61666b);
+  --wc-ink-3: var(--dsw-alias-label-tertiary, #81858c);
+  --wc-line: var(--wc-border-light);
+  --wc-control-h: 28px;
+  --wc-danger: #b42318;
+  --wc-danger-hover: #991b1b;
   --wc-stop: #e5484d;
   --wc-stop-hover: #d13438;
   --wc-btn-idle-bg: #f0f0f0;
@@ -215,9 +227,9 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
-  --wc-sel-bg: #3f8760;
+  --wc-sel-bg: #35734f;
   --wc-sel-ink: #ffffff;
-  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
+  --wc-sel-ink-dim: rgba(255, 255, 255, 0.82);
   --dsw-alias-state-business-primary: var(--wc-green) ;
   --dsw-alias-state-business-tertiary: #16281f ;
   --dsw-alias-state-success-primary: var(--wc-green) ;
@@ -238,8 +250,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
   --wc-sel-bg: #4c9f6f;
-  --wc-sel-ink: #ffffff;
-  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
+  --wc-sel-ink: #0a2e1a;
+  --wc-sel-ink-dim: rgba(10, 46, 26, 0.72);
   --wc-surface: #f2ece0;
   --wc-border-light: #e3dac8;
   --wc-bubble: #ded3ba;
@@ -363,7 +375,9 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="done"] + 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="completed"] + span,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="idle"] + span { display: none; }
 /* waiting for you: solid amber dot; failed: solid red dot */
-body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="warning"] + span { background: var(--wc-dot-warning); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="warning"] + span {
+  background: transparent; box-shadow: 0 0 0 2px var(--wc-row-bg), inset 0 0 0 2px var(--wc-dot-warning);
+}
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="error"] + span,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="failed"] + span { background: var(--wc-dot-error); }
 /* running: a small disc with a spinning arc, sized to stay legible at 26px */
@@ -380,7 +394,7 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="waiting"]
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="thinking"] + span::after {
   content: ""; position: absolute; inset: 2.5px; box-sizing: border-box; border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, var(--wc-green, #07c160) 28%, transparent);
-  border-top-color: var(--wc-green, #07c160);
+  border-top-color: var(--wc-brand-ink);
   animation: dsh-wc-badge-spin 0.9s linear infinite;
 }
 @keyframes dsh-wc-badge-spin { to { transform: rotate(1turn); } }
@@ -414,7 +428,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:not(.JoiKIa
 /* the pin has to follow the row's own ink, or it vanishes on the green selected fill */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_pinIndicator { color: var(--wc-sel-ink); }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_pinIndicator {
-  color: var(--wc-green, #07c160); width: 14px; height: 16px; margin-left: 4px; opacity: .9;
+  color: var(--wc-brand-ink); width: 14px; height: 16px; margin-left: 4px; opacity: .9;
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_pinIndicator > svg { width: 10px; height: 10px; }
 /* unread completion: the host marks it as data-state="done" — a green disc plus a heavier title */
@@ -425,15 +439,15 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_slot > [data-state="done"
   font-weight: 600; color: var(--dsw-alias-label-primary);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_rowResting .JoiKIa_time {
-  color: var(--wc-green, #07c160);
+  color: var(--wc-brand-ink);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_title { color: var(--wc-sel-ink); }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state="done"] + span {
-  background: var(--wc-sel-ink); box-shadow: 0 0 0 0 transparent;
+  background: #ffffff; box-shadow: 0 0 0 0 transparent;
 }
 /* timestamps: one step up from the host's 10px so they stay readable at a glance */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_time {
-  font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary);
+  font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: var(--wc-ink-2);
 }
 /* archived sessions recede until hovered */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_archived { opacity: .55; }
@@ -753,16 +767,15 @@ body.dsh-wechat-skin-on ._3j1mRa_node {
   background: var(--dsw-alias-bg-module-platform, #f2f2f2); padding: 2px 6px;
 }
 body.dsh-wechat-skin-on ._3j1mRa_label { font-size: var(--wc-fs-md); font-weight: 500; }
-body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
+body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: var(--wc-fs-sm); color: var(--wc-ink-2); font-variant-numeric: tabular-nums; }
 body.dsh-wechat-skin-on ._3j1mRa_error { font-size: var(--wc-fs-sm); }
 
 /* Markdown inside assistant replies: WeChat reading rhythm, light chrome. */
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, ul, ol) { line-height: var(--wc-line-height, 1.6); }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a { color: var(--wc-green); text-decoration: underline; text-underline-offset: 2px; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a { color: var(--wc-link); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h1 { font-size: var(--wc-body-xl); font-weight: 600; line-height: 1.35; margin: 18px 0 8px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h2 { font-size: calc(var(--wc-body-lg) * 1.2); font-weight: 600; line-height: 1.4; margin: 16px 0 6px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(h3, h4) { font-size: var(--wc-body-lg); font-weight: 600; line-height: 1.45; margin: 12px 0 4px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a { color: var(--wc-green); text-decoration: underline; text-underline-offset: 2px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :not(pre) > code {
   font-size: var(--wc-body-md); padding: 1px 5px; border-radius: var(--wc-radius-xs);
   background: var(--dsw-alias-bg-module-platform, #f2f2f2); border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
@@ -938,29 +951,31 @@ body .dsh-wc-btn {
 }
 body .dsh-wc-btn-primary {
 	border: none;
-	padding: 6px 14px;
+	padding: 4px 14px;
 	font-size: var(--wc-fs-md);
-	line-height: 1.5;
+	line-height: 20px;
 	color: #ffffff;
-	background: var(--wc-green, #07c160);
+	background: var(--wc-brand-press);
 }
-body .dsh-wc-btn-primary:hover { background: var(--wc-green-hover, #06ad56); }
-body .dsh-wc-btn-primary:active { background: var(--wc-green-deep, #15ac70); }
+body .dsh-wc-btn-danger { border: none; padding: 4px 14px; font-size: var(--wc-fs-md); line-height: 20px; color: #ffffff; background: var(--wc-danger); }
+body .dsh-wc-btn-danger:hover { background: var(--wc-danger-hover); }
+body .dsh-wc-btn-primary:hover { background: var(--wc-brand-ink); }
+body .dsh-wc-btn-primary:active { background: #086636; }
 body .dsh-wc-btn-secondary {
 	border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-	padding: 6px 14px;
+	padding: 4px 14px;
 	font-size: var(--wc-fs-md);
-	line-height: 1.5;
+	line-height: 20px;
 	color: var(--dsw-alias-label-secondary);
 	background: var(--dsw-alias-bg-module-platform);
 }
 body .dsh-wc-btn-secondary:hover { background: var(--dsw-alias-interactive-bg-hover); }
 body .dsh-wc-btn-secondary:active { background: var(--dsw-alias-interactive-bg-active); }
-body .dsh-wc-btn-sm { padding: 6px 12px; font-size: var(--wc-fs-sm); line-height: 1.4; }
+body .dsh-wc-btn-sm { padding: 4px 12px; font-size: var(--wc-fs-sm); line-height: 20px; }
 /* settings search + per-row reset */
 body .dsh-wc-search { display: flex; align-items: center; gap: 8px; }
 body .dsh-wc-search-input {
-flex: 1 1 auto; min-width: 0; height: 28px; padding: 0 10px;
+flex: 1 1 auto; min-width: 0; height: var(--wc-control-h); padding: 0 10px;
 border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-btn);
 background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-primary);
 font-family: inherit; font-size: var(--wc-fs-sm); line-height: 1.5;
@@ -974,7 +989,7 @@ body .dsh-wc-reset {
 flex: none; width: 20px; height: 20px; padding: 0; margin-left: 2px;
 border: none; border-radius: 999px; background: transparent; cursor: pointer;
 color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 20px;
-opacity: 0; transition: opacity 250ms ease-out, background-color 250ms ease-out;
+opacity: .55; transition: opacity 250ms ease-out, background-color 250ms ease-out;
 }
 body .dsh-wc-row:hover .dsh-wc-reset, body .dsh-wc-reset:focus-visible { opacity: 1; }
 body .dsh-wc-reset:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
@@ -1007,7 +1022,7 @@ body .dsh-wc-seg {
 	background: var(--dsw-alias-bg-layer-2, rgba(128, 128, 128, 0.1));
 }
 body .dsh-wc-seg-item {
-	height: 26px;
+	height: calc(var(--wc-control-h) - 4px);
 	padding: 0 10px;
 	border: 0;
 	border-radius: var(--wc-radius-btn);
@@ -1015,7 +1030,7 @@ body .dsh-wc-seg-item {
 	color: var(--dsw-alias-label-secondary);
 	font-family: inherit;
 	font-size: var(--wc-fs-sm);
-	line-height: 1.45;
+	line-height: 1.4;
 	cursor: pointer;
 	transition: background-color 250ms ease-out, color 250ms ease-out, box-shadow 250ms ease-out;
 }
@@ -1764,9 +1779,9 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 			},
 			cardFoot: {
 				display: "flex",
-				alignItems: "center",
-				justifyContent: "space-between",
-				gap: "12px",
+				flexDirection: "column",
+				alignItems: "stretch",
+				gap: "10px",
 				padding: "12px 16px",
 				border: "0.5px solid var(--dsw-alias-border-l2)",
 				borderRadius: "12px",
@@ -1777,6 +1792,9 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 				display: "flex",
 				alignItems: "center",
 				gap: "6px",
+				display: "flex",
+				alignItems: "center",
+				gap: "6px",
 				minWidth: 0,
 				fontSize: "12px",
 				lineHeight: "16px",
@@ -1784,9 +1802,31 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 			},
 			footRight: {
 				display: "flex",
-				alignItems: "center",
+				flexDirection: "column",
+				alignItems: "stretch",
 				gap: "8px",
-				flex: "none"
+				flex: "1 1 auto"
+			},
+			footActions: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "flex-end",
+				gap: "8px",
+				flexWrap: "wrap"
+			},
+			footHint: {
+				fontSize: "12px",
+				lineHeight: "18px",
+				color: "var(--dsw-alias-label-tertiary)"
+			},
+			dangerRow: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "space-between",
+				gap: "12px",
+				marginTop: "10px",
+				paddingTop: "10px",
+				borderTop: "0.5px solid var(--dsw-alias-border-l2)"
 			},
 			dot: {
 				width: "6px",
@@ -1865,8 +1905,12 @@ children: "\u21ba"
 		}
 
 /** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
-function SkinPreview({ t, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible }) {
+function SkinPreview({ t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible, fontFamily, contrast, avatarShape }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
+const textScale = FONT_SCALES[textFontLevel] !== undefined ? FONT_SCALES[textFontLevel] : FONT_SCALES[3];
+const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif' : fontFamily === "serif" ? '"Songti SC", "Noto Serif CJK SC", serif' : undefined;
+const previewAvatarRadius = avatarShape === "circle" ? "50%" : avatarShape === "square" ? "2px" : "5px";
+const highContrast = contrast === "high";
 const gap = 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
 const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
@@ -1874,7 +1918,7 @@ const canvasColor = darkSkin ? "#111113" : "#fafafa";
 const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
 const outBubble = "#95ec69";
 const lh = lineHeight === "compact" ? 1.5 : lineHeight === "relaxed" ? 1.85 : 1.6;
-const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: lh };
+const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontFamily: previewFont, fontSize: Math.round(12 * textScale) + "px", lineHeight: lh };
 return (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", borderRadius: "10px", overflow: "hidden", border: "0.5px solid var(--dsw-alias-border-l2)" },
 children: [
@@ -1891,11 +1935,11 @@ children: [
 style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-start" },
 children: [
 aiAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
-style: { width: "22px", height: "22px", borderRadius: "5px", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
+style: { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
 children: "AI"
 }),
 (0, react_jsx_runtime.jsxs)("div", {
-style: Object.assign({}, bubbleBase, { background: inBubble, color: darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a", border: darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)" }),
+style: Object.assign({}, bubbleBase, { background: inBubble, color: highContrast ? (darkSkin ? "#f2f2f3" : "#111111") : (darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a"), border: highContrast ? (darkSkin ? "0.5px solid rgba(255,255,255,0.34)" : "0.5px solid rgba(0,0,0,0.28)") : (darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)") }),
 children: t("previewIn")
 })
 ]
@@ -1904,7 +1948,7 @@ children: t("previewIn")
 style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-end" },
 children: [
 userAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
-style: { width: "22px", height: "22px", borderRadius: "5px", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
+style: { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
 children: t("me")
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -1939,6 +1983,8 @@ const importRef = (0, _react.useRef)(null);
 const presetPair = (0, _react.useState)(() => { const id = readJson(PRESET_KEY, null); return typeof id === "string" && id ? id : null; });
 const statusPair = (0, _react.useState)({ kind: "", detail: "" });
 const presetId = presetPair[0];
+const [armed, setArmed] = (0, _react.useState)(null);
+const armConfirm = (key) => { setArmed(key); window.setTimeout(() => setArmed((current) => (current === key ? null : current)), 4000); };
 const setPresetId = presetPair[1];
 const status = statusPair[0];
 const setStatus = statusPair[1];
@@ -2116,9 +2162,12 @@ children: t("presetSave")
 typeof presetId === "string" && presetId.indexOf("custom-") === 0 && deletePreset
 ? (0, react_jsx_runtime.jsx)("button", {
 type: "button",
-className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-onClick: () => { deletePreset(presetId); setPresetId(null); bumpPresets((n) => n + 1); },
-children: t("presetDelete")
+className: armed === "preset:" + presetId ? "dsh-wc-btn dsh-wc-btn-danger dsh-wc-btn-sm" : "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => {
+if (armed === "preset:" + presetId) { setArmed(null); deletePreset(presetId); setPresetId(null); bumpPresets((n) => n + 1); }
+else armConfirm("preset:" + presetId);
+},
+children: armed === "preset:" + presetId ? t("confirmAgain") : t("presetDelete")
 })
 : null
 ]
@@ -2126,7 +2175,7 @@ children: t("presetDelete")
 }),
 (0, react_jsx_runtime.jsx)("div", {
 style: styles.previewBlock,
-children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
+children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore, fontFamily, contrast, avatarShape })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAppearance"), children: [
@@ -2254,6 +2303,9 @@ children: status.kind
 (0, react_jsx_runtime.jsxs)("div", {
 style: styles.footRight,
 children: [
+(0, react_jsx_runtime.jsxs)("div", {
+style: styles.footActions,
+children: [
 (0, react_jsx_runtime.jsx)("input", { ref: importRef, type: "file", accept: "application/json,.json", style: { display: "none" }, onChange: runImport }),
 (0, react_jsx_runtime.jsx)("button", {
 type: "button",
@@ -2266,12 +2318,20 @@ type: "button",
 className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
 onClick: () => importRef.current && importRef.current.click(),
 children: t("importConfig")
+})
+]
 }),
+(0, react_jsx_runtime.jsxs)("div", {
+style: styles.dangerRow,
+children: [
+(0, react_jsx_runtime.jsx)("span", { style: styles.footHint, children: t("resetHint") }),
 (0, react_jsx_runtime.jsx)("button", {
 type: "button",
-className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
-onClick: () => resetSkin && resetSkin(),
-children: t("reset")
+className: armed === "reset" ? "dsh-wc-btn dsh-wc-btn-danger dsh-wc-btn-sm" : "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => { if (armed === "reset") { setArmed(null); if (resetSkin) resetSkin(); } else armConfirm("reset"); },
+children: armed === "reset" ? t("confirmAgain") : t("reset")
+})
+]
 })
 ]
 })
@@ -2806,6 +2866,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 					"fontL4": "较大",
 					"fontL5": "大",
 					"reset": "恢复默认",
+					"resetHint": "清除全部外观设置，不可撤销",
+					"confirmAgain": "再点一次确认",
 					"presetTitle": "主题预设",
 					"presetHint": "一次套用一组搭配",
 					"preset_wechat": "微信",
@@ -2888,6 +2950,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 					"fontL4": "L",
 					"fontL5": "XL",
 					"reset": "Reset",
+					"resetHint": "Clears every appearance setting, no undo",
+					"confirmAgain": "Click again to confirm",
 					"presetTitle": "Presets",
 					"presetHint": "Applies a matching set at once",
 					"preset_wechat": "WeChat",

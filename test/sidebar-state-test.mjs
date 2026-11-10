@@ -42,6 +42,7 @@ const m = await page.evaluate(() => {
     running: cs('.JoiKIa_sessionRow:nth-child(1) .JoiKIa_slot > [data-state] + span'),
     runningArc: cs('.JoiKIa_sessionRow:nth-child(1) .JoiKIa_slot > [data-state] + span', '::after'),
     warning: cs('.JoiKIa_sessionRow:nth-child(2) .JoiKIa_slot > [data-state] + span'),
+    warningShadow: getComputedStyle(document.querySelector('.JoiKIa_sessionRow:nth-child(2) .JoiKIa_slot > [data-state] + span')).boxShadow,
     done: cs('.JoiKIa_sessionRow:nth-child(4) .JoiKIa_slot > [data-state] + span'),
     error: cs('.JoiKIa_sessionRow:nth-child(5) .JoiKIa_slot > [data-state] + span'),
     completed: cs('.JoiKIa_sessionRow:nth-child(7) .JoiKIa_slot > [data-state] + span'),
@@ -56,6 +57,7 @@ const m = await page.evaluate(() => {
     pinColor: getComputedStyle(rowEls[8].querySelector('.JoiKIa_pinIndicator')).color,
     archivedOpacity: getComputedStyle(rowEls[9]).opacity,
     timeSize: getComputedStyle(rowEls[0].querySelector('.JoiKIa_time')).fontSize,
+    timeColor: getComputedStyle(rowEls[0].querySelector('.JoiKIa_time')).color,
     selPinBg: getComputedStyle(rowEls[10]).backgroundColor,
     selPinTitle: getComputedStyle(rowEls[10].querySelector('.JoiKIa_title')).color,
     selPinIcon: getComputedStyle(rowEls[10].querySelector('.JoiKIa_pinIndicator')).color,
@@ -72,24 +74,26 @@ eq('avatar width', m.slot.w, '26px');
 eq('avatar radius', m.slot.radius, '6px');
 eq('running badge size', `${m.running.w}/${m.running.h}`, '12px/12px');
 eq('running badge spins', m.runningArc.anim, 'dsh-wc-badge-spin');
-eq('running arc colour', m.runningArc.top, 'rgb(7, 193, 96)');
-eq('warning dot', `${m.warning.w}/${m.warning.bg}`, '9px/rgb(255, 197, 61)');
-eq('error dot', m.error.bg, 'rgb(255, 107, 107)');
+eq('running arc colour', m.runningArc.top, 'rgb(10, 125, 67)');
+eq('warning dot is a ring', `${m.warning.w}/${m.warning.bg}`, '9px/rgba(0, 0, 0, 0)');
+eq('warning ring colour', /rgb\(217, 119, 6\)/.test(m.warningShadow) ? 'ok' : m.warningShadow, 'ok');
+eq('error dot', m.error.bg, 'rgb(220, 38, 38)');
 eq('done (unread) shows a green disc', `${m.done.display}/${m.done.bg}`, 'block/rgb(7, 193, 96)');
 eq('done title is heavier', m.doneTitleWeight, '600');
 eq('completed has no badge', m.completed.display, 'none');
-eq('failed dot', m.failed.bg, 'rgb(255, 107, 107)');
+eq('failed dot', m.failed.bg, 'rgb(220, 38, 38)');
 eq('idle has no badge', m.noBadgeForIdle, 'true');
 eq('selected row is deep green', m.selectedRowBg, 'rgb(76, 159, 111)');
 eq('selected badge sits on white disc', m.selectedBadgeBg, 'rgb(255, 255, 255)');
-eq('selected title is white', m.selectedTitleColor, 'rgb(255, 255, 255)');
+eq('selected title is deep green ink', m.selectedTitleColor, 'rgb(10, 46, 26)');
 eq('pinned row tinted', m.pinnedBg !== m.plainBg, 'true');
-eq('pin icon uses wechat green', m.pinColor, 'rgb(7, 193, 96)');
+eq('pin icon uses brand ink', m.pinColor, 'rgb(10, 125, 67)');
 eq('pinned + selected keeps the green fill', m.selPinBg, 'rgb(76, 159, 111)');
-eq('pinned + selected keeps white title', m.selPinTitle, 'rgb(255, 255, 255)');
-eq('pin icon inverts on selected', m.selPinIcon, 'rgb(255, 255, 255)');
+eq('pinned + selected keeps green ink title', m.selPinTitle, 'rgb(10, 46, 26)');
+eq('pin icon inverts on selected', m.selPinIcon, 'rgb(10, 46, 26)');
 eq('archived row recedes', m.archivedOpacity, '0.55');
 eq('timestamp is 12px', m.timeSize, '12px');
+eq('timestamp uses secondary ink', m.timeColor, 'rgb(97, 102, 107)');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');
 if (fails.length) { console.error('FAIL\n' + fails.join('\n')); process.exit(1); }
 console.log(`sidebar-state: ${checks - fails.length}/${checks} OK`);
