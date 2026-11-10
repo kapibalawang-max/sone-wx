@@ -1183,8 +1183,8 @@ body .dsh-wc-color {
 
 		//#region dsh-wechat-skin: avatars + composer (DOM enhancement)
 		let avatarMap = readJson(AVATAR_MAP_KEY, {});
-		/** Sidebar avatar artwork: coloured initial (default) or dot-grid identicon. */
-		let avatarStyle = "initial";
+		/** Sidebar avatar artwork: head-and-shoulders figure (default) or coloured initial. */
+		let avatarStyle = "silhouette";
 
 		/** Deterministic avatar index from a title — stable across reloads. */
 		function avatarIndexForTitle(title) {
@@ -1203,7 +1203,7 @@ body .dsh-wc-color {
 		/** Generate a deterministic colored-initial SVG avatar (no third-party photos). */
 		function generatedAvatar(title, seed) {
 			if (avatarStyle === "initial") return initialAvatar(title, seed);
-			return identiconAvatar(title, seed);
+			return silhouetteAvatar(title, seed);
 		}
 
 		/** Neutral chip, coloured initial: the hue identifies without painting the tile. */
@@ -1217,28 +1217,20 @@ body .dsh-wc-color {
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
-		/** 5×5 mirror-symmetric dot grid from the title hash; single green, no letters. */
-		function identiconAvatar(title, seed) {
-			let h = (Math.abs(seed) * 2654435761 + 2166136261) >>> 0;
-			const text = String(title);
-			for (let i = 0; i < text.length; i += 1) {
-				h = (Math.imul(h ^ text.charCodeAt(i), 16777619)) >>> 0;
-			}
-			let cells = "";
-			for (let y = 0; y < 5; y += 1) {
-				for (let x = 0; x < 3; x += 1) {
-					if ((h >>> (y * 3 + x)) & 1) {
-						const rect = (cx) => '<rect x="' + (cx * 22 + 3) + '" y="' + (y * 22 + 3) + '" width="18" height="18" rx="4"/>';
-						cells += rect(x);
-						if (x < 2) cells += rect(4 - x);
-					}
-				}
-			}
-			/* An empty grid (very small h) would read as a blank tile; always show the centre. */
-			if (cells === "") cells = '<rect x="47" y="47" width="18" height="18" rx="4"/>';
+		/** Head-and-shoulders figure on a pale tint: reads as a person, carries no text. */
+		function silhouetteAvatar(title, seed) {
+			const AVATAR_HUES = [352, 12, 28, 200, 214, 228, 242, 258, 274, 292, 312, 332];
+			const h = ((Math.abs(seed) * 2654435761) ^ 2166136261) >>> 0;
+			const hue = AVATAR_HUES[(h + title.length * 7) % AVATAR_HUES.length];
+			const headX = 58 + ((h >>> 3) % 13);
+			const headR = 20 + ((h >>> 7) % 5);
+			const shade = 48 + ((h >>> 11) % 8);
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-				+ '<rect width="128" height="128" rx="30" fill="#f2f2f3"/>'
-				+ '<g fill="hsl(152,28%,42%)">' + cells + '</g></svg>';
+				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath></defs>'
+				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',30%,90%)"/>'
+				+ '<g clip-path="url(#c)" fill="hsl(' + hue + ',26%,' + shade + '%)">'
+				+ '<circle cx="' + headX + '" cy="46" r="' + headR + '"/>'
+				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
 
@@ -1492,9 +1484,9 @@ const mode = value === "circle" || value === "square" ? value : "rounded";
 document.body.dataset.dshWcAvatarShape = mode;
 }
 
-/** Sidebar avatar artwork: coloured initial (default) or dot-grid identicon. */
+/** Sidebar avatar artwork: head-and-shoulders figure (default) or coloured initial. */
 function applyAvatarStyle(value) {
-const mode = value === "identicon" ? "identicon" : "initial";
+const mode = value === "initial" ? "initial" : "silhouette";
 avatarStyle = mode;
 if (typeof document === "undefined" || !document.body) return;
 document.body.dataset.dshWcAvatarStyle = mode;
@@ -2042,7 +2034,7 @@ const reduceMotion = useStore((s) => s.reduceMotion);
 const fontFamily = useStore((s) => s.fontFamily) || "system";
 const contrast = useStore((s) => s.contrast) || "normal";
 const avatarShape = useStore((s) => s.avatarShape) || "rounded";
-const avatarStyle = useStore((s) => s.avatarStyle) || "initial";
+const avatarStyle = useStore((s) => s.avatarStyle) || "silhouette";
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -2159,8 +2151,8 @@ const avatarShapeOptions = [
 { value: "square", label: t("avatarShapeSquare") }
 ];
 const avatarStyleOptions = [
-{ value: "initial", label: t("avatarStyleInitial") },
-{ value: "identicon", label: t("avatarStyleIdenticon") }
+{ value: "silhouette", label: t("avatarStyleSilhouette") },
+{ value: "initial", label: t("avatarStyleInitial") }
 ];
 const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) })).concat(customPresets.map((preset) => ({ value: preset.id, label: preset.name })));
 return (0, react_jsx_runtime.jsxs)("div", {
@@ -2291,7 +2283,7 @@ children: (0, react_jsx_runtime.jsx)(Segmented, { value: avatarShape, options: a
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("avatarStyleTitle"),
 hint: t("avatarStyleHint"),
-onReset: () => { if (setAvatarStyle) setAvatarStyle("initial"); }, resetLabel: t("rowReset"),
+onReset: () => { if (setAvatarStyle) setAvatarStyle("silhouette"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: avatarStyle, options: avatarStyleOptions, onChange: (value) => { if (setAvatarStyle) setAvatarStyle(value); } })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
@@ -2522,7 +2514,7 @@ applyTextFontLevel(textFontLevel);
 			let avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
 			if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
 			applyAvatarShape(avatarShape);
-			let avatarArt = readJson(AVATAR_STYLE_KEY, "initial") === "identicon" ? "identicon" : "initial";
+			let avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 			applyAvatarStyle(avatarArt);
 			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt);
 			let bound = null;
@@ -2733,7 +2725,7 @@ scanHooks.push(composerScrollScan);
 						avatarShape = readJson(AVATAR_SHAPE_KEY, "rounded");
 						if (avatarShape !== "circle" && avatarShape !== "square") avatarShape = "rounded";
 						applyAvatarShape(avatarShape);
-						avatarArt = readJson(AVATAR_STYLE_KEY, "initial") === "identicon" ? "identicon" : "initial";
+						avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 						applyAvatarStyle(avatarArt);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
@@ -2807,7 +2799,7 @@ scanHooks.push(composerScrollScan);
 					sync();
 					},
 					setAvatarStyle: (value) => {
-					avatarArt = value === "identicon" ? "identicon" : "initial";
+					avatarArt = value === "initial" ? "initial" : "silhouette";
 					writeJson(AVATAR_STYLE_KEY, avatarArt);
 					applyAvatarStyle(avatarArt);
 					sync();
@@ -2866,7 +2858,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 						contrast = "normal"; applyContrast(false);
 						avatarShape = "rounded"; applyAvatarShape(avatarShape);
 						window.localStorage.removeItem(AVATAR_STYLE_KEY);
-						avatarArt = "initial"; applyAvatarStyle(avatarArt);
+						avatarArt = "silhouette"; applyAvatarStyle(avatarArt);
 						sync();
 					}
 				};
@@ -2918,8 +2910,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "avatarShapeCircle": "正圆",
 "avatarShapeSquare": "方形",
 "avatarStyleTitle": "头像图案",
-"avatarStyleHint": "缺省用标题首字，可换成点阵图案",
-"avatarStyleIdenticon": "点阵",
+"avatarStyleHint": "人形剪影按标题哈希取色相与姿态",
+"avatarStyleSilhouette": "剪影",
 "avatarStyleInitial": "首字",
 "presetSave": "存为预设",
 "presetDelete": "删除预设",
@@ -3006,8 +2998,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "avatarShapeCircle": "Circle",
 "avatarShapeSquare": "Square",
 "avatarStyleTitle": "Avatar artwork",
-"avatarStyleHint": "Initial by default; dot grid is an option",
-"avatarStyleIdenticon": "Dot grid",
+"avatarStyleHint": "Silhouette takes its hue and pose from the title hash",
+"avatarStyleSilhouette": "Silhouette",
 "avatarStyleInitial": "Initial",
 "presetSave": "Save preset",
 "presetDelete": "Delete preset",

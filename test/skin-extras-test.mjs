@@ -65,7 +65,7 @@ ok(/const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape"/.test(src), 'avatar 
 ok(/FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, CUSTOM_PRESETS_KEY\]/.test(src), 'keys exported in config')
 ok(/const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style"/.test(src), 'avatar style key')
 ok(/function applyAvatarStyle\(value\)/.test(src), 'applyAvatarStyle defined')
-ok(/function identiconAvatar\(title, seed\)/.test(src), 'identicon generator')
+ok(/function silhouetteAvatar\(title, seed\)/.test(src), 'silhouette generator')
 ok(/setFontFamily: \(value\) => \{/.test(src) && /setContrast: \(value\) => \{/.test(src) && /setAvatarShape: \(value\) => \{/.test(src), 'injected setters')
 ok(/title: t\("fontFamilyTitle"\)/.test(src) && /title: t\("contrastTitle"\)/.test(src) && /title: t\("avatarShapeTitle"\)/.test(src), 'settings rows wired')
 ok(/window\.localStorage\.removeItem\(FONT_FAMILY_KEY\)/.test(src) && /removeItem\(CONTRAST_KEY\)/.test(src) && /removeItem\(AVATAR_SHAPE_KEY\)/.test(src), 'reset clears keys')
