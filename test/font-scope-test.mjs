@@ -29,9 +29,9 @@ document.title = JSON.stringify({ title: f('title'), p: f('p'), code: f('code'),
 let pass = 0, fail = 0
 const ok = (cond, name, extra) => { if (cond) pass++; else { fail++; console.log('FAIL', name, extra === undefined ? '' : JSON.stringify(extra)) } }
 
-for (const mode of ['serif', 'wechat', 'system', 'kai', 'round']) {
+for (const mode of ['wenkai', 'wechat', 'system', 'kai', 'round']) {
   const r = probe(mode)
-  const want = mode === 'serif' ? /Songti|SimSun|serif/
+  const want = mode === 'wenkai' ? /LXGW WenKai|LXGWWenKai|霞鶩|Kaiti SC/
     : mode === 'wechat' ? /PingFang SC|Hiragino Sans GB|Microsoft YaHei/
     : mode === 'kai' ? /Kaiti|STKaiti|KaiTi/
     : mode === 'round' ? /Yuanti|YouYuan|Maru Gothic/

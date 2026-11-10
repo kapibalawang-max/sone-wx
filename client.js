@@ -76,7 +76,7 @@ window.__ModuleLoader__.load({
 		const MOTION_KEY = "dsh-wechat-skin:reduced-motion";
 		const FONT_FAMILY_KEY = "dsh-wechat-skin:font-family";
 		/** Typeface presets: key consumed by --dsw-font-family. */
-		const FONT_FAMILY_VALUES = ["system", "wechat", "serif", "kai", "round"];
+		const FONT_FAMILY_VALUES = ["system", "wechat", "wenkai", "kai", "round"];
 		const CONTRAST_KEY = "dsh-wechat-skin:contrast";
 		const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape";
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
@@ -289,8 +289,8 @@ body.dsh-wechat-skin-on {
 body.dsh-wechat-skin-on[data-dsh-wc-font-family="wechat"] {
   --dsw-font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
-body.dsh-wechat-skin-on[data-dsh-wc-font-family="serif"] {
-  --dsw-font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+body.dsh-wechat-skin-on[data-dsh-wc-font-family="wenkai"] {
+  --dsw-font-family: "LXGW WenKai", "LXGWWenKai", "霞鶩文楷", "霞鹜文楷", "Kaiti SC", serif;
 }
 body.dsh-wechat-skin-on[data-dsh-wc-font-family="kai"] {
   --dsw-font-family: "Kaiti SC", "STKaiti", "KaiTi", "Kaiti TC", serif;
@@ -1036,6 +1036,9 @@ body .dsh-wc-row { transition: background-color 250ms ease-out; }
 @media (prefers-reduced-motion: reduce) { body .dsh-wc-row { transition: none; } }
 body .dsh-wc-seg {
 	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	max-width: 100%;
 	align-items: center;
 	gap: 2px;
 	padding: 2px;
@@ -1570,7 +1573,8 @@ document.body.dataset.dshWcReduceMotion = on ? "1" : "0";
 /** Font family: system keeps the host stack, wechat mimics PingFang, serif for long reads. */
 function applyFontFamily(value) {
 if (typeof document === "undefined" || !document.body) return;
-const mode = FONT_FAMILY_VALUES.indexOf(value) >= 0 ? value : "system";
+const legacy = value === "serif" ? "wenkai" : value;
+const mode = FONT_FAMILY_VALUES.indexOf(legacy) >= 0 ? legacy : "system";
 document.body.dataset.dshWcFontFamily = mode;
 }
 
@@ -2053,7 +2057,7 @@ function SkinPreview({ t, fontLevel, textFontLevel, density, userAvatarVisible, 
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
 const textScale = FONT_SCALES[textFontLevel] !== undefined ? FONT_SCALES[textFontLevel] : FONT_SCALES[3];
 const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
-  : fontFamily === "serif" ? '"Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", SimSun, serif'
+  : fontFamily === "wenkai" ? '"LXGW WenKai", "LXGWWenKai", "霞鶩文楷", "Kaiti SC", serif'
   : fontFamily === "kai" ? '"Kaiti SC", "STKaiti", KaiTi, serif'
   : fontFamily === "round" ? '"Yuanti SC", YouYuan, "Hiragino Maru Gothic ProN", "PingFang SC", sans-serif'
   : undefined;
@@ -2246,7 +2250,7 @@ const motionOptions = [
 const fontFamilyOptions = [
 { value: "system", label: t("fontFamilySystem") },
 { value: "wechat", label: t("fontFamilyWechat") },
-{ value: "serif", label: t("fontFamilySerif") },
+{ value: "wenkai", label: t("fontFamilyWenkai") },
 { value: "kai", label: t("fontFamilyKai") },
 { value: "round", label: t("fontFamilyRound") }
 ];
@@ -2616,6 +2620,7 @@ applyTextFontLevel(textFontLevel);
 			let reduceMotion = readJson(MOTION_KEY, false) === true;
 			applyReducedMotion(reduceMotion);
 			let fontFamily = readJson(FONT_FAMILY_KEY, "system");
+			if (fontFamily === "serif") fontFamily = "wenkai";
 			if (FONT_FAMILY_VALUES.indexOf(fontFamily) < 0) fontFamily = "system";
 			applyFontFamily(fontFamily);
 			let contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
@@ -2827,6 +2832,7 @@ scanHooks.push(composerScrollScan);
 						reduceMotion = readJson(MOTION_KEY, false) === true;
 						applyReducedMotion(reduceMotion);
 						fontFamily = readJson(FONT_FAMILY_KEY, "system");
+						if (fontFamily === "serif") fontFamily = "wenkai";
 						if (FONT_FAMILY_VALUES.indexOf(fontFamily) < 0) fontFamily = "system";
 						applyFontFamily(fontFamily);
 						contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
@@ -2890,7 +2896,8 @@ scanHooks.push(composerScrollScan);
 					sync();
 					},
 					setFontFamily: (value) => {
-					fontFamily = FONT_FAMILY_VALUES.indexOf(value) >= 0 ? value : "system";
+					const asked = value === "serif" ? "wenkai" : value;
+					fontFamily = FONT_FAMILY_VALUES.indexOf(asked) >= 0 ? asked : "system";
 					writeJson(FONT_FAMILY_KEY, fontFamily);
 					applyFontFamily(fontFamily);
 					sync();
@@ -3009,7 +3016,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "fontFamilyTitle": "字体",
 "fontFamilySystem": "系统默认",
 "fontFamilyWechat": "微信体",
-"fontFamilySerif": "宋体",
+"fontFamilyWenkai": "霞鹜文楷",
 "fontFamilyKai": "楷体",
 "fontFamilyRound": "圆体",
 "contrastTitle": "高对比度",
@@ -3099,7 +3106,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "fontFamilyTitle": "Typeface",
 "fontFamilySystem": "System",
 "fontFamilyWechat": "WeChat",
-"fontFamilySerif": "Serif",
+"fontFamilyWenkai": "LXGW WenKai",
 "fontFamilyKai": "Kaiti",
 "fontFamilyRound": "Rounded",
 "contrastTitle": "High contrast",

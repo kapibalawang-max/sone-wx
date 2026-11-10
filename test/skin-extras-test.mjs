@@ -46,8 +46,9 @@ ok(base.avRadius === '6px' && base.slotRadius === '6px', 'default avatar radius 
 ok(/rgba?\(0, 0, 0/.test(base.sb), 'scrollbar thumb colour applied', base.sb)
 ok(base.border === '#e0e0e0', 'default border token', base.border)
 
-const serif = probe('data-dsh-wc-font-family="serif"')
-ok(/Songti SC/.test(serif.ff), 'serif typeface', serif.ff)
+const wenkai = probe('data-dsh-wc-font-family="wenkai"')
+ok(/LXGW WenKai|LXGWWenKai|Kaiti SC/.test(wenkai.ff), 'wenkai typeface', wenkai.ff)
+ok(/fontFamily === "serif"\) fontFamily = "wenkai"/.test(src), 'legacy serif value migrates to wenkai')
 const wechat = probe('data-dsh-wc-font-family="wechat"')
 ok(/PingFang SC/.test(wechat.ff), 'wechat typeface', wechat.ff)
 const kai = probe('data-dsh-wc-font-family="kai"')

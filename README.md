@@ -16,10 +16,15 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.29.0 宋体换成霞鹜文楷：
+  - 「字体」五档改为：系统默认 / 微信体（苹方）/ 霞鹜文楷（LXGW WenKai、LXGWWenKai、霞鶩文楷、霞鹜文楷、Kaiti SC）/ 楷体 / 圆体。
+  - 旧的 `serif` 取值自动迁移到 `wenkai`（初始化、导入、设置器三处），导入旧配置不会退回系统字体。
+  - 五档在窄窗口会换行：`.dsh-wc-seg` 加 `flex-wrap: wrap; max-width: 100%`，320px 下两行、520px 下仍一行。
+
 - 2026-11-10 v1.28.0 字体新增楷体与圆体：
   - 「字体」由三档扩到五档：系统默认 / 微信体（苹方）/ 宋体 / 楷体（Kaiti SC、STKaiti、KaiTi）/ 圆体（Yuanti SC、YouYuan、Hiragino Maru Gothic ProN）。
   - 取值收敛到 `FONT_FAMILY_VALUES` 单一白名单：初始化、导入、设置器三处用它校验，旧值仍回落 `system`；预览与设置项同源。
-  - 新增 `--dsw-font-family` 覆盖块两条，`test/font-scope-test.mjs` 扩到 20 项、`test/skin-extras-test.mjs` 扩到 25 项（楷体与圆体的字体栈实测）。
+  - 新增 `--dsw-font-family` 覆盖块两条，`test/font-scope-test.mjs` 扩到 20 项、`test/skin-extras-test.mjs` 扩到 26 项（楷体与圆体的字体栈实测）。
 
 - 2026-11-10 v1.27.2 头像形状作用到会话区：
   - 「头像形状」以前只改了会话列表行的 `--wc-av-radius`，聊天区的用户头像与 AI 头像仍写死 `--wc-radius-sm`，看起来像没生效。现在形状变量提到 `body.dsh-wechat-skin-on`，两个气泡头像一并跟随；会话列表的圆角也直接声明在头像格上并加 `!important`，不再依赖变量是否传到子元素。

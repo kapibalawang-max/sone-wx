@@ -87,7 +87,7 @@ const sandbox = {
 };
 // fetch mock
 const brandState = { title: 'SONE', wordmarkImage: true, heroMark: false, mark: { set: true }, wordmark: null };
-sandbox.FONT_FAMILY_VALUES = ['system', 'wechat', 'serif', 'kai', 'round'];
+sandbox.FONT_FAMILY_VALUES = ['system', 'wechat', 'wenkai', 'kai', 'round'];
 sandbox.fetch = (url, init) => {
   calls.push(['fetch', init && init.method ? init.method : 'GET', url]);
   if (url === '/sone-wx/brand' && (!init || !init.method)) {
@@ -155,7 +155,7 @@ ok(localStorage.getItem(KEY.USER_AVATAR_ENABLED_KEY) === null, 'import keeps abs
 ok(calls.some((c) => c[0] === 'fetch' && c[1] === 'POST' && c[2] === '/sone-wx/brand'), 'import posts brand');
 ok(calls.some((c) => c[0] === 'event' && c[1] === 'sone-wx:brand-reload'), 'import dispatches reload');
 ok(calls.some((c) => c[0] === 'userAvatar' && c[1] === true), 'import restores user avatar');
-ok(fontFamily === 'serif' && contrast === 'high' && avatarShape === 'circle', 'import applies new settings');
+ok(fontFamily === 'wenkai' && contrast === 'high' && avatarShape === 'circle', 'import applies new settings (legacy serif migrates to wenkai)');
 ok(textFontLevel === 5, 'import applies text font level');
 await api.importConfig(null).then(() => ok(false, 'null should reject')).catch(() => ok(true, 'null rejects'));
 
