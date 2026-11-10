@@ -475,10 +475,6 @@ body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) * 
 body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) a { color: var(--wc-bubble-link) !important; text-decoration: underline; }
 body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) code,
 body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) pre { background: rgba(0, 0, 0, 0.08) !important; color: var(--wc-bubble-code-ink) !important; }
-body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal])::before {
-  content: ""; position: absolute; top: 15px; right: -7px; width: 0; height: 0;
-  border-style: solid; border-width: 6px 0 6px 7px; border-color: transparent transparent transparent var(--wc-bubble);
-}
 
 /* ================= assistant replies: white WeChat bubble ================= */
 /* .XNZzAa_body = the assistant message body. White bubble on light, a raised dark
