@@ -732,6 +732,10 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScr
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tr:last-child > :is(th, td) { border-bottom: 0; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: var(--dsw-alias-bg-module-platform, #f7f7f7); }
+/* GenUI renders a table inside its card, which already has its own 1px frame and
+   padding; the inner table wrapper draws a second frame inside that padding, so the
+   two borders read as a misaligned box. Drop the inner frame, keep the card's. */
+body.dsh-wechat-skin-on .V1MMBW_card .V1MMBW_tableWrap { border: 0; border-radius: 0; background: transparent; }
 
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */
