@@ -42,6 +42,8 @@ ok(rest.box[0] === rest.box[1], `图标容器应为正方形，实际 ${rest.box
 await page.hover('#plugin')
 await page.waitForTimeout(60)
 ok((await read()).a === 'dsh-wc-glyph-turn', '悬停插件行时播放')
+const turnDur = parseFloat(await page.evaluate(() => getComputedStyle(document.getElementById('g1')).animationDuration))
+ok(turnDur >= 0.7, `一整圈不能快于 700ms，实际 ${turnDur}s`)
 await page.hover('#more')
 await page.waitForTimeout(60)
 ok((await read()).a === 'none', '「更多」行不播放')
@@ -53,4 +55,4 @@ ok(parseFloat(dur) < 0.01, `减少动效时应关掉，实际 ${dur}`)
 await browser.close()
 
 if (fails.length) { console.error('FAIL\n - ' + fails.join('\n - ')); process.exit(1) }
-console.log('glyph-turn OK（6 项）')
+console.log('glyph-turn OK（10 项）')

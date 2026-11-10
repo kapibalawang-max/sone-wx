@@ -541,7 +541,7 @@ body.dsh-wechat-skin-on .kB3qhq_panelGlyph {
 }
 @media (hover: hover) {
   body.dsh-wechat-skin-on .kB3qhq_panelRow:not([aria-haspopup]):hover .kB3qhq_panelGlyph {
-    animation: dsh-wc-glyph-turn 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: dsh-wc-glyph-turn 820ms cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 }
 @keyframes dsh-wc-glyph-turn {
