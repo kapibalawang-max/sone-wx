@@ -1218,17 +1218,37 @@ body .dsh-wc-color {
 		}
 
 		/** Head-and-shoulders bust: neck joins shoulders, tint and pose come from the title. */
+		/**
+		 * Ten muted backgrounds with a same-family figure. Explicit hex rather than a
+		 * generated hue keeps every tile inside the palette instead of drifting.
+		 */
+		const AVATAR_PALETTE = [
+			["#eef1f4", "#8a93a3"], // slate
+			["#eaf5ee", "#5f8f74"], // green
+			["#e9f2f8", "#5b7fa0"], // steel blue
+			["#f3eff8", "#83709f"], // iris
+			["#f7f0e8", "#a08256"], // sand
+			["#f8eeee", "#a47070"], // clay
+			["#eaf5f4", "#5c8f8b"], // teal
+			["#f6eef2", "#a3758c"], // plum
+			["#eef0f7", "#6b76a3"], // indigo
+			["#f7f2e8", "#8d8558"], // olive
+		];
+		function titleHash(text) {
+			let h = 2166136261;
+			for (const ch of String(text)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+			return h >>> 0;
+		}
 		function silhouetteAvatar(title, seed) {
-			const AVATAR_HUES = [352, 12, 28, 200, 214, 228, 242, 258, 274, 292, 312, 332];
-			const h = ((Math.abs(seed) * 2654435761) ^ 2166136261) >>> 0;
-			const hue = AVATAR_HUES[(h + title.length * 7) % AVATAR_HUES.length];
+			const base = titleHash(title);
+			const h = (base ^ Math.imul(Math.abs(seed) + 1, 2654435761)) >>> 0;
+			const [bg, fg] = AVATAR_PALETTE[base % AVATAR_PALETTE.length];
 			const headX = 58 + ((h >>> 3) % 13);
 			const headR = 20 + ((h >>> 7) % 5);
-			const shade = 48 + ((h >>> 11) % 8);
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
 				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath></defs>'
-				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',30%,90%)"/>'
-				+ '<g clip-path="url(#c)" fill="hsl(' + hue + ',26%,' + shade + '%)">'
+				+ '<rect width="128" height="128" rx="30" fill="' + bg + '"/>'
+				+ '<g clip-path="url(#c)" fill="' + fg + '">'
 				+ '<circle cx="' + headX + '" cy="46" r="' + headR + '"/>'
 				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
