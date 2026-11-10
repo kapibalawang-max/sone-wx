@@ -16,6 +16,10 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.27.2 头像形状作用到会话区：
+  - 「头像形状」以前只改了会话列表行的 `--wc-av-radius`，聊天区的用户头像与 AI 头像仍写死 `--wc-radius-sm`，看起来像没生效。现在形状变量提到 `body.dsh-wechat-skin-on`，两个气泡头像一并跟随；会话列表的圆角也直接声明在头像格上并加 `!important`，不再依赖变量是否传到子元素。
+  - `test/skin-extras-test.mjs` 补 2 项（正圆/方形都作用到聊天气泡头像），共 23 项。
+
 - 2026-11-10 v1.27.1 字体设置没作用到侧栏与消息：
   - 旧规则给 `.tnXGgG_column`、`.AkCqbG_userStack`、`.JoiKIa_sessionRow` 钉死了 `"Microsoft YaHei UI", …` 字体栈，字体设置写的 `--dsw-font-family` 传不到这三层，所以宋体只改到设置页与输入框。改为 `font-family: var(--dsw-font-family, "Microsoft YaHei UI", …)`，微信栈只作变量未设置时的兜底。
   - 新增 `test/font-scope-test.mjs`（12 项）：三种字体模式下会话列表标题、用户消息正文、气泡容器都跟随设置，代码块保持等宽。

@@ -291,9 +291,18 @@ body.dsh-wechat-skin-on[data-dsh-wc-font-family="serif"] {
   --dsw-font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
 }
 
-/* avatar shape: rounded square is the WeChat original */
+/* avatar shape: rounded square is the WeChat original. Declare on the painted cell as
+   well as on the row variable — some rows paint their own avatar layer, and a missed
+   variable there used to leave the shape unchanged. */
+body.dsh-wechat-skin-on { --wc-av-radius: var(--wc-radius-sm, 6px); }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="circle"] { --wc-av-radius: 50%; }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="square"] { --wc-av-radius: 2px; }
 body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="circle"] .JoiKIa_sessionRow { --wc-av-radius: 50%; }
 body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="square"] .JoiKIa_sessionRow { --wc-av-radius: 2px; }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="circle"] .JoiKIa_sessionRow .JoiKIa_slot { border-radius: 50% !important; }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="square"] .JoiKIa_sessionRow .JoiKIa_slot { border-radius: 2px !important; }
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="circle"] .JoiKIa_sessionRow .JoiKIa_slot > img,
+body.dsh-wechat-skin-on[data-dsh-wc-avatar-shape="square"] .JoiKIa_sessionRow .JoiKIa_slot > img { border-radius: inherit; }
 
 /* high contrast: darker secondary text and borders */
 body.dsh-wechat-skin-on[data-dsh-wc-contrast="high"] {
@@ -494,7 +503,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="steering"] .AkCqbG_userRow { margi
 body.dsh-wechat-skin-on [data-chat-flow-kind="user"]::after,
 body.dsh-wechat-skin-on [data-chat-flow-kind="steering"]::after {
   content: ""; position: absolute; right: 0; top: 0; width: 34px; height: 34px;
-  border-radius: var(--wc-radius-sm); overflow: hidden;
+  border-radius: var(--wc-av-radius, var(--wc-radius-sm)); overflow: hidden;
   background-image: var(--dsh-user-avatar, linear-gradient(135deg, var(--wc-avatar-user-a), var(--wc-avatar-user-b)));
   background-size: cover; background-position: center;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -513,7 +522,7 @@ body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]:n
 }
 body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]:not([data-chat-group-part="reasoning"]):not(:empty):not(:has(>[data-slot="conversation.chat.node"]:empty))::before {
   content: ""; position: absolute; left: -42px; top: 0; width: 34px; height: 34px;
-  border-radius: var(--wc-radius-sm); overflow: hidden;
+  border-radius: var(--wc-av-radius, var(--wc-radius-sm)); overflow: hidden;
   background-image: var(--dsh-assistant-avatar, linear-gradient(135deg, var(--wc-avatar-sel-a), var(--wc-avatar-sel-b)));
   background-size: cover; background-position: center;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);

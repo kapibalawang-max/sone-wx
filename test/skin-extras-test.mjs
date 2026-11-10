@@ -16,6 +16,8 @@ function probe(attrs) {
 <body class="dsh-wechat-skin-on" ${attrs}>
 <div class="JoiKIa_sessionRow" id="row"><span class="JoiKIa_slot" id="slot"></span></div>
 <span id="txt" style="color:var(--dsw-alias-label-tertiary)">x</span>
+<div data-chat-flow-kind="user" id="ucol"></div>
+<div class="tnXGgG_flowItem" data-chat-flow-kind="assistant-step" id="acol"><span>x</span></div>
 <script>
 const b=getComputedStyle(document.body), row=getComputedStyle(document.getElementById('row')), slot=getComputedStyle(document.getElementById('slot'));
 document.title=JSON.stringify({
@@ -24,6 +26,8 @@ document.title=JSON.stringify({
   avRadius: row.getPropertyValue('--wc-av-radius').trim(),
   slotRadius: slot.borderRadius,
   tertiary: getComputedStyle(document.getElementById('txt')).color,
+  userAvatar: getComputedStyle(document.getElementById('ucol'), '::after').borderRadius,
+  aiAvatar: getComputedStyle(document.getElementById('acol'), '::before').borderRadius,
   border: b.getPropertyValue('--wc-border-light').trim()
 });
 </script></body></html>`
@@ -51,6 +55,8 @@ const circle = probe('data-dsh-wc-avatar-shape="circle"')
 ok(circle.avRadius === '50%' && circle.slotRadius === '50%', 'circle avatar', circle)
 const square = probe('data-dsh-wc-avatar-shape="square"')
 ok(square.avRadius === '2px', 'square avatar', square)
+ok(circle.userAvatar === '50%' && circle.aiAvatar === '50%', 'circle reaches chat avatars', circle)
+ok(square.userAvatar === '2px', 'square reaches chat avatars', square)
 
 const hc = probe('data-dsh-wc-contrast="high"')
 ok(hc.tertiary === 'rgb(74, 74, 76)', 'high contrast tertiary text', hc.tertiary)
