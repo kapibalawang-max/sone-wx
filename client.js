@@ -8,6 +8,21 @@
 // Both halves register NO settings slots themselves; the merged apply mounts a
 // single settings.section `sone-wx` stacking WechatSkinRow + BrandStudioSection.
 
+// ---------------------------------------------------------------------------
+// File layout. DSH loads a client plugin as ONE browser artifact (a lazy
+// factory registered by id), so this cannot be split into ES modules; the
+// //#region markers below are the module boundaries. Grep the region name.
+//   1 constants, tokens, WECHAT_CSS / WECHAT_UI_CSS      "dsh-wechat-skin: constants"
+//   2 persistence + DOM helpers                          "dsh-wechat-skin: persistence"
+//   3 avatars, composer, sidebar DOM enhancement         "dsh-wechat-skin: avatars"
+//   4 store + sidebar background + panel order           "dsh-wechat-skin: settings row store"
+//   5 settings UI (SkinPreview, WechatSkinRow)           "dsh-wechat-skin: client plugin body"
+//   6 BRAND (state, text, seats, styles, page)           "BRAND"
+//   7 merged settings section + icon                     "sone-wx: merged settings section"
+//   8 table stabilizer                                   "sone-wx: table stabilizer"
+//   9 diagnostics + apply()                              "sone-wx: apply"
+// Rule: UI text goes through t(); colours through --wc-* / --dsw-alias-*.
+// ---------------------------------------------------------------------------
 window.__ModuleLoader__.load({
 	id: "sone-wx",
 	factory: (require) => {
@@ -291,19 +306,23 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state] + span {
 }
 /* finished or idle sessions carry no status mark at all */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="done"] + span,
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="completed"] + span,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="idle"] + span { display: none; }
 /* waiting for you: solid amber dot; failed: solid red dot */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="warning"] + span { background: var(--wc-dot-warning); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="error"] + span { background: var(--wc-dot-error); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="error"] + span,
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="failed"] + span { background: var(--wc-dot-error); }
 /* running: a small disc with a spinning arc, sized to stay legible at 26px */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="ongoing"] + span,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="running"] + span,
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="waiting"] + span,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="thinking"] + span {
   width: 12px; height: 12px; right: -3px; bottom: -3px;
   background: var(--wc-row-bg); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="ongoing"] + span::after,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="running"] + span::after,
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="waiting"] + span::after,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="thinking"] + span::after {
   content: ""; position: absolute; inset: 2.5px; box-sizing: border-box; border-radius: 50%;
   border: 1.5px solid color-mix(in srgb, var(--wc-green, #07c160) 28%, transparent);

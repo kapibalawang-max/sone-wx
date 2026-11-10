@@ -16,6 +16,9 @@ if (process.argv.includes('--write') || !prev) {
   console.log('snapshot written', data);
 } else {
   const changed = prev.length !== data.length || prev.css !== css;
-  console.log(changed ? 'DIFF' : 'OK', { prev: { length: prev.length, lines: prev.lines }, curr: data });
-  if (changed) process.exit(2);
+  if (changed) {
+    console.error(`css-snapshot DIFF: ${prev.length} -> ${data.length} chars, ${prev.lines} -> ${data.lines} lines`);
+    process.exit(2);
+  }
+  console.log(`css-snapshot OK（${data.length} chars / ${data.lines} lines）`);
 }

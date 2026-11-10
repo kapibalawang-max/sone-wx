@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.15.7",
+  "version": "1.16.0",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
@@ -43,5 +43,10 @@
     "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.1 <0.3.0",
     "react": "^18.2.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/run-all.mjs",
+    "test:visual": "node test/visual.mjs",
+    "test:update-baseline": "node test/visual.mjs --update"
+  }
 }
