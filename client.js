@@ -242,9 +242,11 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot {
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow:hover { --wc-row-bg: color-mix(in srgb, var(--wc-sidebar) 92%, #000); }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:hover { --wc-row-bg: color-mix(in srgb, var(--wc-sidebar-dark) 90%, #fff); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected { --wc-row-bg: var(--wc-green-deep); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected {
+  --wc-row-bg: color-mix(in srgb, var(--wc-green) 14%, var(--wc-sidebar));
+}
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot {
-  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px color-mix(in srgb, var(--wc-green) 55%, transparent);
 }
 /* sessions with an active scheduled task: clock badge on the avatar's bottom-left */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow [data-session-schedule-mark] {
@@ -298,10 +300,6 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="thinking"
   border-top-color: var(--wc-green, #07c160);
   animation: dsh-wc-badge-spin 0.9s linear infinite;
 }
-/* on the deep-green selected row the badge needs its own light disc to stay visible */
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state] + span {
-  background: #ffffff; box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-}
 @keyframes dsh-wc-badge-spin { to { transform: rotate(1turn); } }
 
 
@@ -311,10 +309,10 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_title {
   font-size: var(--wc-fs-md); font-weight: 500; color: var(--dsw-alias-label-primary);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected,
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover { background: var(--wc-green-deep); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title,
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_time,
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_rowResting { color: #ffffff; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover {
+  background: color-mix(in srgb, var(--wc-green) 14%, var(--wc-sidebar));
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 600; }
 
 
 /* ================= chat surface ================= */
@@ -1010,10 +1008,11 @@ body .dsh-wc-color {
 
 		/** Generate a deterministic colored-initial SVG avatar (no third-party photos). */
 		function generatedAvatar(title, seed) {
-			const hue = (seed * 47 + 15) % 360;
+			const AVATAR_HUES = [4, 18, 215, 230, 245, 258, 270, 282, 295, 315, 330, 345];
+			const hue = AVATAR_HUES[Math.abs(seed) % AVATAR_HUES.length];
 			const initial = escapeXml(Array.from(title.trim())[0] || "?");
 			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',55%,58%)"/>'
+				+ '<rect width="128" height="128" rx="30" fill="hsl(' + hue + ',58%,55%)"/>'
 				+ '<text x="64" y="86" font-size="60" text-anchor="middle" fill="#ffffff" font-family="Microsoft YaHei, Segoe UI, sans-serif">' + initial + '</text></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}

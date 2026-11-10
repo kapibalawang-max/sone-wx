@@ -40,6 +40,8 @@ const m = await page.evaluate(() => {
     done: cs('.JoiKIa_sessionRow:nth-child(4) .JoiKIa_slot > [data-state] + span'),
     error: cs('.JoiKIa_sessionRow:nth-child(5) .JoiKIa_slot > [data-state] + span'),
     selectedBadgeBg: badge(2) && getComputedStyle(badge(2)).backgroundColor,
+    selectedRowBg: getComputedStyle(rowEls[2]).backgroundColor,
+    selectedTitleColor: getComputedStyle(rowEls[2].querySelector('.JoiKIa_title')).color,
     noBadgeForIdle: badge(5) === null,
     scheduleLeft: (() => { const e = document.querySelector('[data-session-schedule-mark]'); const c = e && getComputedStyle(e); return c ? { left: c.left, bottom: c.bottom } : null; })(),
   };
@@ -58,7 +60,10 @@ eq('warning dot', `${m.warning.w}/${m.warning.bg}`, '9px/rgb(255, 197, 61)');
 eq('error dot', m.error.bg, 'rgb(255, 107, 107)');
 eq('done has no badge', m.done.display, 'none');
 eq('idle has no badge', m.noBadgeForIdle, 'true');
-eq('selected badge on white disc', m.selectedBadgeBg, 'rgb(255, 255, 255)');
+if (m.selectedRowBg === 'rgb(21, 172, 112)') fails.push('selected row still deep green');
+if (!m.selectedRowBg.startsWith('color(srgb') && !m.selectedRowBg.startsWith('rgb(')) fails.push('selected row bg unexpected: ' + m.selectedRowBg);
+eq('selected badge matches row bg', m.selectedBadgeBg, m.selectedRowBg);
+eq('selected title keeps ink colour', m.selectedTitleColor, 'rgb(26, 26, 26)');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');
 if (fails.length) { console.error('FAIL\n' + fails.join('\n')); process.exit(1); }
-console.log('sidebar-state: ' + 11 + '/11 OK');
+console.log('sidebar-state: ' + 13 + '/13 OK');
