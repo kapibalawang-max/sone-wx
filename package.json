@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.24.1",
+  "version": "1.24.2",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
