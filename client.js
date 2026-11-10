@@ -710,27 +710,29 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre {
   background: var(--wc-code-bg); padding: 10px 12px; margin: 10px 0;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre code { font-size: var(--wc-fs-md); line-height: 1.6; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote { border-left: 2px solid var(--wc-border-light); background: var(--wc-code-bg); color: var(--wc-bubble-ink); border-radius: 0px !important; }
-  margin: 10px 0; padding: 2px 0 2px 10px; border-left: 2px solid var(--dsw-alias-border-l2, #dcdcdc);
-  color: var(--dsw-alias-label-secondary, #666);
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote {
+  border-left: 2px solid var(--dsw-alias-border-l2, #dcdcdc); border-radius: 0 !important;
+  background: var(--wc-code-bg); color: var(--wc-bubble-ink);
+  margin: 10px 0; padding: 2px 0 2px 10px;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] hr { border: 0; border-top: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); margin: 14px 0; }
+/* Markdown table: the frame belongs to the <table> itself (it is width:max-content
+   inside .tableScroll), otherwise a box on the scroll wrapper runs wider than the
+   columns and the border looks shifted. The host zeroes first/last cell padding for
+   edge-to-edge rows, which left the text flush against the frame; padding is evened
+   out here, and overflow:hidden clips the header fill to the rounded corners. */
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] table {
-  border-collapse: separate; border-spacing: 0; border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-  border-radius: var(--wc-radius-bubble); overflow: hidden; font-size: var(--wc-fs-md); margin: 10px 0;
+  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+  border-collapse: separate; border-spacing: 0;
+  border-radius: var(--wc-radius-sm); overflow: hidden;
+  font-size: var(--wc-fs-md); margin: 10px 0;
 }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] th {
-  background: var(--dsw-alias-bg-module-platform, #f2f2f2); font-weight: 600; text-align: left;
-}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] th { background: var(--dsw-alias-bg-module-platform, #f2f2f2); font-weight: 600; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(th, td) {
-  padding: 6px 10px; border-bottom: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+  padding: 7px 12px !important; border-bottom: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
 }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td { border-bottom: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child > :is(th, td) { border-bottom: 0; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tbody tr:nth-child(even) { background: var(--dsw-alias-bg-module-platform, #f7f7f7); }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:first-child th:first-child { border-top-left-radius: 7px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:first-child th:last-child { border-top-right-radius: 7px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:first-child { border-bottom-left-radius: 7px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] tr:last-child td:last-child { border-bottom-right-radius: 7px; }
 
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */

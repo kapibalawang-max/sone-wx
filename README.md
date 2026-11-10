@@ -16,6 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.19.2 修表格边框错位：宿主把首末列 padding 归零、表格本身 `width:max-content` 且放在 `.tableScroll` 里，皮肤又在 `<table>` 上画框并把 padding 改小，导致外框与首末列文字贴边、看着像错位。现统一 th/td 内边距为 7px 12px（!important 压过宿主归零），外框留在 table 上并补 border-spacing:0 + overflow:hidden 让表头底色贴合圆角；新增 test/table-test.mjs（10 项 computed-style 断言）。
 - 2026-11-10 v1.19.1 修真问题：v1.19.0 只删了「关尾巴」那条覆盖规则，皮肤自己画三角的规则（`.tnXGgG_column [class*="_bubble_"]::before` 的 border 三角）还在，导致尾巴一直显示。现已整条删除，发送气泡不再有三角；user-avatar-test 增加两条气泡 ::before 为 none 的断言。
 - 2026-11-10 v1.19.0 去掉气泡尾巴、新增「我的头像」开关：
   - 删除气泡尾巴的整条链路：设置行、`dsh-wechat-skin:tail` 键、`applyTail`、预览里的三角、预设里的 tail 字段与导入校验分支，历史 `tail` 键不再读取。
