@@ -22,6 +22,7 @@ const rows = [
   { t: '兼容 failed 词汇', time: '昨天', state: 'failed', ch: '错2' },
   { t: '置顶会话', time: '12:00', state: null, ch: '顶', pin: true },
   { t: '归档会话', time: '前天', state: null, ch: '归', arch: true },
+  { t: '置顶且选中', time: '11:00', state: null, ch: '顶2', pin: true, sel: true },
 ];
 const row = (r) => `<div class="JoiKIa_sessionRow${r.sel ? ' JoiKIa_selected' : ''}${r.arch ? ' JoiKIa_archived' : ''}" style="--dsh-avatar:url(&quot;${av(r.ch, 200)}&quot;)"><span class="JoiKIa_slot">${r.state ? `<span data-state="${r.state}"></span><span>状态</span>` : ''}${r.sched ? '<span data-session-schedule-mark><svg viewBox="0 0 16 16"></svg><span>x</span></span>' : ''}</span><span class="JoiKIa_title">${r.t}</span><span class="JoiKIa_rowResting">${r.pin ? '<span class="JoiKIa_pinIndicator"><svg viewBox="0 0 16 16"></svg></span>' : ''}<span class="JoiKIa_time">${r.time}</span></span></div>`;
 const host = `<style>:root{--dsh-sidebar-label-gap:8px;--dsw-radius-md:8px;--dsw-alias-label-primary:#1a1a1a;--dsw-alias-label-tertiary:#8c8c8c;--dsw-specific-sidebar-fill:#eeeef0}.JoiKIa_sessionRow{align-items:center;padding:0 8px;display:flex}.JoiKIa_slot{flex:none;display:inline-flex}.JoiKIa_title{flex:1;min-width:0;overflow:hidden;margin:0 6px 0 8px}.JoiKIa_rowResting{flex:none;display:inline-flex}body{margin:0;background:#eeeef0;font:13px/1.5 -apple-system}</style>`;
@@ -55,6 +56,9 @@ const m = await page.evaluate(() => {
     pinColor: getComputedStyle(rowEls[8].querySelector('.JoiKIa_pinIndicator')).color,
     archivedOpacity: getComputedStyle(rowEls[9]).opacity,
     timeSize: getComputedStyle(rowEls[0].querySelector('.JoiKIa_time')).fontSize,
+    selPinBg: getComputedStyle(rowEls[10]).backgroundColor,
+    selPinTitle: getComputedStyle(rowEls[10].querySelector('.JoiKIa_title')).color,
+    selPinIcon: getComputedStyle(rowEls[10].querySelector('.JoiKIa_pinIndicator')).color,
     scheduleLeft: (() => { const e = document.querySelector('[data-session-schedule-mark]'); const c = e && getComputedStyle(e); return c ? { left: c.left, bottom: c.bottom } : null; })(),
   };
 });
@@ -81,6 +85,9 @@ eq('selected badge sits on white disc', m.selectedBadgeBg, 'rgb(255, 255, 255)')
 eq('selected title is white', m.selectedTitleColor, 'rgb(255, 255, 255)');
 eq('pinned row tinted', m.pinnedBg !== m.plainBg, 'true');
 eq('pin icon uses wechat green', m.pinColor, 'rgb(7, 193, 96)');
+eq('pinned + selected keeps the green fill', m.selPinBg, 'rgb(76, 159, 111)');
+eq('pinned + selected keeps white title', m.selPinTitle, 'rgb(255, 255, 255)');
+eq('pin icon inverts on selected', m.selPinIcon, 'rgb(255, 255, 255)');
 eq('archived row recedes', m.archivedOpacity, '0.55');
 eq('timestamp is 11px', m.timeSize, '11px');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');

@@ -349,12 +349,16 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-
 
 /* ================= session row states: pinned / unread / archived ================= */
 /* pinned rows sit at the top of the list: a faint green wash plus a green pin */
-body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator) {
+/* :has() outranks .JoiKIa_selected, so the wash must skip the current row —
+   otherwise a pinned + selected row paints white text on a pale green fill. */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pinIndicator) {
   background: color-mix(in srgb, var(--wc-green, #07c160) 7%, var(--wc-sidebar));
 }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator) {
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pinIndicator) {
   background: color-mix(in srgb, var(--wc-green, #07c160) 13%, var(--wc-sidebar-dark));
 }
+/* the pin has to follow the row's own ink, or it vanishes on the green selected fill */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_pinIndicator { color: var(--wc-sel-ink); }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_pinIndicator {
   color: var(--wc-green, #07c160); width: 14px; height: 16px; margin-left: 4px; opacity: .9;
 }
