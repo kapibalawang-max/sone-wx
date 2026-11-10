@@ -78,6 +78,10 @@ console.log(a)</code></pre>
           <span style="font-size:13px;color:#1a1a1a">字体大小</span>
           <span class="dsh-wc-seg"><button class="dsh-wc-seg-item">小</button><button class="dsh-wc-seg-item" aria-pressed="true">标准</button><button class="dsh-wc-seg-item">大</button></span>
         </div>
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px;border-top:0.5px solid #e6e6e6">
+          <span style="font-size:13px;color:#1a1a1a">字体</span>
+          <span class="dsh-wc-seg"><button class="dsh-wc-seg-item" aria-pressed="true">系统默认</button><button class="dsh-wc-seg-item">微信体</button><button class="dsh-wc-seg-item">宋体</button></span>
+        </div>
       </div>
     </div>
     <div class="dsh-wc-group" style="margin-top:12px">
@@ -86,6 +90,19 @@ console.log(a)</code></pre>
         <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px">
           <span style="font-size:13px;color:#1a1a1a">AI 头像</span>
           <span style="display:flex;align-items:center;gap:8px"><button class="dsh-wc-switch" role="switch" aria-checked="true"></button><button class="dsh-wc-reset" style="opacity:1">↺</button></span>
+        </div>
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px;border-top:0.5px solid #e6e6e6">
+          <span style="font-size:13px;color:#1a1a1a">头像形状</span>
+          <span class="dsh-wc-seg"><button class="dsh-wc-seg-item" aria-pressed="true">圆角方形</button><button class="dsh-wc-seg-item">正圆</button><button class="dsh-wc-seg-item">方形</button></span>
+        </div>
+      </div>
+    </div>
+    <div class="dsh-wc-group" style="margin-top:12px">
+      <div class="dsh-wc-group-title">辅助</div>
+      <div class="dsh-wc-group-body">
+        <div class="dsh-wc-row" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 16px">
+          <span style="font-size:13px;color:#1a1a1a">高对比度</span>
+          <span class="dsh-wc-seg"><button class="dsh-wc-seg-item" aria-pressed="true">标准</button><button class="dsh-wc-seg-item">高对比</button></span>
         </div>
       </div>
     </div>
