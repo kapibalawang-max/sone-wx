@@ -347,6 +347,40 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-
   background: #ffffff; box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
+/* ================= session row states: pinned / unread / archived ================= */
+/* pinned rows sit at the top of the list: a faint green wash plus a green pin */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator) {
+  background: color-mix(in srgb, var(--wc-green, #07c160) 7%, var(--wc-sidebar));
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator) {
+  background: color-mix(in srgb, var(--wc-green, #07c160) 13%, var(--wc-sidebar-dark));
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_pinIndicator {
+  color: var(--wc-green, #07c160); width: 14px; height: 16px; margin-left: 4px; opacity: .9;
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_pinIndicator > svg { width: 10px; height: 10px; }
+/* unread completion: the host marks it as data-state="done" — a green disc plus a heavier title */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot > [data-state="done"] + span {
+  display: block; background: var(--wc-green, #07c160);
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_title {
+  font-weight: 600; color: var(--dsw-alias-label-primary);
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_rowResting .JoiKIa_time {
+  color: var(--wc-green, #07c160);
+}
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_title { color: var(--wc-sel-ink); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state="done"] + span {
+  background: var(--wc-sel-ink); box-shadow: 0 0 0 0 transparent;
+}
+/* timestamps: one step up from the host's 10px so they stay readable at a glance */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_time {
+  font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary);
+}
+/* archived sessions recede until hovered */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_archived { opacity: .55; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_archived:hover { opacity: .85; }
+
 
 /* ================= chat surface ================= */
 /* use the DSH default surface colour; it already adapts to light/dark via the token */
@@ -856,6 +890,28 @@ body .dsh-wc-btn-secondary {
 body .dsh-wc-btn-secondary:hover { background: var(--dsw-alias-interactive-bg-hover); }
 body .dsh-wc-btn-secondary:active { background: var(--dsw-alias-interactive-bg-active); }
 body .dsh-wc-btn-sm { padding: 6px 12px; font-size: var(--wc-fs-sm); line-height: 1.4; }
+/* settings search + per-row reset */
+body .dsh-wc-search { display: flex; align-items: center; gap: 8px; padding: 12px 16px 0; }
+body .dsh-wc-search-input {
+flex: 1 1 auto; min-width: 0; height: 28px; padding: 0 10px;
+border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-btn);
+background: var(--dsw-alias-bg-module-platform); color: var(--dsw-alias-label-primary);
+font-family: inherit; font-size: var(--wc-fs-sm); line-height: 1.5;
+}
+body .dsh-wc-search-input::placeholder { color: var(--dsw-alias-label-tertiary); }
+body .dsh-wc-search-input:focus-visible {
+outline: none; border-color: var(--wc-green, #07c160);
+box-shadow: 0 0 0 2px color-mix(in srgb, var(--wc-green, #07c160) 22%, transparent);
+}
+body .dsh-wc-reset {
+flex: none; width: 20px; height: 20px; padding: 0; margin-left: 2px;
+border: none; border-radius: 999px; background: transparent; cursor: pointer;
+color: var(--dsw-alias-label-tertiary); font-size: 12px; line-height: 20px;
+opacity: 0; transition: opacity 250ms ease-out, background-color 250ms ease-out;
+}
+body .dsh-wc-row:hover .dsh-wc-reset, body .dsh-wc-reset:focus-visible { opacity: 1; }
+body .dsh-wc-reset:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+body .dsh-wc-empty { padding: 18px 16px; text-align: center; color: var(--dsw-alias-label-tertiary); font-size: var(--wc-fs-sm); }
 body .dsh-wc-seg {
 	display: inline-flex;
 	align-items: center;
@@ -1636,8 +1692,9 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 		};
 
 		/** One label/control line inside the skin card. */
-		function SkinRow({ title, hint, first, children }) {
+		function SkinRow({ title, hint, first, onReset, resetLabel, children }) {
 			return (0, react_jsx_runtime.jsxs)("div", {
+				className: "dsh-wc-row",
 				style: first ? styles.itemFirst : styles.item,
 				children: [
 					(0, react_jsx_runtime.jsxs)("div", {
@@ -1647,7 +1704,20 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 							hint ? (0, react_jsx_runtime.jsx)("div", { style: styles.itemHint, children: hint }) : null
 						]
 					}),
-					(0, react_jsx_runtime.jsx)("div", { style: styles.itemControl, children })
+					(0, react_jsx_runtime.jsxs)("div", {
+style: styles.itemControl,
+children: [
+children,
+typeof onReset === "function" ? (0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-reset",
+title: resetLabel || "",
+"aria-label": resetLabel || "",
+onClick: onReset,
+children: "\u21ba"
+}) : null
+]
+})
 				]
 			});
 		}
@@ -1751,6 +1821,38 @@ const reduceMotion = useStore((s) => s.reduceMotion);
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
+const searchPair = (0, _react.useState)("");
+const searchQuery = searchPair[0];
+const setSearchQuery = searchPair[1];
+const emptyPair = (0, _react.useState)(false);
+const noHit = emptyPair[0];
+const setNoHit = emptyPair[1];
+const listRef = (0, _react.useRef)(null);
+(0, _react.useEffect)(() => {
+const root = listRef.current;
+if (!root) return;
+const q = String(searchQuery || "").trim().toLowerCase();
+let visibleCount = 0;
+const rows = Array.prototype.slice.call(root.querySelectorAll(".dsh-wc-row"));
+rows.forEach((rowEl) => {
+const hit = !q || String(rowEl.textContent || "").toLowerCase().indexOf(q) !== -1;
+rowEl.style.display = hit ? "" : "none";
+if (hit) visibleCount += 1;
+});
+// 分组标题在其下所有行都被过滤掉时一并隐藏
+const kids = Array.prototype.slice.call(root.children);
+kids.forEach((child, index) => {
+if (!child.classList || !child.classList.contains("dsh-wc-grouptitle")) return;
+let visible = false;
+for (let j = index + 1; j < kids.length; j++) {
+const sib = kids[j];
+if (sib.classList && sib.classList.contains("dsh-wc-grouptitle")) break;
+if (sib.classList && sib.classList.contains("dsh-wc-row") && sib.style.display !== "none") { visible = true; break; }
+}
+child.style.display = visible ? "" : "none";
+});
+setNoHit(Boolean(q) && visibleCount === 0);
+}, [searchQuery]);
 const missing = SELECTOR_PROBES.filter((selector) => {
 try { return document.querySelector(selector) === null; } catch (error) { return true; }
 });
@@ -1826,8 +1928,29 @@ const motionOptions = [
 ];
 const presetOptions = THEME_PRESETS.map((preset) => ({ value: preset.id, label: t("preset_" + preset.id) })).concat(customPresets.map((preset) => ({ value: preset.id, label: preset.name })));
 return (0, react_jsx_runtime.jsxs)("div", {
+ref: listRef,
 style: styles.card,
 children: [
+(0, react_jsx_runtime.jsxs)("div", {
+className: "dsh-wc-search",
+children: [
+(0, react_jsx_runtime.jsx)("input", {
+type: "search",
+className: "dsh-wc-search-input",
+placeholder: t("searchSettings"),
+"aria-label": t("searchSettings"),
+value: searchQuery,
+onChange: (event) => setSearchQuery(event.target.value)
+}),
+searchQuery ? (0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: () => setSearchQuery(""),
+children: t("searchClear")
+}) : null
+]
+}),
+noHit ? (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-empty", children: t("noMatch") }) : null,
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("presetTitle"),
 first: true,
@@ -1868,13 +1991,14 @@ children: t("presetDelete")
 style: styles.previewBlock,
 children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
 }),
-(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupAppearance") }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupAppearance") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("fontTitle"),
 hint: t("fontHint"),
+onReset: () => setFontLevel(3), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: fontLevel, options: fontOptions, onChange: setFontLevel })
 }),
-(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupMessage") }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupMessage") }),
 (0, react_jsx_runtime.jsxs)(SkinRow, {
 title: t("avatarTitle"),
 children: [
@@ -1897,19 +2021,23 @@ children: t("uploadAi")
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("aiAvatarTitle"),
 hint: t("aiAvatarHint"),
+onReset: () => setAiAvatarVisible(true), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: aiAvatarStore, options: aiAvatarOptions, onChange: setAiAvatarVisible })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("densityTitle"),
+onReset: () => setDensity("cozy"), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: density, options: densityOptions, onChange: setDensity })
 }),
-(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupLayout") }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupLayout") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("widthTitle"),
+onReset: () => setChatWidth("wide"), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: chatWidth, options: widthOptions, onChange: setChatWidth })
 }),
 (0, react_jsx_runtime.jsxs)(SkinRow, {
 title: t("sidebarBgTitle"),
+onReset: () => setSidebarBg(null), resetLabel: t("rowReset"),
 children: [
 SIDEBAR_SWATCHES.map((swatch) => (0, react_jsx_runtime.jsx)("button", {
 type: "button",
@@ -1931,16 +2059,19 @@ onChange: (event) => setSidebarBg(event.target.value)
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("lineHeightTitle"),
 hint: t("lineHeightHint"),
+onReset: () => { if (setLineHeight) setLineHeight("normal"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: lineHeight, options: lineHeightOptions, onChange: (value) => { if (setLineHeight) setLineHeight(value); } })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("tailTitle"),
+onReset: () => setTail(true), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
 }),
-(0, react_jsx_runtime.jsx)("div", { style: styles.groupTitle, children: t("groupAssist") }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-grouptitle", style: styles.groupTitle, children: t("groupAssist") }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("motionTitle"),
 hint: t("motionHint"),
+onReset: () => { if (setReduceMotion) setReduceMotion(false); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: reduceMotion, options: motionOptions, onChange: (value) => { if (setReduceMotion) setReduceMotion(value); } })
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -2431,6 +2562,10 @@ window.localStorage.removeItem(MOTION_KEY);
 					"tailTitle": "气泡尾巴",
 					"tailOn": "开",
 					"tailOff": "关",
+					"searchSettings": "搜索设置",
+"searchClear": "清除",
+"noMatch": "没有匹配的设置",
+"rowReset": "重置这一项",
 					"fontTitle": "字体大小（5 档）",
 					"fontHint": "作用于会话标题与发送气泡",
 					"fontL1": "小",
@@ -2493,6 +2628,10 @@ window.localStorage.removeItem(MOTION_KEY);
 					"tailTitle": "Bubble tail",
 					"tailOn": "On",
 					"tailOff": "Off",
+					"searchSettings": "Search settings",
+"searchClear": "Clear",
+"noMatch": "No matching setting",
+"rowReset": "Reset this row",
 					"fontTitle": "Font size (5 levels)",
 					"fontHint": "Applies to session titles and sent bubbles",
 					"fontL1": "XS",

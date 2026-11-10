@@ -67,6 +67,7 @@ console.log(a)</code></pre>
   </div>`,
   'settings-light': `<div style="width:560px;padding:16px;background:#fff">
     <div class="dsh-wc-settings">
+      <div class="dsh-wc-search"><input class="dsh-wc-search-input" placeholder="搜索设置"><button class="dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm">清除</button></div>
       <div class="dsh-wc-row"><span class="dsh-wc-label">字号</span>
         <span class="dsh-wc-seg"><button class="dsh-wc-seg-btn">小</button><button class="dsh-wc-seg-btn dsh-wc-seg-on">标准</button><button class="dsh-wc-seg-btn">大</button></span></div>
       <div class="dsh-wc-row"><span class="dsh-wc-label">侧栏背景</span>

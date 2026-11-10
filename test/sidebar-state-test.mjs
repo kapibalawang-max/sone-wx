@@ -20,8 +20,10 @@ const rows = [
   { t: '新会话', time: '', state: null, ch: '新' },
   { t: '兼容 completed 词汇', time: '昨天', state: 'completed', ch: '完2' },
   { t: '兼容 failed 词汇', time: '昨天', state: 'failed', ch: '错2' },
+  { t: '置顶会话', time: '12:00', state: null, ch: '顶', pin: true },
+  { t: '归档会话', time: '前天', state: null, ch: '归', arch: true },
 ];
-const row = (r) => `<div class="JoiKIa_sessionRow${r.sel ? ' JoiKIa_selected' : ''}" style="--dsh-avatar:url(&quot;${av(r.ch, 200)}&quot;)"><span class="JoiKIa_slot">${r.state ? `<span data-state="${r.state}"></span><span>状态</span>` : ''}${r.sched ? '<span data-session-schedule-mark><svg viewBox="0 0 16 16"></svg><span>x</span></span>' : ''}</span><span class="JoiKIa_title">${r.t}</span><span class="JoiKIa_rowResting"><span class="JoiKIa_time">${r.time}</span></span></div>`;
+const row = (r) => `<div class="JoiKIa_sessionRow${r.sel ? ' JoiKIa_selected' : ''}${r.arch ? ' JoiKIa_archived' : ''}" style="--dsh-avatar:url(&quot;${av(r.ch, 200)}&quot;)"><span class="JoiKIa_slot">${r.state ? `<span data-state="${r.state}"></span><span>状态</span>` : ''}${r.sched ? '<span data-session-schedule-mark><svg viewBox="0 0 16 16"></svg><span>x</span></span>' : ''}</span><span class="JoiKIa_title">${r.t}</span><span class="JoiKIa_rowResting">${r.pin ? '<span class="JoiKIa_pinIndicator"><svg viewBox="0 0 16 16"></svg></span>' : ''}<span class="JoiKIa_time">${r.time}</span></span></div>`;
 const host = `<style>:root{--dsh-sidebar-label-gap:8px;--dsw-radius-md:8px;--dsw-alias-label-primary:#1a1a1a;--dsw-alias-label-tertiary:#8c8c8c;--dsw-specific-sidebar-fill:#eeeef0}.JoiKIa_sessionRow{align-items:center;padding:0 8px;display:flex}.JoiKIa_slot{flex:none;display:inline-flex}.JoiKIa_title{flex:1;min-width:0;overflow:hidden;margin:0 6px 0 8px}.JoiKIa_rowResting{flex:none;display:inline-flex}body{margin:0;background:#eeeef0;font:13px/1.5 -apple-system}</style>`;
 const html = `<!doctype html><html><head><meta charset="utf-8">${host}<style>${css}</style></head><body class="dsh-wechat-skin-on dsh-wechat-match"><div style="padding:14px;width:330px">${rows.map(row).join('')}</div></body></html>`;
 writeFileSync('/tmp/sidebar-state-test.html', html);
@@ -47,6 +49,12 @@ const m = await page.evaluate(() => {
     selectedRowBg: getComputedStyle(rowEls[2]).backgroundColor,
     selectedTitleColor: getComputedStyle(rowEls[2].querySelector('.JoiKIa_title')).color,
     noBadgeForIdle: badge(5) === null,
+    doneTitleWeight: getComputedStyle(rowEls[3].querySelector('.JoiKIa_title')).fontWeight,
+    pinnedBg: getComputedStyle(rowEls[8]).backgroundColor,
+    plainBg: getComputedStyle(rowEls[5]).backgroundColor,
+    pinColor: getComputedStyle(rowEls[8].querySelector('.JoiKIa_pinIndicator')).color,
+    archivedOpacity: getComputedStyle(rowEls[9]).opacity,
+    timeSize: getComputedStyle(rowEls[0].querySelector('.JoiKIa_time')).fontSize,
     scheduleLeft: (() => { const e = document.querySelector('[data-session-schedule-mark]'); const c = e && getComputedStyle(e); return c ? { left: c.left, bottom: c.bottom } : null; })(),
   };
 });
@@ -63,13 +71,18 @@ eq('running badge spins', m.runningArc.anim, 'dsh-wc-badge-spin');
 eq('running arc colour', m.runningArc.top, 'rgb(7, 193, 96)');
 eq('warning dot', `${m.warning.w}/${m.warning.bg}`, '9px/rgb(255, 197, 61)');
 eq('error dot', m.error.bg, 'rgb(255, 107, 107)');
-eq('done has no badge', m.done.display, 'none');
+eq('done (unread) shows a green disc', `${m.done.display}/${m.done.bg}`, 'block/rgb(7, 193, 96)');
+eq('done title is heavier', m.doneTitleWeight, '600');
 eq('completed has no badge', m.completed.display, 'none');
 eq('failed dot', m.failed.bg, 'rgb(255, 107, 107)');
 eq('idle has no badge', m.noBadgeForIdle, 'true');
 eq('selected row is deep green', m.selectedRowBg, 'rgb(76, 159, 111)');
 eq('selected badge sits on white disc', m.selectedBadgeBg, 'rgb(255, 255, 255)');
 eq('selected title is white', m.selectedTitleColor, 'rgb(255, 255, 255)');
+eq('pinned row tinted', m.pinnedBg !== m.plainBg, 'true');
+eq('pin icon uses wechat green', m.pinColor, 'rgb(7, 193, 96)');
+eq('archived row recedes', m.archivedOpacity, '0.55');
+eq('timestamp is 11px', m.timeSize, '11px');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');
 if (fails.length) { console.error('FAIL\n' + fails.join('\n')); process.exit(1); }
 console.log(`sidebar-state: ${checks - fails.length}/${checks} OK`);
