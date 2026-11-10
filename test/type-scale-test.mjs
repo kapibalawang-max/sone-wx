@@ -13,15 +13,16 @@ writeFileSync('/tmp/sone-css-type.css', grab('WECHAT_CSS') + '\n' + grab('WECHAT
 function probe(scale, textScale = scale) {
   const html = `<!doctype html><html style="--dsh-wechat-font-scale:${scale};--dsh-wechat-text-scale:${textScale}"><head><meta charset="utf-8">
 <link rel="stylesheet" href="file:///tmp/sone-css-type.css"></head>
-<body class="dsh-wechat-skin-on" style="--wc-line-height:1.6">
+<body class="dsh-wechat-skin-on dsh-wechat-match" style="--wc-line-height:1.6">
 <div class="JoiKIa_sessionRow"><span class="JoiKIa_title" id="a">会话标题</span></div>
 <div class="tnXGgG_column" data-chat-flow-kind="assistant-step"><div class="q_bubble_1" id="b">正文段落</div><p><code id="c">code</code></p></div>
+<div class="XNZzAa_body" id="h">助手回复正文</div>
 <span class="JoiKIa_timestamp" id="d">12:00</span>
 <span class="JoiKIa_searchResultHeading" id="e">搜索标题</span>
 <button class="dsh-wc-btn dsh-wc-btn-secondary" id="f">按钮</button>
 <span class="dsh-wc-seg-item" id="g">分段</span>
 <script>
-const ids=['a','b','c','d','e','f','g']; const out={};
+const ids=['a','b','c','d','e','f','g','h']; const out={};
 for (const id of ids) out[id]=parseFloat(getComputedStyle(document.getElementById(id)).fontSize);
 document.title=JSON.stringify(out);
 </script></body></html>`
@@ -45,10 +46,11 @@ const uiOnly = probe(1.18, 1)
 const checks = [
   ['body scale raises bubble only', bodyOnly.b > base.b && bodyOnly.a === base.a],
   ['ui scale raises sidebar only', uiOnly.a > base.a && uiOnly.b === base.b],
-  ['body scale keeps UI meta unchanged', bodyOnly.d === base.d && bodyOnly.f === base.f]
+  ['body scale keeps UI meta unchanged', bodyOnly.d === base.d && bodyOnly.f === base.f],
+  ['assistant body follows text scale', bodyOnly.h > base.h && bodyOnly.h >= 13]
 ]
 for (const [name, ok] of checks) {
   if (!ok) { fail += 1; console.log('FAIL', name, JSON.stringify({ base, bodyOnly, uiOnly })) }
 }
-console.log(fail ? `${fail}/8 FAIL` : '8/8 OK')
+console.log(fail ? `${fail}/11 FAIL` : '11/11 OK')
 process.exit(fail ? 1 : 0)

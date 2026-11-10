@@ -538,6 +538,8 @@ body.dsh-wechat-skin-on.dsh-wechat-match .XNZzAa_body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   position: relative;
   min-width: 40px;
+  font-size: var(--wc-body-lg);
+  line-height: calc(var(--wc-body-lg) * var(--wc-line-height, 1.6));
 }
 /* DARK scheme: raised dark bubble (#2a2a2d on the #111214 wallpaper) */
 body.dsh-wechat-skin-on.dsh-wechat-match[data-dsh-wechat-dark="1"] .XNZzAa_body {
@@ -2410,19 +2412,19 @@ scanHooks.push(composerScrollScan);
 						applyFontLevel(fontLevel);
 						sync();
 					},
+					setTextFontLevel: (level) => {
+						textFontLevel = (level >= 1 && level <= 5) ? level : 3;
+						writeJson(TEXT_FONT_LEVEL_KEY, textFontLevel);
+						applyTextFontLevel(textFontLevel);
+						sync();
+					},
 					setDensity: (value) => {
-setTextFontLevel: (level) => {
-	textFontLevel = (level >= 1 && level <= 5) ? level : 3;
-	writeJson(TEXT_FONT_LEVEL_KEY, textFontLevel);
-	applyTextFontLevel(textFontLevel);
-	sync();
-},
 						density = value === "compact" ? "compact" : "cozy";
 						writeJson(DENSITY_KEY, density);
 						applyDensity(density);
 						sync();
 					},
-setUserAvatarVisible: (on) => {
+					setUserAvatarVisible: (on) => {
 					  userAvatarVisible = !!on;
 					  writeJson(USER_AVATAR_ENABLED_KEY, userAvatarVisible);
 					  applyUserAvatar(userAvatarVisible);
