@@ -34,7 +34,7 @@ document.title=JSON.stringify(out);
 let fail = 0
 for (const scale of [0.85, 0.92, 1.0, 1.08, 1.18]) {
   const r = probe(scale)
-  const ok = r.b > r.a && r.a >= r.c && r.c >= r.d * 1.1 && r.d >= r.e && r.b >= 13 && r.b <= 19 && r.f >= 12
+  const ok = r.b > r.a && r.a >= r.c && r.c >= r.d && r.d >= r.e && r.d >= 12 && r.e >= 12 && r.b >= 13 && r.b <= 21 && r.f >= 12
   if (!ok) fail += 1
   console.log(String(scale).padEnd(5), JSON.stringify(r), ok ? 'OK' : 'FAIL')
 }

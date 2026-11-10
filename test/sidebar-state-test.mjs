@@ -89,7 +89,7 @@ eq('pinned + selected keeps the green fill', m.selPinBg, 'rgb(76, 159, 111)');
 eq('pinned + selected keeps white title', m.selPinTitle, 'rgb(255, 255, 255)');
 eq('pin icon inverts on selected', m.selPinIcon, 'rgb(255, 255, 255)');
 eq('archived row recedes', m.archivedOpacity, '0.55');
-eq('timestamp is 11px', m.timeSize, '11px');
+eq('timestamp is 12px', m.timeSize, '12px');
 eq('schedule badge bottom-left', `${m.scheduleLeft.left}/${m.scheduleLeft.bottom}`, '-2px/-2px');
 if (fails.length) { console.error('FAIL\n' + fails.join('\n')); process.exit(1); }
 console.log(`sidebar-state: ${checks - fails.length}/${checks} OK`);

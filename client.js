@@ -172,16 +172,14 @@ window.__ModuleLoader__.load({
   --wc-text-lg: 15px;
   --wc-text-md: 13px;
   --wc-text-sm: 12px;
-  --wc-text-xs: 11px;
   --wc-fs-xl: clamp(16px, calc(var(--wc-text-xl) * var(--dsh-wechat-font-scale, 1)), 21px);
   --wc-fs-lg: clamp(13px, calc(var(--wc-text-lg) * var(--dsh-wechat-font-scale, 1)), 19px);
   --wc-fs-md: clamp(12px, calc(var(--wc-text-md) * var(--dsh-wechat-font-scale, 1)), 16px);
-  --wc-fs-sm: clamp(11px, calc(var(--wc-text-sm) * var(--dsh-wechat-font-scale, 1)), 15px);
-  --wc-fs-xs: clamp(10px, calc(var(--wc-text-xs) * var(--dsh-wechat-font-scale, 1)), 13px);
+  --wc-fs-sm: clamp(12px, calc(var(--wc-text-sm) * var(--dsh-wechat-font-scale, 1)), 15px);
   /* 旧变量名保留为别名，避免外部或旧缓存引用失效 */
   --wc-font-base: var(--wc-fs-md);
   --wc-font-sm: var(--wc-fs-sm);
-  --wc-font-xs: var(--wc-fs-xs);
+  --wc-font-xs: var(--wc-fs-sm);
   --wc-radius-card: 12px;
   --wc-radius-md: 10px;
   --wc-radius-bubble: 8px;
@@ -379,7 +377,7 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-
 }
 /* timestamps: one step up from the host's 10px so they stay readable at a glance */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_time {
-  font-size: 11px; font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary);
+  font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: var(--dsw-alias-label-tertiary);
 }
 /* archived sessions recede until hovered */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_archived { opacity: .55; }
@@ -691,7 +689,7 @@ body.dsh-wechat-skin-on ._3j1mRa_node {
   background: var(--dsw-alias-bg-module-platform, #f2f2f2); padding: 2px 6px;
 }
 body.dsh-wechat-skin-on ._3j1mRa_label { font-size: var(--wc-fs-md); font-weight: 500; }
-body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: var(--wc-fs-xs); color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
+body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
 body.dsh-wechat-skin-on ._3j1mRa_error { font-size: var(--wc-fs-sm); }
 
 /* Markdown inside assistant replies: WeChat reading rhythm, light chrome. */
@@ -711,7 +709,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre {
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre code { font-size: var(--wc-fs-md); line-height: 1.6; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote {
-  border-left: 2px solid var(--dsw-alias-border-l2, #dcdcdc); border-radius: 0 !important;
+  border-left: 0.5px solid var(--dsw-alias-border-l2, #dcdcdc); border-radius: 0 !important;
   background: var(--wc-code-bg); color: var(--wc-bubble-ink);
   margin: 10px 0; padding: 2px 0 2px 10px;
 }
@@ -765,13 +763,13 @@ body.dsh-wechat-skin-on .m00Doa_card {
 body.dsh-wechat-skin-on .m00Doa_row { border-radius: var(--wc-radius-sm); }
 body.dsh-wechat-skin-on .m00Doa_rowActive { background: var(--wc-hover-accent); }
 body.dsh-wechat-skin-on .m00Doa_label { font-size: var(--wc-fs-md); }
-body.dsh-wechat-skin-on .m00Doa_badge { border-radius: 999px; font-size: var(--wc-fs-xs); }
+body.dsh-wechat-skin-on .m00Doa_badge { border-radius: 999px; font-size: var(--wc-fs-sm); }
 body.dsh-wechat-skin-on .m00Doa_search { border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-sm); }
 
 /* Session list details: quieter meta, readable search hits. */
 body.dsh-wechat-skin-on .JoiKIa_time,
-body.dsh-wechat-skin-on .JoiKIa_timestamp { font-size: var(--wc-fs-xs); color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
-body.dsh-wechat-skin-on .JoiKIa_searchResultHeading { font-size: var(--wc-fs-xs); color: var(--dsw-alias-label-tertiary, #999); letter-spacing: 0.02em; }
+body.dsh-wechat-skin-on .JoiKIa_timestamp { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-tertiary, #999); font-variant-numeric: tabular-nums; }
+body.dsh-wechat-skin-on .JoiKIa_searchResultHeading { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-tertiary, #999); letter-spacing: 0.02em; }
 body.dsh-wechat-skin-on .JoiKIa_searchResultRow { border-radius: var(--wc-radius-bubble); }
 body.dsh-wechat-skin-on .JoiKIa_searchResultRow:hover { background: var(--wc-hover); }
 body.dsh-wechat-skin-on .JoiKIa_searchResultTitle { font-size: var(--wc-fs-md); font-weight: 500; }
@@ -788,7 +786,7 @@ body.dsh-wechat-skin-on .ZITbJG_action {
   color: var(--dsw-alias-label-tertiary, #999); transition: background-color .15s ease-out, color .15s ease-out;
 }
 body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--wc-hover); color: var(--dsw-alias-label-primary, #1b1b1c); }
-body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: var(--wc-fs-xs); color: var(--dsw-alias-label-tertiary, #999); }
+body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-tertiary, #999); }
 
 /* Toast: same top-center pill, tuned to the skin's radius and weight. */
 body.dsh-wechat-skin-on ._toast_hr9yd_6 {
@@ -831,7 +829,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind] [class*="_file_"] {
 body.dsh-wechat-skin-on [data-chat-flow-kind="user"] blockquote,
 body.dsh-wechat-skin-on [data-chat-flow-kind="user"] [class*="reply"],
 body.dsh-wechat-skin-on [data-chat-flow-kind="user"] [class*="quote"] {
-  border-left: 2px solid var(--wc-border-light); background: rgba(0,0,0,0.04); border-radius: 0; padding: 4px 8px; margin: 4px 0; font-size: var(--wc-fs-sm);
+  border-left: 0.5px solid var(--wc-border-light); background: rgba(0,0,0,0.04); border-radius: 0; padding: 4px 8px; margin: 4px 0; font-size: var(--wc-fs-sm);
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="user"] blockquote { background: rgba(255,255,255,0.06); }
 
@@ -2600,7 +2598,7 @@ window.localStorage.removeItem(MOTION_KEY);
 "noMatch": "没有匹配的设置",
 "rowReset": "重置这一项",
 					"fontTitle": "字体大小（5 档）",
-					"fontHint": "作用于会话标题与发送气泡",
+					"fontHint": "作用于会话区全部文字",
 					"fontL1": "小",
 					"fontL2": "较小",
 					"fontL3": "标准",
@@ -2668,7 +2666,7 @@ window.localStorage.removeItem(MOTION_KEY);
 "noMatch": "No matching setting",
 "rowReset": "Reset this row",
 					"fontTitle": "Font size (5 levels)",
-					"fontHint": "Applies to session titles and sent bubbles",
+					"fontHint": "Applies to all text in the chat",
 					"fontL1": "XS",
 					"fontL2": "S",
 					"fontL3": "M",

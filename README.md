@@ -16,6 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.19.5 按 UI 审查修三处：①字号收敛为 4 档（12/13/15/18），删除 11px 的 xs 档、`--wc-fs-sm` 下限抬到 12px，时间戳、子智能体指标、弹层徽标、搜索标题、结束信息全部改用 `var(--wc-fs-sm)`，全站不再出现 10/11px 文字；②设置项说明改为「作用于会话区全部文字」（原来只写会话标题与发送气泡，与 v1.13.0 起的全站缩放不符）；③引用块竖线由 2px 改为 0.5px（助手引用与用户引用两处），与全局 0.5px 边框约定一致。type-scale-test 与 sidebar-state-test 同步更新断言。
 - 2026-11-10 v1.19.4 修 GenUI 表格双框：genui 表格放在 `.V1MMBW_card` 里，卡片已有 1px 边框和 20px 内边距，里面 `.V1MMBW_tableWrap` 又画一层边框，两层框叠着看就是「边框错位」。现卡片内的表容器去掉自身边框与圆角，只留卡片一层；genui-table-test 扩到 8 项（卡片有框、内层无框）。
 - 2026-11-10 v1.19.3 修 GenUI 表格被皮肤误伤：皮肤原先用裸 `table` 选择器套 Markdown 表格样式，连带命中 dsh-genui 自己的表格组件（V1MMBW_table*），给它叠了外框、10px 外边距和 7px 内边距，表头离外框出现白边。现所有表格规则收敛到 `[class*="tableScroll"]` 范围内，只作用于宿主 Markdown 表格；新增 test/genui-table-test.mjs（7 项断言，保证 genui 表格边框/内外边距原样）。
 - 2026-11-10 v1.19.2 修表格边框错位：宿主把首末列 padding 归零、表格本身 `width:max-content` 且放在 `.tableScroll` 里，皮肤又在 `<table>` 上画框并把 padding 改小，导致外框与首末列文字贴边、看着像错位。现统一 th/td 内边距为 7px 12px（!important 压过宿主归零），外框留在 table 上并补 border-spacing:0 + overflow:hidden 让表头底色贴合圆角；新增 test/table-test.mjs（10 项 computed-style 断言）。
