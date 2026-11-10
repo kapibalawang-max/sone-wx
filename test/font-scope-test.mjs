@@ -29,9 +29,13 @@ document.title = JSON.stringify({ title: f('title'), p: f('p'), code: f('code'),
 let pass = 0, fail = 0
 const ok = (cond, name, extra) => { if (cond) pass++; else { fail++; console.log('FAIL', name, extra === undefined ? '' : JSON.stringify(extra)) } }
 
-for (const mode of ['serif', 'wechat', 'system']) {
+for (const mode of ['serif', 'wechat', 'system', 'kai', 'round']) {
   const r = probe(mode)
-  const want = mode === 'serif' ? /Songti|SimSun|serif/ : mode === 'wechat' ? /PingFang SC|Hiragino Sans GB|Microsoft YaHei/ : /-apple-system|system-ui|BlinkMacSystemFont/
+  const want = mode === 'serif' ? /Songti|SimSun|serif/
+    : mode === 'wechat' ? /PingFang SC|Hiragino Sans GB|Microsoft YaHei/
+    : mode === 'kai' ? /Kaiti|STKaiti|KaiTi/
+    : mode === 'round' ? /Yuanti|YouYuan|Maru Gothic/
+    : /-apple-system|system-ui|BlinkMacSystemFont/
   ok(want.test(r.title), `${mode}: 会话列表标题`, r.title)
   ok(want.test(r.p), `${mode}: 用户消息正文`, r.p)
   ok(want.test(r.bubble), `${mode}: 用户气泡容器`, r.bubble)

@@ -87,6 +87,7 @@ const sandbox = {
 };
 // fetch mock
 const brandState = { title: 'SONE', wordmarkImage: true, heroMark: false, mark: { set: true }, wordmark: null };
+sandbox.FONT_FAMILY_VALUES = ['system', 'wechat', 'serif', 'kai', 'round'];
 sandbox.fetch = (url, init) => {
   calls.push(['fetch', init && init.method ? init.method : 'GET', url]);
   if (url === '/sone-wx/brand' && (!init || !init.method)) {

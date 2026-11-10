@@ -75,6 +75,8 @@ window.__ModuleLoader__.load({
 		const LINE_HEIGHT_KEY = "dsh-wechat-skin:line-height";
 		const MOTION_KEY = "dsh-wechat-skin:reduced-motion";
 		const FONT_FAMILY_KEY = "dsh-wechat-skin:font-family";
+		/** Typeface presets: key consumed by --dsw-font-family. */
+		const FONT_FAMILY_VALUES = ["system", "wechat", "serif", "kai", "round"];
 		const CONTRAST_KEY = "dsh-wechat-skin:contrast";
 		const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape";
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
@@ -289,6 +291,12 @@ body.dsh-wechat-skin-on[data-dsh-wc-font-family="wechat"] {
 }
 body.dsh-wechat-skin-on[data-dsh-wc-font-family="serif"] {
   --dsw-font-family: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-font-family="kai"] {
+  --dsw-font-family: "Kaiti SC", "STKaiti", "KaiTi", "Kaiti TC", serif;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-font-family="round"] {
+  --dsw-font-family: "Yuanti SC", "YouYuan", "Hiragino Maru Gothic ProN", "PingFang SC", sans-serif;
 }
 
 /* avatar shape: rounded square is the WeChat original. Declare on the painted cell as
@@ -1562,7 +1570,7 @@ document.body.dataset.dshWcReduceMotion = on ? "1" : "0";
 /** Font family: system keeps the host stack, wechat mimics PingFang, serif for long reads. */
 function applyFontFamily(value) {
 if (typeof document === "undefined" || !document.body) return;
-const mode = value === "wechat" || value === "serif" ? value : "system";
+const mode = FONT_FAMILY_VALUES.indexOf(value) >= 0 ? value : "system";
 document.body.dataset.dshWcFontFamily = mode;
 }
 
@@ -2044,7 +2052,11 @@ children: "\u21ba"
 function SkinPreview({ t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible, fontFamily, contrast, avatarShape }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
 const textScale = FONT_SCALES[textFontLevel] !== undefined ? FONT_SCALES[textFontLevel] : FONT_SCALES[3];
-const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif' : fontFamily === "serif" ? '"Songti SC", "Noto Serif CJK SC", serif' : undefined;
+const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
+  : fontFamily === "serif" ? '"Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", SimSun, serif'
+  : fontFamily === "kai" ? '"Kaiti SC", "STKaiti", KaiTi, serif'
+  : fontFamily === "round" ? '"Yuanti SC", YouYuan, "Hiragino Maru Gothic ProN", "PingFang SC", sans-serif'
+  : undefined;
 const previewAvatarRadius = avatarShape === "circle" ? "50%" : avatarShape === "square" ? "2px" : "5px";
 const highContrast = contrast === "high";
 const gap = 10;
@@ -2234,7 +2246,9 @@ const motionOptions = [
 const fontFamilyOptions = [
 { value: "system", label: t("fontFamilySystem") },
 { value: "wechat", label: t("fontFamilyWechat") },
-{ value: "serif", label: t("fontFamilySerif") }
+{ value: "serif", label: t("fontFamilySerif") },
+{ value: "kai", label: t("fontFamilyKai") },
+{ value: "round", label: t("fontFamilyRound") }
 ];
 const contrastOptions = [
 { value: "normal", label: t("contrastNormal") },
@@ -2602,7 +2616,7 @@ applyTextFontLevel(textFontLevel);
 			let reduceMotion = readJson(MOTION_KEY, false) === true;
 			applyReducedMotion(reduceMotion);
 			let fontFamily = readJson(FONT_FAMILY_KEY, "system");
-			if (fontFamily !== "wechat" && fontFamily !== "serif") fontFamily = "system";
+			if (FONT_FAMILY_VALUES.indexOf(fontFamily) < 0) fontFamily = "system";
 			applyFontFamily(fontFamily);
 			let contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
 			applyContrast(contrast === "high");
@@ -2813,7 +2827,7 @@ scanHooks.push(composerScrollScan);
 						reduceMotion = readJson(MOTION_KEY, false) === true;
 						applyReducedMotion(reduceMotion);
 						fontFamily = readJson(FONT_FAMILY_KEY, "system");
-						if (fontFamily !== "wechat" && fontFamily !== "serif") fontFamily = "system";
+						if (FONT_FAMILY_VALUES.indexOf(fontFamily) < 0) fontFamily = "system";
 						applyFontFamily(fontFamily);
 						contrast = readJson(CONTRAST_KEY, "normal") === "high" ? "high" : "normal";
 						applyContrast(contrast === "high");
@@ -2876,7 +2890,7 @@ scanHooks.push(composerScrollScan);
 					sync();
 					},
 					setFontFamily: (value) => {
-					fontFamily = value === "wechat" || value === "serif" ? value : "system";
+					fontFamily = FONT_FAMILY_VALUES.indexOf(value) >= 0 ? value : "system";
 					writeJson(FONT_FAMILY_KEY, fontFamily);
 					applyFontFamily(fontFamily);
 					sync();
@@ -2996,6 +3010,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "fontFamilySystem": "系统默认",
 "fontFamilyWechat": "微信体",
 "fontFamilySerif": "宋体",
+"fontFamilyKai": "楷体",
+"fontFamilyRound": "圆体",
 "contrastTitle": "高对比度",
 "contrastHint": "加深正文、次要文字与边框，适合强光或外接显示器",
 "contrastNormal": "标准",
@@ -3084,6 +3100,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "fontFamilySystem": "System",
 "fontFamilyWechat": "WeChat",
 "fontFamilySerif": "Serif",
+"fontFamilyKai": "Kaiti",
+"fontFamilyRound": "Rounded",
 "contrastTitle": "High contrast",
 "contrastHint": "Darker text and borders for bright rooms and external displays",
 "contrastNormal": "Normal",
