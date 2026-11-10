@@ -476,10 +476,12 @@ body.dsh-wechat-skin-on[data-dsh-wechat-width="medium"] .kiGsTW_embeddedBody { -
 /* "native" width: no override - official 920px cap */
 
 /* ================= fonts ================= */
+/* The typeface setting owns --dsw-font-family; pin a hard stack here and every column
+   would ignore it. Keep the WeChat stack only as the fallback for an unset variable. */
 body.dsh-wechat-skin-on .tnXGgG_column,
 body.dsh-wechat-skin-on .AkCqbG_userStack,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
-  font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  font-family: var(--dsw-font-family, "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif);
 }
 
 /* ================= user bubble + avatar ================= */

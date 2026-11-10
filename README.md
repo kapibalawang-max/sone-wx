@@ -16,6 +16,10 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.27.1 字体设置没作用到侧栏与消息：
+  - 旧规则给 `.tnXGgG_column`、`.AkCqbG_userStack`、`.JoiKIa_sessionRow` 钉死了 `"Microsoft YaHei UI", …` 字体栈，字体设置写的 `--dsw-font-family` 传不到这三层，所以宋体只改到设置页与输入框。改为 `font-family: var(--dsw-font-family, "Microsoft YaHei UI", …)`，微信栈只作变量未设置时的兜底。
+  - 新增 `test/font-scope-test.mjs`（12 项）：三种字体模式下会话列表标题、用户消息正文、气泡容器都跟随设置，代码块保持等宽。
+
 - 2026-11-10 v1.27.0 未命名会话的头像：
   - 新建会话的标题都是「新建会话 / New chat」，按标题取色会让几个新会话长得一模一样。现在标题是占位词（或为空）时，改用会话 id（行上的 `data-row-key="session:<id>"`）作键：色板与头的偏移都按 id 稳定生成，所以每个新会话各自一色，命名后又自动换成主题配色。
   - 占位词表：新建会话 / 新会话 / 新对话 / 未命名会话 / 未命名 / new chat / new session / untitled / untitled session。
