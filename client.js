@@ -130,6 +130,8 @@ window.__ModuleLoader__.load({
   --wc-bubble-code-ink: #0a2e1a;
   /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
   --wc-sidebar: #eeeef0;
+  /* selected session row: WeChat uses a neutral grey one step darker than the list */
+  --wc-sel-bg: #dcdcde;
   --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
@@ -187,6 +189,7 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
+  --wc-sel-bg: #3a3a3d;
   --dsw-alias-state-business-primary: var(--wc-green) ;
   --dsw-alias-state-business-tertiary: #16281f ;
   --dsw-alias-state-success-primary: var(--wc-green) ;
@@ -204,6 +207,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
+  --wc-sel-bg: #e2d9c6;
   --wc-surface: #f2ece0;
   --wc-border-light: #e3dac8;
   --wc-bubble: #ded3ba;
@@ -243,10 +247,10 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_slot {
 body.dsh-wechat-skin-on .JoiKIa_sessionRow:hover { --wc-row-bg: color-mix(in srgb, var(--wc-sidebar) 92%, #000); }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:hover { --wc-row-bg: color-mix(in srgb, var(--wc-sidebar-dark) 90%, #fff); }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected {
-  --wc-row-bg: color-mix(in srgb, var(--wc-green) 14%, var(--wc-sidebar));
+  --wc-row-bg: var(--wc-sel-bg);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot {
-  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px color-mix(in srgb, var(--wc-green) 55%, transparent);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.55);
 }
 /* sessions with an active scheduled task: clock badge on the avatar's bottom-left */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow [data-session-schedule-mark] {
@@ -309,10 +313,8 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_title {
   font-size: var(--wc-fs-md); font-weight: 500; color: var(--dsw-alias-label-primary);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected,
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover {
-  background: color-mix(in srgb, var(--wc-green) 14%, var(--wc-sidebar));
-}
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 600; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover { background: var(--wc-sel-bg); }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 500; }
 
 
 /* ================= chat surface ================= */
