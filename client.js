@@ -130,10 +130,10 @@ window.__ModuleLoader__.load({
   --wc-bubble-code-ink: #0a2e1a;
   /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
   --wc-sidebar: #eeeef0;
-  /* selected session row: light lime with dark ink (white text is unreadable on it) */
-  --wc-sel-bg: #a9ea7a;
-  --wc-sel-ink: #14301f;
-  --wc-sel-ink-dim: rgba(20, 48, 31, 0.62);
+  /* selected session row: WeChat deep green with white text */
+  --wc-sel-bg: #4c9f6f;
+  --wc-sel-ink: #ffffff;
+  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
   --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
@@ -191,7 +191,7 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
-  --wc-sel-bg: #2f5c3f;
+  --wc-sel-bg: #3f8760;
   --wc-sel-ink: #ffffff;
   --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
   --dsw-alias-state-business-primary: var(--wc-green) ;
@@ -211,9 +211,9 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
-  --wc-sel-bg: #c9e39b;
-  --wc-sel-ink: #2b3a1e;
-  --wc-sel-ink-dim: rgba(43, 58, 30, 0.62);
+  --wc-sel-bg: #4c9f6f;
+  --wc-sel-ink: #ffffff;
+  --wc-sel-ink-dim: rgba(255, 255, 255, 0.8);
   --wc-surface: #f2ece0;
   --wc-border-light: #e3dac8;
   --wc-bubble: #ded3ba;
