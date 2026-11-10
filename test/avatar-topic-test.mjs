@@ -24,10 +24,12 @@ const paletteEnd = src.indexOf('];', paletteStart) + 2;
 const topicsStart = src.indexOf('const AVATAR_TOPICS');
 const topicsEnd = src.indexOf('];', topicsStart) + 2;
 const code = src.slice(paletteStart, paletteEnd) + '\n' + src.slice(topicsStart, topicsEnd) + '\n'
-  + grab('titleHash') + '\n' + grab('paletteForTopic') + '\n' + grab('silhouetteAvatar');
+  + grab('titleHash') + '\n' + grab('paletteForTopic') + '\n' + grab('silhouetteAvatar')
+  + '\n' + src.slice(src.indexOf('const PLACEHOLDER_TITLES'), src.indexOf('];', src.indexOf('const PLACEHOLDER_TITLES')) + 2)
+  + '\n' + grab('isPlaceholderTitle') + '\n' + grab('avatarKeyFor');
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(code + '\n;this.palette=AVATAR_PALETTE;this.topic=(t)=>paletteForTopic(t);this.avatar=(t,i)=>silhouetteAvatar(t,i);', ctx);
+vm.runInContext(code + '\n;this.palette=AVATAR_PALETTE;this.topic=(t)=>paletteForTopic(t);this.avatar=(t,i)=>silhouetteAvatar(t,i);this.keyFor=(row,t)=>avatarKeyFor(row,t);this.blank=(t)=>isPlaceholderTitle(t);', ctx);
 
 const fails = [];
 const check = (name, ok, detail) => { if (!ok) fails.push(name + (detail ? ' — ' + detail : '')); };
@@ -70,6 +72,18 @@ for (const title of ['修复登录态过期', '周报数据核对', '重构设�
   used.add((svg.match(/fill="(#[0-9a-f]{6})"/i) || [])[1]);
 }
 check('11 个主题落到不同色板', used.size === 11, [...used].join(' '));
+
+const rowOf = (id) => ({ dataset: { rowKey: 'session:' + id } });
+check('占位标题按会话 id 取键', ctx.keyFor(rowOf('abc'), '新建会话') === 'session:abc');
+check('占位标题英文也认', ctx.blank('New chat') === true && ctx.blank('Untitled') === true);
+check('有名字的会话按标题取键', ctx.keyFor(rowOf('abc'), '修复登录态过期') === '修复登录态过期');
+check('没有 row 时回落到标题', ctx.keyFor(null, '新建会话') === '新建会话');
+
+const newA = ctx.avatar('session:aaa111', 0);
+const newB = ctx.avatar('session:bbb222', 0);
+check('两个新会话颜色不同', newA !== newB);
+check('新会话同 id 稳定', newA === ctx.avatar('session:aaa111', 0));
+check('占位标题退回哈希取色', ctx.avatar('新建会话', 0).startsWith('data:image/svg+xml,'));
 
 if (fails.length) { console.log('FAIL avatar-topic\n  - ' + fails.join('\n  - ')); process.exit(1); }
 console.log('PASS avatar-topic');

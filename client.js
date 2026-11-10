@@ -1313,13 +1313,30 @@ body .dsh-wc-color {
 			return el ? el.textContent.trim() : "";
 		}
 
+		/**
+		 * Titles a brand-new session carries before it gets a name. Two of them read the same,
+		 * so keying the avatar by title would paint every new session the same colour.
+		 */
+		const PLACEHOLDER_TITLES = ["新建会话", "新会话", "新对话", "未命名会话", "未命名", "new chat", "new session", "untitled", "untitled session"];
+		function isPlaceholderTitle(title) {
+			if (!title) return true;
+			return PLACEHOLDER_TITLES.includes(String(title).trim().toLowerCase());
+		}
+		/** Avatar key: the title, or the session id while the session is still unnamed. */
+		function avatarKeyFor(row, title) {
+			if (!isPlaceholderTitle(title)) return title;
+			const raw = (row && row.dataset && row.dataset.rowKey) || "";
+			return raw.startsWith("session:") ? "session:" + raw.slice(8) : title;
+		}
+
 		/** Assign (and persist) a stable avatar to one session row. */
 		function assignRowAvatar(row, title) {
-			if (avatarMap[title] === undefined) {
-				avatarMap[title] = avatarIndexForTitle(title);
+			const key = avatarKeyFor(row, title);
+			if (avatarMap[key] === undefined) {
+				avatarMap[key] = avatarIndexForTitle(key);
 				writeJson(AVATAR_MAP_KEY, avatarMap);
 			}
-			const value = "url(\"" + avatarForIndex(title, avatarMap[title]) + "\")";
+			const value = "url(\"" + avatarForIndex(key, avatarMap[key]) + "\")";
 if (row.dataset.dshAvatar !== value) {
 row.style.setProperty("--dsh-avatar", value);
 row.dataset.dshAvatar = value;
