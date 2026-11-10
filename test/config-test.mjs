@@ -7,7 +7,7 @@ if (a < 0 || b < 0) throw new Error('api block not found');
 const apiText = src.slice(a, b);
 const KEY = {
   FONT_LEVEL_KEY: 'dsh-wechat-skin:font-level', DENSITY_KEY: 'dsh-wechat-skin:density',
-  TAIL_KEY: 'dsh-wechat-skin:tail', CHAT_WIDTH_KEY: 'dsh-wechat-skin:chat-width',
+  USER_AVATAR_ENABLED_KEY: 'dsh-wechat-skin:user-avatar:enabled', CHAT_WIDTH_KEY: 'dsh-wechat-skin:chat-width',
   SIDEBAR_BG_KEY: 'dsh-wechat-skin:sidebar-bg', SIDEBAR_ORDER_KEY: 'dsh-wechat-skin:sidebar-order',
   USER_AVATAR_KEY: 'dsh-wechat-skin:user-avatar', AI_AVATAR_KEY: 'dsh-wechat-skin:ai-avatar',
   AI_AVATAR_ENABLED_KEY: 'dsh-wechat-skin:ai-avatar:enabled', AI_AVATAR_SHOW_KEY_LEGACY: 'dsh-wechat-skin:ai-avatar-visible',
@@ -22,7 +22,7 @@ const localStorage = {
   setItem: (k, v) => store.set(k, String(v)),
   removeItem: (k) => store.delete(k)
 };
-let sidebarBg = null, fontLevel = 3, density = 'cozy', tail = true, chatWidth = 'wide', sidebarOrder = [];
+let sidebarBg = null, fontLevel = 3, density = 'cozy', userAvatarVisible = true, chatWidth = 'wide', sidebarOrder = [];
 const calls = [];
 const sandbox = {
   window: { localStorage, dispatchEvent: (e) => calls.push(['event', e.type]), localStorageSet: null },
@@ -33,9 +33,9 @@ const sandbox = {
   FileReader: class { readAsDataURL(blob) { this.result = 'data:image/png;base64,' + Buffer.from(blob.__bytes || 'x').toString('base64'); setTimeout(() => this.onload && this.onload(), 0); } },
   CustomEvent: class { constructor(type) { this.type = type; } },
   THEME_PRESETS: [
-    { id: 'wechat', fontLevel: 3, density: 'cozy', chatWidth: 'wide', tail: true, sidebarBg: null },
-    { id: 'compact', fontLevel: 2, density: 'compact', chatWidth: 'medium', tail: true, sidebarBg: null },
-    { id: 'paper', fontLevel: 3, density: 'cozy', chatWidth: 'medium', tail: false, sidebarBg: '#f7f3ec' }
+    { id: 'wechat', fontLevel: 3, density: 'cozy', chatWidth: 'wide', sidebarBg: null },
+    { id: 'compact', fontLevel: 2, density: 'compact', chatWidth: 'medium', sidebarBg: null },
+    { id: 'paper', fontLevel: 3, density: 'cozy', chatWidth: 'medium', sidebarBg: '#f7f3ec' }
   ],
   CONFIG_SKIN_KEYS: Object.values(KEY),
   ...KEY,
@@ -50,7 +50,7 @@ const sandbox = {
   readJson: (k, d) => { const raw = localStorage.getItem(k); if (raw === null) return d; try { return JSON.parse(raw); } catch (e) { return d; } },
   applyFontLevel: (v) => { calls.push(['font', v]); },
   applyDensity: (v) => { calls.push(['density', v]); },
-  applyTail: (v) => { calls.push(['tail', v]); },
+  applyUserAvatar: (v) => { calls.push(['userAvatarVisible', v]); },
   applyChatWidth: (v) => { calls.push(['width', v]); },
   applySidebarBg: () => { calls.push(['sidebarBg', sidebarBg]); },
   applyAiAvatar: (v) => { calls.push(['aiAvatarVisible', v]); },
@@ -66,7 +66,7 @@ const sandbox = {
   sync: () => calls.push(['sync']),
   get fontLevel() { return fontLevel; }, set fontLevel(v) { fontLevel = v; },
   get density() { return density; }, set density(v) { density = v; },
-  get tail() { return tail; }, set tail(v) { tail = v; },
+  get userAvatarVisible() { return userAvatarVisible; }, set userAvatarVisible(v) { userAvatarVisible = v; },
   get chatWidth() { return chatWidth; }, set chatWidth(v) { chatWidth = v; },
   get sidebarBg() { return sidebarBg; }, set sidebarBg(v) { sidebarBg = v; },
   get sidebarOrder() { return sidebarOrder; }, set sidebarOrder(v) { sidebarOrder = v; }
@@ -95,8 +95,8 @@ const ok = (cond, name) => { if (cond) { pass++; } else { fail++; console.log('F
 
 // applyPreset paper
 api.applyPreset('paper');
-ok(fontLevel === 3 && density === 'cozy' && tail === false && chatWidth === 'medium', 'preset values');
-ok(localStorage.getItem(KEY.TAIL_KEY) === 'false', 'preset persisted tail');
+ok(fontLevel === 3 && density === 'cozy' && chatWidth === 'medium', 'preset values');
+ok(localStorage.getItem(KEY.USER_AVATAR_ENABLED_KEY) === null, 'preset does not touch avatar visibility');
 ok(sidebarBg === '#f7f3ec' && localStorage.getItem(KEY.SIDEBAR_BG_KEY) === '"#f7f3ec"', 'preset sidebar bg');
 // applyPreset compact resets sidebar to null
 api.applyPreset('compact');
@@ -126,12 +126,12 @@ calls.length = 0;
 const imp = JSON.parse(JSON.stringify(payload));
 imp.skin[KEY.FONT_LEVEL_KEY] = JSON.stringify(1);
 imp.skin[KEY.SIDEBAR_BG_KEY] = JSON.stringify('#abcdef');
-delete imp.skin[KEY.TAIL_KEY];
+delete imp.skin[KEY.USER_AVATAR_ENABLED_KEY];
 imp.brand = { title: 'NEW', wordmarkImage: false, heroMark: true };
 await api.importConfig(imp);
 ok(fontLevel === 1, 'import applies font');
 ok(sidebarBg === '#abcdef', 'import applies sidebar');
-ok(localStorage.getItem(KEY.TAIL_KEY) === 'true', 'import keeps absent keys (no clobber)');
+ok(localStorage.getItem(KEY.USER_AVATAR_ENABLED_KEY) === null, 'import keeps absent keys (no clobber)');
 ok(calls.some((c) => c[0] === 'fetch' && c[1] === 'POST' && c[2] === '/sone-wx/brand'), 'import posts brand');
 ok(calls.some((c) => c[0] === 'event' && c[1] === 'sone-wx:brand-reload'), 'import dispatches reload');
 ok(calls.some((c) => c[0] === 'userAvatar' && c[1] === true), 'import restores user avatar');

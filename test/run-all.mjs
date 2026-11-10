@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 const here = dirname(fileURLToPath(import.meta.url))
 const files = ['sbg-test', 'panel-order-test', 'config-test', 'bg-test', 'type-scale-test',
-  'style-prop-test', 'glyph-turn-test', 'sidebar-state-test', 'i18n-keys-test', 'settings-search-test', 'css-snapshot', 'visual']
+  'style-prop-test', 'glyph-turn-test', 'sidebar-state-test', 'i18n-keys-test', 'settings-search-test', 'user-avatar-test', 'css-snapshot', 'visual']
 let failed = 0
 for (const f of files) {
   const r = spawnSync(process.execPath, [join(here, f + '.mjs')], { encoding: 'utf8' })

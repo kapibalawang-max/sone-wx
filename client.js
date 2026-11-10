@@ -64,7 +64,7 @@ window.__ModuleLoader__.load({
 		const AI_AVATAR_KEY = "dsh-wechat-skin:ai-avatar";
 		const DENSITY_KEY = "dsh-wechat-skin:density";
 		const CHAT_WIDTH_KEY = "dsh-wechat-skin:chat-width";
-		const TAIL_KEY = "dsh-wechat-skin:tail";
+		const USER_AVATAR_ENABLED_KEY = "dsh-wechat-skin:user-avatar:enabled";
 		const AI_AVATAR_ENABLED_KEY = "dsh-wechat-skin:ai-avatar:enabled";
 		// Legacy key for configs exported before the enabled rename
 		const AI_AVATAR_SHOW_KEY_LEGACY = "dsh-wechat-skin:ai-avatar-visible";
@@ -86,14 +86,14 @@ window.__ModuleLoader__.load({
 		const FONT_SCALES = { 1: 0.85, 2: 0.92, 3: 1.0, 4: 1.08, 5: 1.18 };
 		/** Theme presets: one click sets a coherent set of skin values. */
 		const THEME_PRESETS = [
-			{ id: "wechat", fontLevel: 3, density: "cozy", chatWidth: "wide", tail: true, sidebarBg: null },
-			{ id: "compact", fontLevel: 2, density: "compact", chatWidth: "medium", tail: true, sidebarBg: null },
-			{ id: "paper", fontLevel: 3, density: "cozy", chatWidth: "medium", tail: false, sidebarBg: null }
+			{ id: "wechat", fontLevel: 3, density: "cozy", chatWidth: "wide", sidebarBg: null },
+			{ id: "compact", fontLevel: 2, density: "compact", chatWidth: "medium", sidebarBg: null },
+			{ id: "paper", fontLevel: 3, density: "cozy", chatWidth: "medium", sidebarBg: null }
 		];
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, TAIL_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -450,6 +450,10 @@ body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]:n
 /* AI avatar off: no avatar, and the answer rows sit flush left with the rest. */
 body.dsh-wechat-skin-on[data-dsh-wechat-ai-avatar="0"] .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"] { margin-left: 0 !important; }
 body.dsh-wechat-skin-on[data-dsh-wechat-ai-avatar="0"] .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]::before { content: none !important; }
+/* My avatar off: hide the sent-row avatar and let the bubble sit flush right. */
+body.dsh-wechat-skin-on[data-dsh-wechat-user-avatar="0"] [data-chat-flow-kind="user"]::after,
+body.dsh-wechat-skin-on[data-dsh-wechat-user-avatar="0"] [data-chat-flow-kind="steering"]::after { content: none !important; }
+body.dsh-wechat-skin-on[data-dsh-wechat-user-avatar="0"] .AkCqbG_userRow { margin-right: 0 !important; }
 /* Process-group seat ("已完成分析" chip, bare .r52wTW_root) has no avatar either —
    flush left like the other avatar-less rows. */
 /* The settled-turn line ("已完成，用时 X 秒", button.gTO55a_root) is a system
@@ -855,10 +859,6 @@ body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
   }
 }
 
-/* bubble tail off: hide the right-pointing triangle on sent bubbles */
-body.dsh-wechat-skin-on[data-dsh-wechat-tail="0"] .tnXGgG_column [class*="_bubble_"]:not([data-portal])::before {
-  content: none;
-}
 `;
 
 				/** Settings-row button styles: injected even when the skin is off, so the row keeps hover/active/disabled feedback. */
@@ -1312,9 +1312,9 @@ if (rows.length > 0) sessionListPrimed = true;
 			else delete document.body.dataset.dshWechatDensity;
 		}
 
-		/** Apply the user-bubble tail visibility. */
-		function applyTail(on) {
-		  if (document.body) document.body.dataset.dshWechatTail = on ? "1" : "0";
+		/** Show/hide the sent-row (my) avatar; hiding it also drops the reserved 42px column. */
+		function applyUserAvatar(on) {
+		  if (document.body) document.body.dataset.dshWechatUserAvatar = on ? "1" : "0";
 		}
 
 		/** Show/hide the assistant avatar; hiding it also drops the reserved 42px column. */
@@ -1577,16 +1577,16 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialDensity, initialTail, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion) {
+		function createStore(initialEnabled, initialFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, tail: initialTail, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion) => {
+		      sync: (d, enabled, fontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
 		        d.density = density;
-		        d.tail = tail;
+		        d.userAvatar = userAvatar;
 		        d.chatWidth = chatWidth;
 		        d.sidebarBg = sidebarBg;
 		        d.aiAvatar = aiAvatar;
@@ -1774,7 +1774,7 @@ children: "\u21ba"
 		}
 
 /** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
-function SkinPreview({ t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible }) {
+function SkinPreview({ t, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
 const gap = 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
@@ -1784,12 +1784,6 @@ const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
 const outBubble = "#95ec69";
 const lh = lineHeight === "compact" ? 1.5 : lineHeight === "relaxed" ? 1.85 : 1.6;
 const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontSize: Math.round(12 * scale) + "px", lineHeight: lh };
-const tailStyle = (color, right) => {
-const style = { position: "absolute", top: "9px", width: 0, height: 0, borderTop: "4px solid transparent", borderBottom: "4px solid transparent" };
-if (right) { style.right = "-5px"; style.borderLeft = "6px solid " + color; }
-else { style.left = "-5px"; style.borderRight = "6px solid " + color; }
-return style;
-};
 return (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", borderRadius: "10px", overflow: "hidden", border: "0.5px solid var(--dsw-alias-border-l2)" },
 children: [
@@ -1811,18 +1805,21 @@ children: "AI"
 }),
 (0, react_jsx_runtime.jsxs)("div", {
 style: Object.assign({}, bubbleBase, { background: inBubble, color: darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a", border: darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)" }),
-children: [
-tail ? (0, react_jsx_runtime.jsx)("span", { style: tailStyle(inBubble, false) }) : null,
-t("previewIn")
-]
+children: t("previewIn")
 })
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
-style: Object.assign({}, bubbleBase, { alignSelf: "flex-end", background: outBubble, color: "#101010" }),
+style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-end" },
 children: [
-tail ? (0, react_jsx_runtime.jsx)("span", { style: tailStyle(outBubble, true) }) : null,
-t("previewOut")
+userAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
+style: { width: "22px", height: "22px", borderRadius: "5px", flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
+children: t("me")
+}),
+(0, react_jsx_runtime.jsxs)("div", {
+style: Object.assign({}, bubbleBase, { background: outBubble, color: "#101010" }),
+children: t("previewOut")
+})
 ]
 })
 ]
@@ -1836,10 +1833,10 @@ t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setDensity, setTail, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const density = useStore((s) => s.density);
-const tail = useStore((s) => s.tail);
+const userAvatarVisible = useStore((s) => s.userAvatar);
 const aiAvatarStore = useStore((s) => s.aiAvatar);
 const chatWidth = useStore((s) => s.chatWidth);
 const sidebarBg = useStore((s) => s.sidebarBg);
@@ -1943,9 +1940,9 @@ const aiAvatarOptions = [
 { value: true, label: t("aiAvatarOn") },
 { value: false, label: t("aiAvatarOff") }
 ];
-const tailOptions = [
-{ value: true, label: t("tailOn") },
-{ value: false, label: t("tailOff") }
+const userAvatarOptions = [
+{ value: true, label: t("userAvatarOn") },
+{ value: false, label: t("userAvatarOff") }
 ];
 const lineHeightOptions = [
 { value: "compact", label: t("lineHeightCompact") },
@@ -2020,7 +2017,7 @@ children: t("presetDelete")
 }),
 (0, react_jsx_runtime.jsx)("div", {
 style: styles.previewBlock,
-children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, tail, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
+children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAppearance"), children: [
@@ -2056,6 +2053,12 @@ title: t("aiAvatarTitle"),
 hint: t("aiAvatarHint"),
 onReset: () => setAiAvatarVisible(true), resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: aiAvatarStore, options: aiAvatarOptions, onChange: setAiAvatarVisible })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("userAvatarTitle"),
+hint: t("userAvatarHint"),
+onReset: () => setUserAvatarVisible(true), resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: userAvatarVisible, options: userAvatarOptions, onChange: setUserAvatarVisible })
 }),
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("densityTitle"),
@@ -2095,11 +2098,6 @@ title: t("lineHeightTitle"),
 hint: t("lineHeightHint"),
 onReset: () => { if (setLineHeight) setLineHeight("normal"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: lineHeight, options: lineHeightOptions, onChange: (value) => { if (setLineHeight) setLineHeight(value); } })
-}),
-(0, react_jsx_runtime.jsx)(SkinRow, {
-title: t("tailTitle"),
-onReset: () => setTail(true), resetLabel: t("rowReset"),
-children: (0, react_jsx_runtime.jsx)(Segmented, { value: tail, options: tailOptions, onChange: setTail })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAssist"), children: [
@@ -2249,8 +2247,8 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applyFontLevel(fontLevel);
 			let density = readJson(DENSITY_KEY, "cozy") === "compact" ? "compact" : "cozy";
 			applyDensity(density);
-			let tail = readJson(TAIL_KEY, true) !== false;
-			applyTail(tail);
+			let userAvatarVisible = readJson(USER_AVATAR_ENABLED_KEY, true) !== false;
+			applyUserAvatar(userAvatarVisible);
 			let aiAvatarVisible = readJson(AI_AVATAR_ENABLED_KEY, true) !== false;
 			applyAiAvatar(aiAvatarVisible);
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
@@ -2262,11 +2260,11 @@ sidebarBg = normalizeHexColor(readJson(SIDEBAR_BG_KEY, null));
 			applyLineHeight(lineHeight);
 			let reduceMotion = readJson(MOTION_KEY, false) === true;
 			applyReducedMotion(reduceMotion);
-			const store = createStore(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion);
+			const store = createStore(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, density, tail, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion);
+				bound?.sync(enabled, fontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -2287,10 +2285,10 @@ scanHooks.push(composerScrollScan);
 						applyDensity(density);
 						sync();
 					},
-					setTail: (on) => {
-					  tail = !!on;
-					  writeJson(TAIL_KEY, tail);
-					  applyTail(tail);
+setUserAvatarVisible: (on) => {
+					  userAvatarVisible = !!on;
+					  writeJson(USER_AVATAR_ENABLED_KEY, userAvatarVisible);
+					  applyUserAvatar(userAvatarVisible);
 					  sync();
 					},
 					setAiAvatarVisible: (on) => {
@@ -2323,9 +2321,6 @@ scanHooks.push(composerScrollScan);
 						density = preset.density;
 						writeJson(DENSITY_KEY, density);
 						applyDensity(density);
-						tail = preset.tail;
-						writeJson(TAIL_KEY, tail);
-						applyTail(tail);
 						chatWidth = preset.chatWidth;
 						writeJson(CHAT_WIDTH_KEY, chatWidth);
 						applyChatWidth(chatWidth);
@@ -2387,8 +2382,8 @@ scanHooks.push(composerScrollScan);
 						if (importedDensity !== undefined && importedDensity !== "cozy" && importedDensity !== "compact") return Promise.reject(new Error("invalid config"));
 						const importedChatWidth = importedValue(CHAT_WIDTH_KEY);
 						if (importedChatWidth !== undefined && importedChatWidth !== "wide" && importedChatWidth !== "medium" && importedChatWidth !== "native") return Promise.reject(new Error("invalid config"));
-						const importedTail = importedValue(TAIL_KEY);
-						if (importedTail !== undefined && typeof importedTail !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedUserVisible = importedValue(USER_AVATAR_ENABLED_KEY);
+						if (importedUserVisible !== undefined && typeof importedUserVisible !== "boolean") return Promise.reject(new Error("invalid config"));
 						const importedAiVisible = importedValue(AI_AVATAR_ENABLED_KEY);
 						const importedAiVisibleLegacy = importedValue(AI_AVATAR_SHOW_KEY_LEGACY);
 						if (importedAiVisible !== undefined && typeof importedAiVisible !== "boolean") return Promise.reject(new Error("invalid config"));
@@ -2409,7 +2404,7 @@ scanHooks.push(composerScrollScan);
 								if (!(Number(p.fontLevel) >= 1 && Number(p.fontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
 								if (p.density !== "cozy" && p.density !== "compact") return Promise.reject(new Error("invalid config"));
 								if (p.chatWidth !== "wide" && p.chatWidth !== "medium" && p.chatWidth !== "native") return Promise.reject(new Error("invalid config"));
-								if (typeof p.tail !== "boolean") return Promise.reject(new Error("invalid config"));
+								if (p.tail !== undefined && typeof p.tail !== "boolean") return Promise.reject(new Error("invalid config"));
 								if (p.sidebarBg !== null && p.sidebarBg !== undefined && !/^#[0-9a-fA-F]{6}$/.test(String(p.sidebarBg))) return Promise.reject(new Error("invalid config"));
 							}
 						}
@@ -2433,8 +2428,8 @@ scanHooks.push(composerScrollScan);
 						applyFontLevel(fontLevel);
 						density = readJson(DENSITY_KEY, "cozy") === "compact" ? "compact" : "cozy";
 						applyDensity(density);
-						tail = readJson(TAIL_KEY, true) !== false;
-						applyTail(tail);
+						userAvatarVisible = readJson(USER_AVATAR_ENABLED_KEY, true) !== false;
+						applyUserAvatar(userAvatarVisible);
 						chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 						if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 						applyChatWidth(chatWidth);
@@ -2508,7 +2503,7 @@ scanHooks.push(composerScrollScan);
 					sync();
 					},
 					savePreset: (name) => {
-					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, density, tail, chatWidth, sidebarBg };
+					const preset = { id: "custom-" + Date.now(), name: String(name || "Preset").slice(0, 18), fontLevel, density, chatWidth, sidebarBg };
 					const list = readCustomPresets();
 					list.unshift(preset);
 					writeJson(CUSTOM_PRESETS_KEY, list.slice(0, 6));
@@ -2529,7 +2524,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(AI_AVATAR_KEY);
 							window.localStorage.removeItem(FONT_LEVEL_KEY);
 							window.localStorage.removeItem(DENSITY_KEY);
-							window.localStorage.removeItem(TAIL_KEY);
+							window.localStorage.removeItem(USER_AVATAR_ENABLED_KEY);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
@@ -2547,7 +2542,7 @@ window.localStorage.removeItem(MOTION_KEY);
 						document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
 						fontLevel = 3; writeJson(FONT_LEVEL_KEY, fontLevel); applyFontLevel(fontLevel);
 						density = "cozy"; applyDensity(density);
-						tail = true; applyTail(tail);
+						userAvatarVisible = true; applyUserAvatar(userAvatarVisible);
 						chatWidth = "wide"; applyChatWidth(chatWidth);
 						aiAvatarVisible = true; applyAiAvatar(aiAvatarVisible);
 						sidebarBg = null; applySidebarBg();
@@ -2595,9 +2590,10 @@ window.localStorage.removeItem(MOTION_KEY);
 "presetSave": "存为预设",
 "presetDelete": "删除预设",
 "presetMine": "我的预设",
-					"tailTitle": "气泡尾巴",
-					"tailOn": "开",
-					"tailOff": "关",
+					"userAvatarTitle": "我的头像",
+					"userAvatarHint": "关闭后不显示你发送的会话头像，气泡贴右",
+					"userAvatarOn": "显示",
+					"userAvatarOff": "隐藏",
 					"searchSettings": "搜索设置",
 "searchClear": "清除",
 "noMatch": "没有匹配的设置",
@@ -2615,6 +2611,7 @@ window.localStorage.removeItem(MOTION_KEY);
 					"preset_wechat": "微信",
 					"preset_compact": "紧凑",
 					"preset_paper": "纸张",
+					"me": "我",
 					"previewIn": "今天有空吗？帮我看看这份方案",
 					"previewOut": "可以，发过来吧",
 					"fitOk": "适配正常",
@@ -2661,9 +2658,10 @@ window.localStorage.removeItem(MOTION_KEY);
 "presetSave": "Save preset",
 "presetDelete": "Delete preset",
 "presetMine": "My preset",
-					"tailTitle": "Bubble tail",
-					"tailOn": "On",
-					"tailOff": "Off",
+					"userAvatarTitle": "My avatar",
+					"userAvatarHint": "When hidden, your sent messages drop the avatar and sit flush right",
+					"userAvatarOn": "Shown",
+					"userAvatarOff": "Hidden",
 					"searchSettings": "Search settings",
 "searchClear": "Clear",
 "noMatch": "No matching setting",
@@ -2681,7 +2679,8 @@ window.localStorage.removeItem(MOTION_KEY);
 					"preset_wechat": "WeChat",
 					"preset_compact": "Compact",
 					"preset_paper": "Paper",
-					"previewIn": "Free today? Can you look at this proposal?",
+					"me": "Me",
+					"previewIn": "Busy today? Can you look at this plan?",
 					"previewOut": "Sure, send it over",
 					"fitOk": "Selectors OK",
 					"fitMissing": "Selectors missing",
