@@ -6,7 +6,7 @@ const b = src.indexOf('uploadUserAvatar: (dataUrl) => {');
 if (a < 0 || b < 0) throw new Error('api block not found');
 const apiText = src.slice(a, b);
 const KEY = {
-  FONT_LEVEL_KEY: 'dsh-wechat-skin:font-level', DENSITY_KEY: 'dsh-wechat-skin:density',
+  FONT_LEVEL_KEY: 'dsh-wechat-skin:font-level', TEXT_FONT_LEVEL_KEY: 'dsh-wechat-skin:text-font-level', DENSITY_KEY: 'dsh-wechat-skin:density',
   USER_AVATAR_ENABLED_KEY: 'dsh-wechat-skin:user-avatar:enabled', CHAT_WIDTH_KEY: 'dsh-wechat-skin:chat-width',
   SIDEBAR_BG_KEY: 'dsh-wechat-skin:sidebar-bg', SIDEBAR_ORDER_KEY: 'dsh-wechat-skin:sidebar-order',
   USER_AVATAR_KEY: 'dsh-wechat-skin:user-avatar', AI_AVATAR_KEY: 'dsh-wechat-skin:ai-avatar',
@@ -26,6 +26,7 @@ const localStorage = {
 };
 let sidebarBg = null, fontLevel = 3, density = 'cozy', userAvatarVisible = true, chatWidth = 'wide', sidebarOrder = [];
 let fontFamily = 'system', contrast = 'normal', avatarShape = 'rounded';
+let textFontLevel = 3;
 const calls = [];
 const sandbox = {
   window: { localStorage, dispatchEvent: (e) => calls.push(['event', e.type]), localStorageSet: null },
@@ -52,6 +53,7 @@ const sandbox = {
   writeJson: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
   readJson: (k, d) => { const raw = localStorage.getItem(k); if (raw === null) return d; try { return JSON.parse(raw); } catch (e) { return d; } },
   applyFontLevel: (v) => { calls.push(['font', v]); },
+  applyTextFontLevel: (v) => { calls.push(['textFont', v]); },
   applyDensity: (v) => { calls.push(['density', v]); },
   applyUserAvatar: (v) => { calls.push(['userAvatarVisible', v]); },
   applyChatWidth: (v) => { calls.push(['width', v]); },
@@ -76,6 +78,7 @@ const sandbox = {
   get chatWidth() { return chatWidth; }, set chatWidth(v) { chatWidth = v; },
   get sidebarBg() { return sidebarBg; }, set sidebarBg(v) { sidebarBg = v; },
   get sidebarOrder() { return sidebarOrder; }, set sidebarOrder(v) { sidebarOrder = v; },
+  get textFontLevel() { return textFontLevel; }, set textFontLevel(v) { textFontLevel = v; },
   get fontFamily() { return fontFamily; }, set fontFamily(v) { fontFamily = v; },
   get contrast() { return contrast; }, set contrast(v) { contrast = v; },
   get avatarShape() { return avatarShape; }, set avatarShape(v) { avatarShape = v; }
@@ -136,6 +139,7 @@ const imp = JSON.parse(JSON.stringify(payload));
 imp.skin[KEY.FONT_LEVEL_KEY] = JSON.stringify(1);
 imp.skin[KEY.SIDEBAR_BG_KEY] = JSON.stringify('#abcdef');
 imp.skin[KEY.FONT_FAMILY_KEY] = JSON.stringify('serif');
+imp.skin[KEY.TEXT_FONT_LEVEL_KEY] = JSON.stringify(5);
 imp.skin[KEY.CONTRAST_KEY] = JSON.stringify('high');
 imp.skin[KEY.AVATAR_SHAPE_KEY] = JSON.stringify('circle');
 delete imp.skin[KEY.USER_AVATAR_ENABLED_KEY];
@@ -148,6 +152,7 @@ ok(calls.some((c) => c[0] === 'fetch' && c[1] === 'POST' && c[2] === '/sone-wx/b
 ok(calls.some((c) => c[0] === 'event' && c[1] === 'sone-wx:brand-reload'), 'import dispatches reload');
 ok(calls.some((c) => c[0] === 'userAvatar' && c[1] === true), 'import restores user avatar');
 ok(fontFamily === 'serif' && contrast === 'high' && avatarShape === 'circle', 'import applies new settings');
+ok(textFontLevel === 5, 'import applies text font level');
 await api.importConfig(null).then(() => ok(false, 'null should reject')).catch(() => ok(true, 'null rejects'));
 
 // custom presets
