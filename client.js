@@ -1,7 +1,7 @@
 // sone-wx — merged client bundle: dsh-wechat-skin (WeChat-style skin) +
 // dsh-brand-studio (brand editor) under one settings section.
 //
-// Skin half: tokens/structure CSS/avatars/density/tail/chat width.
+// Skin half: tokens/structure CSS/avatars/density/chat width/fonts.
 // localStorage keys stay `dsh-wechat-skin:*` for data continuity.
 // Brand half: brand mark/title/wordmark via /sone-wx/brand (host side), seats
 // sidebar.brand.* + conversation.hero.brand.mark, OWNED_CSS countermeasures.
@@ -145,7 +145,6 @@ window.__ModuleLoader__.load({
 :root {
   --wc-green: #07c160;
   --wc-green-hover: #06ad56;
-  --wc-green-deep: #15ac70;          /* selected row */
   --wc-bubble: #95ec69;              /* sent bubble */
   --wc-bubble-ink: #101010;
   --wc-bubble-link: #0a5c33;
@@ -172,12 +171,10 @@ window.__ModuleLoader__.load({
   --wc-dot-error: #dc2626;
   /* semantic colour source: fill vs ink. brand-ink reaches 5.2:1 on white. */
   --wc-brand: var(--wc-green);
-  --wc-brand-hover: var(--wc-green-hover);
   --wc-brand-press: #0a7d43;
   --wc-brand-ink: #0a7d43;
   --wc-link: #0a7d43;
   --wc-ink-2: var(--dsw-alias-label-secondary, #61666b);
-  --wc-ink-3: var(--dsw-alias-label-tertiary, #81858c);
   --wc-line: var(--wc-border-light);
   --wc-control-h: 28px;
   --wc-danger: #b42318;
@@ -193,8 +190,6 @@ window.__ModuleLoader__.load({
   --wc-text-lg: 15px;
   --wc-text-md: 13px;
   --wc-text-sm: 12px;
-  --wc-fs-xl: clamp(16px, calc(var(--wc-text-xl) * var(--dsh-wechat-font-scale, 1)), 21px);
-  --wc-fs-lg: clamp(13px, calc(var(--wc-text-lg) * var(--dsh-wechat-font-scale, 1)), 19px);
   --wc-fs-md: clamp(12px, calc(var(--wc-text-md) * var(--dsh-wechat-font-scale, 1)), 16px);
   --wc-fs-sm: clamp(12px, calc(var(--wc-text-sm) * var(--dsh-wechat-font-scale, 1)), 15px);
   /* 正文字号独立档位：只作用于会话区正文（气泡、代码、表格、引用、标题） */
@@ -203,17 +198,12 @@ window.__ModuleLoader__.load({
   --wc-body-md: clamp(12px, calc(var(--wc-text-md) * var(--dsh-wechat-text-scale, 1)), 17px);
   --wc-body-sm: clamp(12px, calc(var(--wc-text-sm) * var(--dsh-wechat-text-scale, 1)), 16px);
   /* 旧变量名保留为别名，避免外部或旧缓存引用失效 */
-  --wc-font-base: var(--wc-fs-md);
-  --wc-font-sm: var(--wc-fs-sm);
-  --wc-font-xs: var(--wc-fs-sm);
   --wc-radius-card: 12px;
   --wc-radius-md: 10px;
   --wc-radius-bubble: 8px;
   --wc-radius-btn: 8px;
   --wc-radius-sm: 6px;
   --wc-radius-xs: 4px;
-  --wc-gap-flow: 8px;
-  --wc-gap-tight: 4px;
 }
 
 /* ================= palette ================= */
@@ -522,7 +512,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="steering"]::after {
    The avatar rides ONLY on the answer row: the router splits one assistant-step
    node into groupPart="reasoning" (thinking chip) and groupPart="response"
    (answer) rows, and the answer keeps the avatar + 42px band. Rows without an
-   avatar (thinking, tool/process rows, tails) sit flush left — no reserved
+   avatar (thinking, tool/process rows) sit flush left — no reserved
    avatar column (user decision). Empty flow items (height:0 spacers in the
    native sheet) must not paint an avatar, so mirror the native :empty guards. */
 body.dsh-wechat-skin-on .tnXGgG_flowItem[data-chat-flow-kind="assistant-step"]:not([data-chat-group-part="reasoning"]):not(:empty):not(:has(>[data-slot="conversation.chat.node"]:empty)) {
@@ -756,7 +746,7 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-enter="1"] {
   to { opacity: 1; transform: none; }
 }
 
-/* ================= density + bubble tail toggles ================= */
+/* ================= density + chat width ================= */
 /* compact density: shorter session list rows (list density only; message rhythm untouched) */
 body.dsh-wechat-skin-on[data-dsh-wechat-density="compact"] .JoiKIa_sessionRow {
   height: 32px; margin: 0;
@@ -1356,6 +1346,18 @@ body .dsh-wc-color {
 			const key = avatarKeyFor(row, title);
 			if (avatarMap[key] === undefined) {
 				avatarMap[key] = avatarIndexForTitle(key);
+				// Long-lived installs collect one entry per session title; drop keys whose
+				// sessions are gone once the map grows past a few hundred.
+				const keys = Object.keys(avatarMap);
+				if (keys.length > 400) {
+					const live = new Set(Array.prototype.map.call(
+						document.querySelectorAll(".JoiKIa_sessionRow"), (el) => avatarKeyFor(el, el.textContent || "")
+					));
+					live.add(key);
+					const pruned = {};
+					keys.forEach((k) => { if (live.has(k)) pruned[k] = avatarMap[k]; });
+					avatarMap = pruned;
+				}
 				writeJson(AVATAR_MAP_KEY, avatarMap);
 			}
 			const value = "url(\"" + avatarForIndex(key, avatarMap[key]) + "\")";
@@ -2848,6 +2850,30 @@ scanHooks.push(composerScrollScan);
 						if (typeof aiAvatar === "string" && aiAvatar) setAiAvatar(aiAvatar);
 						sidebarOrder = normalizePanelOrder(readJson(SIDEBAR_ORDER_KEY, []));
 						applyPanelOrder();
+						// Rewrite the keys that were present in the payload with the values that
+						// were actually applied, so a hand-edited import cannot leave out-of-range
+						// values behind. Absent keys stay absent (they keep the current setting).
+						const canonical = [
+							[FONT_LEVEL_KEY, fontLevel], [TEXT_FONT_LEVEL_KEY, textFontLevel],
+							[DENSITY_KEY, density], [CHAT_WIDTH_KEY, chatWidth],
+							[USER_AVATAR_ENABLED_KEY, userAvatarVisible], [AI_AVATAR_ENABLED_KEY, aiAvatarVisible],
+							[LINE_HEIGHT_KEY, lineHeight], [MOTION_KEY, reduceMotion],
+							[FONT_FAMILY_KEY, fontFamily], [CONTRAST_KEY, contrast],
+							[AVATAR_SHAPE_KEY, avatarShape], [AVATAR_STYLE_KEY, avatarArt]
+						];
+						canonical.forEach(([key, value]) => {
+							if (Object.prototype.hasOwnProperty.call(skin, key)) writeJson(key, value);
+						});
+						try {
+							if (Object.prototype.hasOwnProperty.call(skin, SIDEBAR_BG_KEY)) {
+								if (sidebarBg === null) window.localStorage.removeItem(SIDEBAR_BG_KEY);
+								else writeJson(SIDEBAR_BG_KEY, sidebarBg);
+							}
+							if (Object.prototype.hasOwnProperty.call(skin, PRESET_KEY)) {
+								if (importedPresetId === null) window.localStorage.removeItem(PRESET_KEY);
+								else writeJson(PRESET_KEY, importedPresetId);
+							}
+						} catch (e) {}
 						sync();
 						const brand = payload.brand && typeof payload.brand === "object" ? payload.brand : null;
 						const images = payload.images && typeof payload.images === "object" ? payload.images : {};
@@ -2941,6 +2967,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(USER_AVATAR_KEY);
 							window.localStorage.removeItem(AI_AVATAR_KEY);
 							window.localStorage.removeItem(FONT_LEVEL_KEY);
+							window.localStorage.removeItem(TEXT_FONT_LEVEL_KEY);
 							window.localStorage.removeItem(DENSITY_KEY);
 							window.localStorage.removeItem(USER_AVATAR_ENABLED_KEY);
 							window.localStorage.removeItem(CHAT_WIDTH_KEY);
@@ -2961,6 +2988,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 						lastAssistantAvatarValue = null;
 						syncAssistantAvatar();
 						document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
+				document.documentElement.style.removeProperty("--dsh-wechat-text-scale");
 						fontLevel = 3; writeJson(FONT_LEVEL_KEY, fontLevel); applyFontLevel(fontLevel); textFontLevel = 3; writeJson(TEXT_FONT_LEVEL_KEY, textFontLevel); applyTextFontLevel(textFontLevel);
 						density = "cozy"; applyDensity(density);
 						userAvatarVisible = true; applyUserAvatar(userAvatarVisible);
@@ -3168,7 +3196,8 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 				if (disposeTokens) disposeTokens();
 				removeStyleTag();
 				removeUiStyleTag();
-				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS); if (document.body) { for (const flag of ["dshWechatDark", "dshWechatDensity", "dshWechatTail", "dshWechatWidth", "dshWechatPreset", "dshWechatLineHeight", "dshWechatAiAvatar", "dshWcReduceMotion"]) delete document.body.dataset[flag]; }
+				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS);
+				if (document.body) { for (const flag of ["dshWechatDark", "dshWechatDensity", "dshWechatWidth", "dshWechatPreset", "dshWechatLineHeight", "dshWechatAiAvatar", "dshWechatUserAvatar", "dshWcReduceMotion", "dshWcFontFamily", "dshWcContrast", "dshWcAvatarShape", "dshWcAvatarStyle"]) delete document.body.dataset[flag]; }
 				observer?.disconnect();
 				document.body?.classList.remove(SIDEBAR_BG_CLASS);
 				if (panelDragCleanup) { panelDragCleanup(); panelDragCleanup = null; }
@@ -3179,6 +3208,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 				if (document.body) delete document.body.dataset.dshWcSidebarInk;
 				document.documentElement.style.removeProperty("--dsh-wc-sidebar-color");
 				document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
+				document.documentElement.style.removeProperty("--dsh-wechat-text-scale");
 				document.documentElement.style.removeProperty("--dsh-user-avatar");
 				document.documentElement.style.removeProperty("--dsh-assistant-avatar");
 			}, "sone-wx: skin cleanup");

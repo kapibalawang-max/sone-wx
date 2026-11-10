@@ -16,6 +16,14 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-10 v1.30.0 全插件体检：
+  - 删掉 10 个只声明未使用的令牌（`--wc-green-deep`、`--wc-brand-hover`、`--wc-ink-3`、`--wc-fs-xl/lg`、`--wc-font-base/sm/xs`、`--wc-gap-flow/tight`），`--wc-fs-xl/lg` 已由 `--wc-body-*` 取代。
+  - 卸载清理补齐：`dshWechatUserAvatar`、`dshWcFontFamily`、`dshWcContrast`、`dshWcAvatarShape`、`dshWcAvatarStyle` 五个 body 标记，以及 `--dsh-wechat-text-scale`；去掉已删除功能残留的 `dshWechatTail`。
+  - 恢复默认漏清 `dsh-wechat-skin:text-font-level`，导致「正文字号」重置后重启又变回来；已补。
+  - 导入配置后会重写「载荷里出现过」的键，把手改/越界的值落成实际生效值；没出现的键保持原状（不覆盖当前设置）。
+  - 头像索引 `AVATAR_MAP_KEY` 超过 400 条时按当前会话列表剪枝，长期使用不再无限增长。
+  - 新增 `test/cleanup-test.mjs`（5 项静态守卫：标记清理齐全、字体缩放变量清理、无旧 tail 残留、恢复默认覆盖全部配置键），并入 run-all。
+
 - 2026-11-10 v1.29.0 宋体换成霞鹜文楷：
   - 「字体」五档改为：系统默认 / 微信体（苹方）/ 霞鹜文楷（LXGW WenKai、LXGWWenKai、霞鶩文楷、霞鹜文楷、Kaiti SC）/ 楷体 / 圆体。
   - 旧的 `serif` 取值自动迁移到 `wenkai`（初始化、导入、设置器三处），导入旧配置不会退回系统字体。
@@ -95,7 +103,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 正文档存 `dsh-wechat-skin:text-font-level`，随预设、导出导入、恢复默认一起走；内置三套预设的正文档与界面档保持一致。
   - type-scale-test 扩到 8 项：除五档层级单调外，新增「只调正文档时正文变大、界面不动」「只调界面档时反之」两条独立性断言。
 - 2026-11-10 v1.20.0 新增四项外观能力：
-  - **字体**：系统默认 / 微信体 / 宋体三选，落到 `--dsw-font-family`（宿主有这个 token 但从未定义，皮肤接管后全站继承），解决长文档阅读时的字体疲劳。
+  - **字体**：系统默认 / 微信体 / 霞鹜文楷 / 楷体 / 圆体五选，落到 `--dsw-font-family`（宿主有这个 token 但从未定义，皮肤接管后全站继承），解决长文档阅读时的字体疲劳。
   - **高对比度**：加深次要文字与边框（`--dsw-alias-label-secondary/tertiary`、`--wc-border-light`、`--dsw-alias-border-l2`），深浅主题各自一套值，适合强光或外接显示器。
   - **头像形状**：圆角方形（微信原味）/ 正圆 / 方形；只改 `--wc-av-radius`，生成头像与上传头像同时生效（背景图本身被容器圆角裁剪）。
   - **选中文字与滚动条**：`::selection` 换成微信绿半透明，滚动条改用细条 + `--wc-scroll-thumb` 令牌，不再用系统蓝和系统灰。

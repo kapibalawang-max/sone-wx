@@ -157,6 +157,7 @@ ok(calls.some((c) => c[0] === 'event' && c[1] === 'sone-wx:brand-reload'), 'impo
 ok(calls.some((c) => c[0] === 'userAvatar' && c[1] === true), 'import restores user avatar');
 ok(fontFamily === 'wenkai' && contrast === 'high' && avatarShape === 'circle', 'import applies new settings (legacy serif migrates to wenkai)');
 ok(textFontLevel === 5, 'import applies text font level');
+ok(localStorage.getItem(KEY.FONT_FAMILY_KEY) === JSON.stringify('wenkai'), 'import persists the canonical font family (serif -> wenkai)');
 await api.importConfig(null).then(() => ok(false, 'null should reject')).catch(() => ok(true, 'null rejects'));
 
 // custom presets
