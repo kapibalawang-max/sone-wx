@@ -130,8 +130,8 @@ window.__ModuleLoader__.load({
   --wc-bubble-code-ink: #0a2e1a;
   /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
   --wc-sidebar: #eeeef0;
-  /* selected session row: WeChat uses a neutral grey one step darker than the list */
-  --wc-sel-bg: #dcdcde;
+  /* selected session row: WeChat brand green */
+  --wc-sel-bg: #4c9f6f;
   --wc-sidebar-dark: #1a1a1b;
   --wc-surface: #f2f2f2;
   --wc-surface-dark: #252527;
@@ -189,7 +189,7 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
-  --wc-sel-bg: #3a3a3d;
+  --wc-sel-bg: #3f8760;
   --dsw-alias-state-business-primary: var(--wc-green) ;
   --dsw-alias-state-business-tertiary: #16281f ;
   --dsw-alias-state-success-primary: var(--wc-green) ;
@@ -207,7 +207,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
-  --wc-sel-bg: #e2d9c6;
+  --wc-sel-bg: #4c9f6f;
   --wc-surface: #f2ece0;
   --wc-border-light: #e3dac8;
   --wc-bubble: #ded3ba;
@@ -314,7 +314,13 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_title {
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected,
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:hover { background: var(--wc-sel-bg); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 500; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_title { font-weight: 600; color: #ffffff; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_time,
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_rowResting { color: rgba(255, 255, 255, 0.8); }
+/* green selected row: the status badge needs a light disc so the arc stays visible */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state] + span {
+  background: #ffffff; box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+}
 
 
 /* ================= chat surface ================= */
