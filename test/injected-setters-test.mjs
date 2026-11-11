@@ -20,7 +20,7 @@ try {
   console.log('FAIL injected literal does not evaluate:', e.message)
   process.exit(1)
 }
-const expected = ['setFontLevel', 'setTextFontLevel', 'setDensity', 'setUserAvatarVisible', 'setAiAvatarVisible', 'setChatWidth', 'setSidebarBg', 'setLineHeight', 'setReduceMotion', 'setFontFamily', 'setContrast', 'setAvatarShape', 'setAvatarStyle', 'applyPreset', 'savePreset', 'deletePreset', 'listPresets', 'exportConfig', 'importConfig', 'uploadUserAvatar', 'uploadAiAvatar', 'resetSkin']
+const expected = ['setFontLevel', 'setTextFontLevel', 'setDensity', 'setUserAvatarVisible', 'setAiAvatarVisible', 'setChatWidth', 'setSidebarBg', 'setLineHeight', 'setReduceMotion', 'setFontFamily', 'setContrast', 'setAvatarShape', 'setAvatarStyle', 'setComposerFx', 'applyPreset', 'savePreset', 'deletePreset', 'listPresets', 'exportConfig', 'importConfig', 'uploadUserAvatar', 'uploadAiAvatar', 'resetSkin']
 let fail = 0
 for (const name of expected) {
   if (typeof obj[name] !== 'function') { fail++; console.log('FAIL prop missing or not callable:', name, typeof obj[name]) }

@@ -80,6 +80,8 @@ window.__ModuleLoader__.load({
 		const CONTRAST_KEY = "dsh-wechat-skin:contrast";
 		const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape";
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
+/** Composer extras: glass card, sliding caret, send-flight morph. */
+const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -100,7 +102,7 @@ window.__ModuleLoader__.load({
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -1083,10 +1085,55 @@ body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
   }
 }
 
+/* ---- composer effects: glass card, sliding caret, send flight ---- */
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
+  position: relative; background: transparent !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 0.5px var(--wc-border-light),
+    0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card]::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--wc-surface, #ffffff) 34%, transparent),
+      color-mix(in srgb, var(--wc-surface, #ffffff) 58%, transparent) 46%,
+      color-mix(in srgb, var(--wc-surface, #ffffff) 70%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 4%, transparent), color-mix(in srgb, var(--wc-green) 1.5%, transparent));
+  -webkit-backdrop-filter: blur(20px) saturate(1.35); backdrop-filter: blur(20px) saturate(1.35);
+}
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.10),
+    0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card]::before {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--wc-surface-dark, #2a2a2c) 62%, transparent),
+      color-mix(in srgb, var(--wc-surface-dark, #2a2a2c) 74%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 9%, transparent), transparent);
+}
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret-host] { position: relative; }
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret] { caret-color: transparent; }
+body.dsh-wechat-skin-on .dsh-wc-caret {
+  position: absolute; z-index: 6; width: 1.8px; border-radius: 1px; opacity: 0;
+  background: var(--wc-caret-ink, #111214); pointer-events: none;
+  transition: left 80ms ease-out, top 80ms ease-out, height 60ms linear;
+  animation: dsh-wc-caret-blink 1.06s steps(1, end) infinite;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: #f2f2f3; }
+@keyframes dsh-wc-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  body.dsh-wechat-skin-on .dsh-wc-caret { animation: none; transition: none; }
+}
 `;
 
 				/** Settings-row button styles: injected even when the skin is off, so the row keeps hover/active/disabled feedback. */
-		const WECHAT_UI_CSS = `
+		
+const WECHAT_UI_CSS = `
 /* dsh-wechat-skin settings-row buttons (always present, not gated by dsh-wechat-skin-on) */
 body .dsh-wc-btn {
 	cursor: pointer;
@@ -1966,11 +2013,11 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 //#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle) {
+		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, composerFx: initialComposerFx, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle) => {
+		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle, composerFx) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -1986,6 +2033,8 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 		        d.contrast = contrast;
 		        d.avatarShape = avatarShape;
 		        d.avatarStyle = avatarStyle;
+
+		        d.composerFx = composerFx;
 		        d.revision = revision;
 					}
 				}
@@ -2260,7 +2309,182 @@ children: t("previewOut")
  * with a fit check and config tools in the footer.
  * @param props - composed Settings slot props.
  */
-function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+
+/**
+ * Composer extras: the glass card is pure CSS (see the composer effects block);
+ * this adds the two behaviours — a caret that slides instead of jumping, and a
+ * send-flight that shrinks the composer card into the bubble that just landed.
+ * Everything degrades to the native behaviour when it cannot measure.
+ */
+function installComposerEffects() {
+if (typeof document === "undefined") return { setEnabled: () => {}, dispose: () => {} };
+let enabled = false;
+let disposed = false;
+let layer = null;
+let host = null;
+let frame = 0;
+let observer = null;
+let lastCardRect = null;
+let lastSignal = 0;
+const reduced = () => {
+try { return !!window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+};
+const editor = () => document.querySelector("[data-composer-input]");
+
+const hideCaret = () => { if (layer) layer.style.opacity = "0"; };
+
+function ensureLayer(ed) {
+const parent = ed.parentElement;
+if (!parent) return null;
+if (host !== parent) {
+if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+host = parent;
+parent.setAttribute("data-dsh-wc-caret-host", "");
+layer = document.createElement("div");
+layer.className = "dsh-wc-caret";
+parent.appendChild(layer);
+}
+return layer;
+}
+
+function paintCaret() {
+if (disposed || !enabled || reduced()) { hideCaret(); return; }
+const ed = editor();
+const active = document.activeElement;
+if (!ed || !active || !ed.contains(active)) { hideCaret(); return; }
+const box = ensureLayer(ed);
+if (!box) return;
+// A collapsed range still reports a rect in Chromium; anything else is a
+// selection (no caret to draw) or an editor we do not understand.
+const sel = window.getSelection();
+if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) { hideCaret(); return; }
+const range = sel.getRangeAt(0);
+if (!ed.contains(range.startContainer)) { hideCaret(); return; }
+let rect = null;
+try { rect = range.getBoundingClientRect(); } catch (e) { rect = null; }
+if (!rect || !rect.height || (rect.width === 0 && rect.height === 0)) { hideCaret(); return; }
+ed.setAttribute("data-dsh-wc-caret", "");
+const hostBox = host.getBoundingClientRect();
+box.style.left = Math.round(rect.left - hostBox.left) + "px";
+box.style.top = Math.round(rect.top - hostBox.top) + "px";
+box.style.height = Math.round(rect.height) + "px";
+box.style.opacity = "1";
+}
+
+function queueCaret() {
+if (disposed || frame) return;
+frame = window.requestAnimationFrame(() => {
+frame = 0;
+paintCaret();
+});
+}
+
+function noteSignal() {
+const card = document.querySelector("[data-composer-card]");
+if (!card) return;
+lastCardRect = card.getBoundingClientRect();
+lastSignal = Date.now();
+}
+
+function flyBubble(node) {
+if (!enabled || reduced() || !lastCardRect || !lastSignal) return;
+if (Date.now() - lastSignal > 1800) return;
+const to = node.getBoundingClientRect();
+if (!to.width || !to.height) return;
+const from = lastCardRect;
+lastSignal = 0;
+const dx = (from.left + from.width / 2) - (to.left + to.width / 2);
+const dy = (from.top + from.height / 2) - (to.top + to.height / 2);
+const sx = Math.min(1.6, Math.max(0.4, from.width / to.width));
+const sy = Math.min(1.6, Math.max(0.4, from.height / to.height));
+try {
+node.animate([
+{ transformOrigin: "50% 50%", transform: "translate(" + dx + "px," + dy + "px) scale(" + sx + "," + sy + ")", opacity: 0.3 },
+{ transformOrigin: "50% 50%", transform: "none", opacity: 1 }
+], { duration: 340, easing: "cubic-bezier(.2,.8,.2,1)" });
+} catch (e) {}
+}
+
+function startObserver() {
+if (observer || typeof MutationObserver === "undefined") return;
+observer = new MutationObserver((records) => {
+if (!enabled || reduced() || !lastSignal) return;
+for (const record of records) {
+for (const node of record.addedNodes) {
+if (!node || node.nodeType !== 1) continue;
+const rows = node.matches && node.matches('[data-chat-flow-kind="user"]')
+? [node]
+: Array.from(node.querySelectorAll ? node.querySelectorAll('[data-chat-flow-kind="user"]') : []);
+if (rows.length) {
+flyBubble(rows[rows.length - 1]);
+return;
+}
+}
+}
+});
+observer.observe(document.body, { childList: true, subtree: true });
+}
+
+const onKeyDown = (event) => {
+if (!enabled) return;
+const target = event.target;
+if (!(target instanceof HTMLElement)) return;
+if (!target.closest("[data-composer-input]")) return;
+if (event.key === "Enter" && !event.shiftKey && !event.isComposing) noteSignal();
+};
+const onSelectionChange = () => queueCaret();
+const onFocusIn = () => { window.setTimeout(queueCaret, 60); };
+const onInput = () => queueCaret();
+
+function bind() {
+document.addEventListener("keydown", onKeyDown, true);
+document.addEventListener("selectionchange", onSelectionChange);
+document.addEventListener("focusin", onFocusIn, true);
+document.addEventListener("input", onInput, true);
+document.addEventListener("pointerup", onInput, true);
+startObserver();
+}
+
+function unbind() {
+document.removeEventListener("keydown", onKeyDown, true);
+document.removeEventListener("selectionchange", onSelectionChange);
+document.removeEventListener("focusin", onFocusIn, true);
+document.removeEventListener("input", onInput, true);
+document.removeEventListener("pointerup", onInput, true);
+}
+
+function setEnabled(on) {
+enabled = !!on;
+document.body.dataset.dshWcComposerFx = enabled ? "1" : "0";
+if (!enabled) {
+hideCaret();
+const ed = editor();
+if (ed) ed.removeAttribute("data-dsh-wc-caret");
+if (layer) layer.style.opacity = "0";
+return;
+}
+queueCaret();
+}
+
+function dispose() {
+disposed = true;
+unbind();
+if (observer) { observer.disconnect(); observer = null; }
+if (frame) { window.cancelAnimationFrame(frame); frame = 0; }
+if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+layer = null;
+if (host) host.removeAttribute("data-dsh-wc-caret-host");
+host = null;
+const ed = editor();
+if (ed) ed.removeAttribute("data-dsh-wc-caret");
+if (document.body) delete document.body.dataset.dshWcComposerFx;
+}
+
+bind();
+return { setEnabled, dispose };
+}
+
+function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
 const density = useStore((s) => s.density);
@@ -2286,6 +2510,7 @@ const fontFamily = useStore((s) => s.fontFamily) || "system";
 const contrast = useStore((s) => s.contrast) || "normal";
 const avatarShape = useStore((s) => s.avatarShape) || "rounded";
 const avatarStyle = useStore((s) => s.avatarStyle) || "silhouette";
+const composerFx = useStore((s) => s.composerFx) === true;
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -2382,6 +2607,10 @@ const lineHeightOptions = [
 { value: "compact", label: t("lineHeightCompact") },
 { value: "normal", label: t("lineHeightNormal") },
 { value: "relaxed", label: t("lineHeightRelaxed") }
+];
+const composerFxOptions = [
+{ value: false, label: t("fxOff") },
+{ value: true, label: t("fxOn") }
 ];
 const motionOptions = [
 { value: false, label: t("motionFull") },
@@ -2592,6 +2821,12 @@ hint: t("contrastHint"),
 onReset: () => { if (setContrast) setContrast("normal"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: contrast, options: contrastOptions, onChange: (value) => { if (setContrast) setContrast(value); } })
 }),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("composerFxTitle"),
+hint: t("composerFxHint"),
+onReset: () => { if (setComposerFx) setComposerFx(false); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: composerFx, options: composerFxOptions, onChange: (value) => { if (setComposerFx) setComposerFx(value); } })
+}),
 ] }),
 (0, react_jsx_runtime.jsxs)("div", {
 style: styles.cardFoot,
@@ -2750,6 +2985,9 @@ applyTextFontLevel(textFontLevel);
 			applyUserAvatar(userAvatarVisible);
 			let aiAvatarVisible = readJson(AI_AVATAR_ENABLED_KEY, true) !== false;
 			applyAiAvatar(aiAvatarVisible);
+			let composerFxOn = readJson(COMPOSER_FX_KEY, true) !== false;
+			const composerEffects = installComposerEffects();
+			composerEffects.setEnabled(composerFxOn);
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
@@ -2770,7 +3008,7 @@ applyTextFontLevel(textFontLevel);
 			applyAvatarShape(avatarShape);
 			let avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 			applyAvatarStyle(avatarArt);
-			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt);
+			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
@@ -2894,6 +3132,8 @@ scanHooks.push(composerScrollScan);
 						const importedLineHeight = importedValue(LINE_HEIGHT_KEY);
 						if (importedLineHeight !== undefined && importedLineHeight !== "compact" && importedLineHeight !== "relaxed" && importedLineHeight !== "normal") return Promise.reject(new Error("invalid config"));
 						const importedMotion = importedValue(MOTION_KEY);
+						const importedComposerFx = importedValue(COMPOSER_FX_KEY);
+						if (importedComposerFx !== undefined && typeof importedComposerFx !== "boolean") return Promise.reject(new Error("invalid config"));
 						if (importedMotion !== undefined && typeof importedMotion !== "boolean") return Promise.reject(new Error("invalid config"));
 						const importedFontLevel = importedValue(FONT_LEVEL_KEY);
 						if (importedFontLevel !== undefined && !(Number(importedFontLevel) >= 1 && Number(importedFontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
@@ -2982,6 +3222,8 @@ scanHooks.push(composerScrollScan);
 						applyAvatarShape(avatarShape);
 						avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 						applyAvatarStyle(avatarArt);
+						composerFxOn = readJson(COMPOSER_FX_KEY, true) !== false;
+						composerEffects.setEnabled(composerFxOn);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -2997,7 +3239,8 @@ scanHooks.push(composerScrollScan);
 							[USER_AVATAR_ENABLED_KEY, userAvatarVisible], [AI_AVATAR_ENABLED_KEY, aiAvatarVisible],
 							[LINE_HEIGHT_KEY, lineHeight], [MOTION_KEY, reduceMotion],
 							[FONT_FAMILY_KEY, fontFamily], [CONTRAST_KEY, contrast],
-							[AVATAR_SHAPE_KEY, avatarShape], [AVATAR_STYLE_KEY, avatarArt]
+							[AVATAR_SHAPE_KEY, avatarShape], [AVATAR_STYLE_KEY, avatarArt],
+							[COMPOSER_FX_KEY, composerFxOn]
 						];
 						canonical.forEach(([key, value]) => {
 							if (Object.prototype.hasOwnProperty.call(skin, key)) writeJson(key, value);
@@ -3078,6 +3321,12 @@ scanHooks.push(composerScrollScan);
 					applyAvatarShape(avatarShape);
 					sync();
 					},
+					setComposerFx: (on) => {
+					  composerFxOn = !!on;
+					  writeJson(COMPOSER_FX_KEY, composerFxOn);
+					  composerEffects.setEnabled(composerFxOn);
+					  sync();
+					},
 					setAvatarStyle: (value) => {
 					avatarArt = value === "initial" ? "initial" : "silhouette";
 					writeJson(AVATAR_STYLE_KEY, avatarArt);
@@ -3118,6 +3367,7 @@ window.localStorage.removeItem(MOTION_KEY);
 window.localStorage.removeItem(FONT_FAMILY_KEY);
 window.localStorage.removeItem(CONTRAST_KEY);
 window.localStorage.removeItem(AVATAR_SHAPE_KEY);
+window.localStorage.removeItem(COMPOSER_FX_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -3141,6 +3391,7 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 						avatarShape = "rounded"; applyAvatarShape(avatarShape);
 						window.localStorage.removeItem(AVATAR_STYLE_KEY);
 						avatarArt = "silhouette"; applyAvatarStyle(avatarArt);
+						composerFxOn = false; composerEffects.setEnabled(false);
 						sync();
 					}
 				};
@@ -3178,6 +3429,10 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "groupAssist": "辅助",
 "motionHint": "关闭皮肤的过渡与动画，跟随系统辅助功能设置",
 "motionFull": "完整",
+"fxOn": "开启",
+"fxOff": "关闭",
+"composerFxTitle": "输入框效果",
+"composerFxHint": "毛玻璃卡片、光标滑动、发送时气泡从输入框落下",
 "motionReduced": "减少",
 "fontFamilyTitle": "字体",
 "fontFamilySystem": "系统默认",
@@ -3268,6 +3523,10 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 "groupAssist": "Assist",
 "motionHint": "Turn off skin transitions and animations; follows the system setting",
 "motionFull": "Full",
+"fxOn": "On",
+"fxOff": "Off",
+"composerFxTitle": "Composer effects",
+"composerFxHint": "Glass card, sliding caret, send-flight into the bubble",
 "motionReduced": "Reduced",
 "fontFamilyTitle": "Typeface",
 "fontFamilySystem": "System",
@@ -3335,9 +3594,10 @@ window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 				removeStyleTag();
 				removeUiStyleTag();
 				document.body?.classList.remove(BODY_CLASS); document.body?.classList.remove(MATCH_CLASS);
-				if (document.body) { for (const flag of ["dshWechatDark", "dshWechatDensity", "dshWechatWidth", "dshWechatPreset", "dshWechatLineHeight", "dshWechatAiAvatar", "dshWechatUserAvatar", "dshWcReduceMotion", "dshWcFontFamily", "dshWcContrast", "dshWcAvatarShape", "dshWcAvatarStyle"]) delete document.body.dataset[flag]; }
+				if (document.body) { for (const flag of ["dshWechatDark", "dshWechatDensity", "dshWechatWidth", "dshWechatPreset", "dshWechatLineHeight", "dshWechatAiAvatar", "dshWechatUserAvatar", "dshWcReduceMotion", "dshWcFontFamily", "dshWcContrast", "dshWcAvatarShape", "dshWcAvatarStyle", "dshWcComposerFx"]) delete document.body.dataset[flag]; }
 				observer?.disconnect();
 				document.body?.classList.remove(SIDEBAR_BG_CLASS);
+				if (typeof composerEffects !== "undefined") composerEffects.dispose();
 				if (panelDragCleanup) { panelDragCleanup(); panelDragCleanup = null; }
 				document.body?.classList.remove(PANEL_DRAGGING_CLASS);
 				const orderHook = scanHooks.indexOf(applyPanelOrder);

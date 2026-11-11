@@ -16,6 +16,7 @@ const KEY = {
   FONT_FAMILY_KEY: 'dsh-wechat-skin:font-family', CONTRAST_KEY: 'dsh-wechat-skin:contrast',
   AVATAR_SHAPE_KEY: 'dsh-wechat-skin:avatar-shape',
   AVATAR_STYLE_KEY: 'dsh-wechat-skin:avatar-style',
+  COMPOSER_FX_KEY: 'dsh-wechat-skin:composer-fx',
   CUSTOM_PRESETS_KEY: 'dsh-wechat-skin:presets',
   COMPOSER_H_KEY: 'dsh-wechat-skin:composer-height'
 };
@@ -67,6 +68,7 @@ const sandbox = {
   applyContrast: (v) => { calls.push(['contrast', v]); },
   applyAvatarShape: (v) => { calls.push(['avatarShape', v]); },
   applyAvatarStyle: (v) => { calls.push(['avatarStyle', v]); },
+  composerEffects: { setEnabled: (v) => { calls.push(['composerFx', !!v]); } },
   readCustomPresets: () => { const raw = localStorage.getItem('dsh-wechat-skin:presets'); try { const v = raw === null ? [] : JSON.parse(raw); return Array.isArray(v) ? v : []; } catch (e) { return []; } },
   aiAvatar: true,
   applyPanelOrder: () => { calls.push(['order', sidebarOrder.join(',')]); },
