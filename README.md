@@ -16,6 +16,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.33.3 修「输入框效果」开关点不动：store 的 `sync()` 是位置参数，上一版漏传了最后的 `composerFx`，于是每次点击后 `d.composerFx = undefined`，控件立刻弹回「关」，看起来像按钮点不动。补上参数并新增 `test/store-sync-test.mjs`——比对该调用传入的参数个数与 `sync` 签名，少传一个就红。
+
 - 2026-11-11 v1.33.2 让毛玻璃可见可核对：浅色下白层降到 26/44/58%，品牌绿提到 14%→4%，卡片呈淡薄荷色，与纯白卡片一眼可分（深色绿 16%）；设置卡底部自检行右侧打印当前加载的版本号（`SKIN_VERSION`，与 package.json 由 test/version-test.mjs 对齐），以后「开关没反应」先看这个数字是不是新版本。
 
 - 2026-11-11 v1.33.1 修毛玻璃无效：上一版把玻璃画在 `[data-composer-card]::before` 上并设 `z-index:-1`，在真实 dock 里被会话区的层叠上下文吞掉，卡片交出自己的底色后只剩一片白，开关看起来毫无作用。改为卡片自己承担玻璃——`background` 直接铺多段半透明白 + 5% 品牌绿，`backdrop-filter: blur(20px) saturate(1.35)` 挂在卡片上，顶边亮线与 0.5px 内描边仍走 `box-shadow`；深色块用 #2a2a2c 62/78% + 10% 绿。测试改为断言卡片自身的 `backdrop-filter` 与渐变（关闭时为 none）。
