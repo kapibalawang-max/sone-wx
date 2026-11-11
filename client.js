@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.0";
+const SKIN_VERSION = "1.34.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -331,8 +331,6 @@ body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
    (specificity 0,4,1); the skin's flat WeChat fill has to outrank it. */
 html body.dsh-wechat-skin-on .PIRFFq_sidebarCol { background: var(--wc-sidebar) !important; border-right: none; }
 html body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .PIRFFq_sidebarCol { background: var(--wc-sidebar-dark) !important; }
-body.dsh-wechat-skin-on .kB3qhq_newSession { border-radius: var(--wc-radius-bubble); border-color: transparent; background: #ffffff; }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .kB3qhq_newSession { background: var(--wc-overlay-dark); }
 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
   position: relative; height: 40px; border-radius: var(--wc-radius-bubble); margin: 1px 0; gap: 1px;
@@ -771,12 +769,25 @@ body.dsh-wechat-skin-on .kB3qhq_panelGlyph {
   to { transform: rotate(360deg); }
 }
 
+/* Plugin list density: 36px rows with 2px gaps read as a loose stack once the
+   skin drops the button chrome. 32px rows with a 1px gap keep the same rhythm as
+   the session list; the collapsed rail keeps its 36px squares untouched. */
+body.dsh-wechat-skin-on .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelRow {
+  min-height: 32px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+body.dsh-wechat-skin-on .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelList {
+  gap: 1px;
+  margin-bottom: 6px;
+}
+
 /* New session entry: it should read like a plugin title row, not like a button —
    flat surface, icon + 13px label on the left, tint only on hover. The rail
    (icon-only) keeps its 36px square, so the left alignment is scoped with :has
    to the version that actually renders a label. */
 body.dsh-wechat-skin-on .kB3qhq_newSession {
-  height: 36px;
+  height: 32px;
   margin: 0 0 8px;
   border: 0;
   background: transparent;

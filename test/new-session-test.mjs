@@ -48,7 +48,7 @@ const rail = await p.evaluate(() => {
 await b.close();
 let pass = 0, fail = 0;
 const ok = (cond, name) => { if (cond) pass++; else { fail++; console.log('FAIL', name); } };
-ok(wide.h === '36px', 'same height as a plugin row');
+ok(wide.h === '32px', 'same height as a plugin row');
 ok(wide.border === '0px', 'no button border');
 ok(wide.bg === 'rgba(0, 0, 0, 0)', 'flat surface at rest');
 ok(wide.justify === 'flex-start', 'icon and label sit left');
