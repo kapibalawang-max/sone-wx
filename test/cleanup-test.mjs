@@ -35,5 +35,12 @@ const resetBlock = src.slice(resetStart, resetEnd);
 const removed = new Set([...resetBlock.matchAll(/removeItem\(([A-Z0-9_]+)\)/g)].map((m) => m[1]));
 const notReset = [...new Set(configKeys)].filter((k) => k !== 'CONFIG_SKIN_KEYS' && k !== 'CUSTOM_PRESETS_KEY' && !removed.has(k));
 ok(notReset.length === 0, `resetSkin clears every CONFIG_SKIN_KEYS entry${notReset.length ? ': missing ' + notReset.join(', ') : ''}`);
-console.log(`${5 - failed}/5 OK`);
+// scan hooks are pushed per apply(): both must be spliced out again, the pending
+// scan frame cancelled, and the composer scroll listener unbound.
+ok(/for \(const hook of \[applyPanelOrder, composerScrollScan\]\)/.test(cleanup), 'cleanup removes both scan hooks');
+ok(/cancelAnimationFrame\(scheduled\)/.test(cleanup), 'cleanup cancels the pending scan frame');
+ok(/unbindComposerFade\(\)/.test(cleanup), 'cleanup unbinds the composer scroll listener');
+const bindIdx = src.indexOf('composerFadeBound.set(view, onScroll)');
+ok(bindIdx > 0 && src.includes('view.removeEventListener("scroll", onScroll)'), 'the bound scroll handler is removable (named, tracked)');
+console.log(`${9 - failed}/9 OK`);
 process.exit(failed ? 1 : 0);
