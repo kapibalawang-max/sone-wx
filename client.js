@@ -622,9 +622,47 @@ body.dsh-wechat-skin-on .JZLxKW_add {
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_add { border-color: var(--wc-border-dark); }
 body.dsh-wechat-skin-on .JZLxKW_add:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
-/* model selector: lighter weight, hover surface only */
-body.dsh-wechat-skin-on .JZLxKW_select { height: 28px; font-size: var(--wc-fs-sm); border-radius: var(--wc-radius-sm); }
-body.dsh-wechat-skin-on .JZLxKW_select:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); }
+/* model selector: a WeChat-style tinted chip (green ink, own chevron) */
+body.dsh-wechat-skin-on .JZLxKW_select {
+  height: var(--wc-control-h); max-width: 220px;
+  padding: 0 24px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--wc-green) 12%, transparent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'%3E%3Cpath d='M2.2 3.9L5 6.7L7.8 3.9' stroke='%230a7d43' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 9px center;
+  background-repeat: no-repeat;
+  background-size: 10px 10px;
+  color: var(--wc-brand-ink);
+  font-size: var(--wc-fs-sm); font-weight: 500; line-height: 20px;
+  transition: background-color 250ms ease-out, color 250ms ease-out;
+}
+body.dsh-wechat-skin-on .JZLxKW_select:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--wc-green) 20%, transparent);
+  color: var(--wc-brand-press);
+}
+body.dsh-wechat-skin-on .JZLxKW_select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wc-green) 45%, transparent);
+  outline-offset: 1px;
+}
+body.dsh-wechat-skin-on .JZLxKW_select:disabled { opacity: .5; cursor: default; }
+body.dsh-wechat-skin-on .JZLxKW_select option {
+  background: var(--dsw-alias-bg-base, #ffffff);
+  color: var(--dsw-alias-label-primary, #1a1a1a);
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select {
+  background-color: rgba(7, 193, 96, 0.18);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'%3E%3Cpath d='M2.2 3.9L5 6.7L7.8 3.9' stroke='%237EE2A8' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  color: #7ee2a8;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select:hover:not(:disabled) {
+  background-color: rgba(7, 193, 96, 0.28);
+  color: #a7f0c6;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select option {
+  background: var(--wc-sidebar-dark);
+  color: #f2f2f3;
+}
 /* send: small green circle with the native arrow icon, no text label */
 body.dsh-wechat-skin-on .JZLxKW_primary {
   width: 32px; min-width: 32px; max-width: 32px; height: 32px; padding: 0; border-radius: 999px;

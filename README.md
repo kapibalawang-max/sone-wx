@@ -16,6 +16,12 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.31.0 输入框模型选择器换样式：
+  - 从「透明文字 + 宿主小箭头」改成微信式绿色药丸：`color-mix(--wc-green 12%)` 底色、`--wc-brand-ink` 绿字、12px/500、28px 高、圆角 999，自绘 10px chevron（深浅两套描边色）。
+  - 悬停底色加深到 20% 并把字提到 `--wc-brand-press`；`:focus-visible` 加 2px 半透明绿描边；禁用态 50%。
+  - 下拉项在深色下单独给底色，避免原生菜单白底。
+  - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
+
 - 2026-11-10 v1.30.0 全插件体检：
   - 删掉 10 个只声明未使用的令牌（`--wc-green-deep`、`--wc-brand-hover`、`--wc-ink-3`、`--wc-fs-xl/lg`、`--wc-font-base/sm/xs`、`--wc-gap-flow/tight`），`--wc-fs-xl/lg` 已由 `--wc-body-*` 取代。
   - 卸载清理补齐：`dshWechatUserAvatar`、`dshWcFontFamily`、`dshWcContrast`、`dshWcAvatarShape`、`dshWcAvatarStyle` 五个 body 标记，以及 `--dsh-wechat-text-scale`；去掉已删除功能残留的 `dshWechatTail`。
