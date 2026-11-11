@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.35.0",
+  "version": "1.36.0",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
@@ -37,15 +37,19 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-client-store": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-locale": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-ui-theme": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-store": ">=0.2.2-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-client-locale": ">=0.2.2-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-client-ui-theme": ">=0.2.2-rc.1 <0.3.0-0",
+    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.2-rc.1 <0.3.0-0",
     "react": "^18.2.0"
   },
   "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  },
   "scripts": {
     "test": "node test/run-all.mjs",
+    "test:fixtures": "node test/fixtures.mjs",
     "test:visual": "node test/visual.mjs",
     "test:update-baseline": "node test/visual.mjs --update"
   }

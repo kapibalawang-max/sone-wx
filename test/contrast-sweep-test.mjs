@@ -5,14 +5,12 @@
 //
 // Host token values are the resolved ones from @deepseek-ai/dsh-client-ui-theme
 // (static-neutral-bluish scale), so the measurement matches the app.
-import { createRequire } from 'node:module';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { chromium } from './browser.mjs'
 
 execFileSync(process.execPath, [new URL('./extract-css.mjs', import.meta.url).pathname], { stdio: 'ignore' });
 const css = readFileSync('/tmp/sone-css.css', 'utf8');
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/');
-const { chromium } = require('playwright');
 
 const HOST_LIGHT = {
   '--dsw-alias-label-primary': '#0f1115',

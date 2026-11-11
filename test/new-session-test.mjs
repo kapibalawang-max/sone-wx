@@ -2,9 +2,7 @@
 // left aligned, 13px/500 label, tint only on hover. The icon-only rail keeps
 // its centred 36px square, so the left alignment must not leak into it.
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/');
-const { chromium } = require('playwright');
+import { chromium } from './browser.mjs'
 const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
 const i = src.indexOf('const WECHAT_CSS = `'); const j = src.indexOf('`;', i);
 const css = src.slice(i + 'const WECHAT_CSS = `'.length, j).replace(/\\`/g, '`').replace(/\\\$/g, '$');

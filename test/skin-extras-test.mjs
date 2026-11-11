@@ -41,7 +41,11 @@ let pass = 0, fail = 0
 const ok = (cond, name, extra) => { if (cond) pass++; else { fail++; console.log('FAIL', name, extra === undefined ? '' : JSON.stringify(extra)) } }
 
 const base = probe('')
-ok(/Songti|PingFang|Hiragino|sans-serif/.test(base.ff), 'default font stack', base.ff)
+// Exact stack: a loose /PingFang|sans-serif/ test would pass even if the font
+// switch stopped working entirely.
+// Chrome reports BlinkMacSystemFont as "system-ui".
+const SYSTEM_STACK = '-apple-system, "system-ui", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+ok(base.ff === SYSTEM_STACK, 'default font stack is the system stack', base.ff)
 ok(base.avRadius === '6px' && base.slotRadius === '6px', 'default avatar radius 6px', base)
 ok(/rgba?\(0, 0, 0/.test(base.sb), 'scrollbar thumb colour applied', base.sb)
 ok(base.border === '#e0e0e0', 'default border token', base.border)

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 const src = readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
 const a = src.indexOf('\t\t\t\t\tapplyPreset: (id) => {');
-const b = src.indexOf('uploadUserAvatar: (dataUrl) => {');
+const b = src.indexOf('uploadUserAvatar: (dataUrl) =>');
 if (a < 0 || b < 0) throw new Error('api block not found');
 const apiText = src.slice(a, b);
 const KEY = {

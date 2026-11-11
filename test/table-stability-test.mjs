@@ -2,10 +2,9 @@
 // space via padding-bottom and swaps it for a real scrollbar on hover; the skin
 // keeps overflow at auto, so the reserve has to stay off in both states.
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/');
-const { chromium } = require('playwright');
-const host = fs.readFileSync('/tmp/app.css', 'utf8') + '\n}';
+import { chromium } from './browser.mjs'
+// fixtures.mjs already closes the host stylesheet's unterminated last rule.
+const host = fs.readFileSync('/tmp/app.css', 'utf8');
 const skin = fs.readFileSync('/tmp/sone-css.css', 'utf8');
 const cells = Array.from({ length: 6 }, (_, i) => `<th>列 ${i + 1}</th>`).join('');
 const row = Array.from({ length: 6 }, (_, i) => `<td>很长的单元格内容 ${i}</td>`).join('');

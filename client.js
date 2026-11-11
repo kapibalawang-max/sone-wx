@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.35.0";
+const SKIN_VERSION = "1.36.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1568,20 +1568,6 @@ body .dsh-wc-color {
 				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
 			return "data:image/svg+xml," + encodeURIComponent(svg);
 		}
-		function silhouetteAvatar(title, seed) {
-			const base = titleHash(title);
-			const h = (base ^ Math.imul(Math.abs(seed) + 1, 2654435761)) >>> 0;
-			const [bg, fg] = AVATAR_PALETTE[base % AVATAR_PALETTE.length];
-			const headX = 58 + ((h >>> 3) % 13);
-			const headR = 20 + ((h >>> 7) % 5);
-			const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'
-				+ '<defs><clipPath id="c"><rect width="128" height="128" rx="30"/></clipPath></defs>'
-				+ '<rect width="128" height="128" rx="30" fill="' + bg + '"/>'
-				+ '<g clip-path="url(#c)" fill="' + fg + '">'
-				+ '<circle cx="' + headX + '" cy="46" r="' + headR + '"/>'
-				+ '<path d="M 18 128 C 18 92 40 76 64 76 C 88 76 110 92 110 128 Z"/></g></svg>';
-			return "data:image/svg+xml," + encodeURIComponent(svg);
-		}
 
 		/** Resolve an avatar for an index: photo from the pool, or a generated one. */
 		function avatarForIndex(title, index) {
@@ -1621,7 +1607,7 @@ body .dsh-wc-color {
 				const keys = Object.keys(avatarMap);
 				if (keys.length > 400) {
 					const live = new Set(Array.prototype.map.call(
-						document.querySelectorAll(".JoiKIa_sessionRow"), (el) => avatarKeyFor(el, el.textContent || "")
+						document.querySelectorAll(".JoiKIa_sessionRow"), (el) => avatarKeyFor(el, titleOf(el))
 					));
 					live.add(key);
 					const pruned = {};
@@ -1688,9 +1674,14 @@ row.dataset.dshAvatar = value;
 					canvas.width = Math.max(1, Math.round(img.width * scale));
 					canvas.height = Math.max(1, Math.round(img.height * scale));
 					const ctx = canvas.getContext("2d");
-					ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 					URL.revokeObjectURL(url);
-					resolve(canvas.toDataURL("image/jpeg", 0.82));
+					// A null 2d context would throw inside onload and leave the promise pending
+					// forever, so the upload button would never answer.
+					if (!ctx) { reject(new Error("canvas unavailable")); return; }
+					try {
+						ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+						resolve(canvas.toDataURL("image/jpeg", 0.82));
+					} catch (error) { reject(error); }
 				};
 				img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image load failed")); };
 				img.src = url;
@@ -1699,20 +1690,26 @@ row.dataset.dshAvatar = value;
 
 		/** Set a custom user avatar (persisted + applied). */
 		function setUserAvatar(dataUrl) {
-			try { window.localStorage.setItem(USER_AVATAR_KEY, dataUrl); } catch (e) {}
+			// false = the browser refused to store it (quota); the caller tells the user
+			// instead of showing an avatar that vanishes on the next restart.
+			let stored = true;
+			try { window.localStorage.setItem(USER_AVATAR_KEY, dataUrl); } catch (e) { stored = false; }
 			userAvatarDataUrl = dataUrl;
 			const value = "url(\"" + dataUrl + "\")";
 			document.documentElement.style.setProperty("--dsh-user-avatar", value);
 			lastUserAvatarValue = value;
+			return stored;
 		}
 
 		/** Set the global AI avatar (persisted + applied; overrides per-session avatars). */
 		function setAiAvatar(dataUrl) {
-			try { window.localStorage.setItem(AI_AVATAR_KEY, dataUrl); } catch (e) {}
+			let stored = true;
+			try { window.localStorage.setItem(AI_AVATAR_KEY, dataUrl); } catch (e) { stored = false; }
 			aiAvatarDataUrl = dataUrl;
 			const value = "url(\"" + dataUrl + "\")";
 			document.documentElement.style.setProperty("--dsh-assistant-avatar", value);
 			lastAssistantAvatarValue = value;
+			return stored;
 		}
 
 		//#region sidebar avatar
@@ -2448,6 +2445,9 @@ if (host === parent && layer && layer.parentNode === parent) return layer;
 // A composer re-render can move the editor under a fresh parent and leave the old
 // layer blinking wherever it stood — exactly one caret layer may exist.
 for (const stale of document.querySelectorAll(".dsh-wc-caret")) stale.remove();
+// The old parent keeps position:relative from the host attribute and would go on
+// capturing absolutely positioned children after the editor moved away.
+if (host && host !== parent) { try { host.removeAttribute("data-dsh-wc-caret-host"); } catch (e) {} }
 host = parent;
 parent.setAttribute("data-dsh-wc-caret-host", "");
 layer = document.createElement("div");
@@ -2658,7 +2658,7 @@ const hitRow = Array.prototype.slice.call(card.querySelectorAll(".dsh-wc-row")).
 card.style.display = hitRow ? "" : "none";
 });
 setNoHit(Boolean(q) && visibleCount === 0);
-}, [searchQuery]);
+}, [searchQuery, customPresets.length]);
 const missing = SELECTOR_PROBES.filter((selector) => {
 try { return document.querySelector(selector) === null; } catch (error) { return true; }
 });
@@ -2667,7 +2667,12 @@ try { return document.querySelector(selector) === null; } catch (error) { return
 });
 const onFile = (action) => (event) => {
 const file = event.target.files && event.target.files[0];
-if (file) downscaleImage(file).then(action).catch(() => {});
+// Both failure paths used to be swallowed: a broken file or a full localStorage
+// looked exactly like a successful upload until the next restart.
+if (file) downscaleImage(file).then((dataUrl) => {
+const stored = action(dataUrl);
+setStatus(stored === false ? { kind: "err", detail: t("avatarStoreFailed") } : { kind: "ok", detail: t("avatarSaved") });
+}).catch(() => setStatus({ kind: "err", detail: t("avatarBadImage") }));
 event.target.value = "";
 };
 const runExport = () => {
@@ -3385,7 +3390,9 @@ scanHooks.push(composerScrollScan);
 							if (typeof dataUrl !== "string" || dataUrl.indexOf("data:") !== 0) return;
 							const mime = dataUrl.slice(5, dataUrl.indexOf(";"));
 							const comma = dataUrl.indexOf(",");
-							const binary = atob(dataUrl.slice(comma + 1));
+
+							let binary = "";
+							try { binary = atob(dataUrl.slice(comma + 1)); } catch (e) { return; }
 							const bytes = new Uint8Array(binary.length);
 							for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
 							jobs.push(fetch("/sone-wx/brand/" + kind, { method: "PUT", headers: { "content-type": mime }, body: new Blob([bytes], { type: mime }) }).catch(() => {}));
@@ -3405,12 +3412,8 @@ scanHooks.push(composerScrollScan);
 							try { window.dispatchEvent(new CustomEvent("sone-wx:brand-reload")); } catch (e) {}
 						});
 					},
-					uploadUserAvatar: (dataUrl) => {
-						setUserAvatar(dataUrl);
-					},
-					uploadAiAvatar: (dataUrl) => {
-						setAiAvatar(dataUrl);
-					},
+					uploadUserAvatar: (dataUrl) => setUserAvatar(dataUrl),
+					uploadAiAvatar: (dataUrl) => setAiAvatar(dataUrl),
 					setLineHeight: (value) => {
 					lineHeight = value === "compact" || value === "relaxed" ? value : "normal";
 					writeJson(LINE_HEIGHT_KEY, lineHeight);
@@ -3512,7 +3515,11 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 						avatarShape = "rounded"; applyAvatarShape(avatarShape);
 						window.localStorage.removeItem(AVATAR_STYLE_KEY);
 						avatarArt = "silhouette"; applyAvatarStyle(avatarArt);
-						composerFxOn = false; composerEffects.setEnabled(false);
+						composerFxOn = true; composerEffects.setEnabled(true);
+						// Deleting the key is not enough: the in-memory order keeps driving the DOM
+						// until the next reload, and saved presets would survive a "restore defaults".
+						sidebarOrder = []; applyPanelOrder();
+						writeJson(CUSTOM_PRESETS_KEY, []);
 						sync();
 					}
 				};
@@ -3528,6 +3535,9 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 "aiAvatarOn": "显示",
 "aiAvatarOff": "隐藏",
 					"uploadUser": "上传我的头像",
+"avatarSaved": "头像已保存",
+"avatarBadImage": "这张图片读不出来，换一张试试",
+"avatarStoreFailed": "浏览器存储已满，头像本次生效但不会保留",
 					"uploadAi": "上传 AI 头像",
 					"densityTitle": "列表密度",
 					"densityCozy": "标准",
@@ -3622,6 +3632,9 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 "aiAvatarOn": "Shown",
 "aiAvatarOff": "Hidden",
 					"uploadUser": "Upload my avatar",
+"avatarSaved": "Avatar saved",
+"avatarBadImage": "That image could not be read, try another one",
+"avatarStoreFailed": "Browser storage is full: the avatar applies now but will not persist",
 					"uploadAi": "Upload AI avatar",
 					"densityTitle": "List density",
 					"densityCozy": "Cozy",
@@ -4756,7 +4769,7 @@ function applyTableStabilizer(ctx) {
  * "slot entry crashed"/"slot factory occurrence crashed" 的错误 POST 到
  * 宿主 /sone-wx/diag 落盘（~/.dsh/sone-wx/diag.json），供外部读取。 */
 function installDiagHook() {
-if (globalThis.__soneWxDiagHooked) return;
+if (globalThis.__soneWxDiagHooked) return () => {};
 globalThis.__soneWxDiagHooked = true;
 const post = (msg) => {
 try {
@@ -4767,7 +4780,8 @@ body: JSON.stringify({ t: Date.now(), msg: String(msg).slice(0, 4000) })
 }).catch(() => {});
 } catch {}
 };
-const origError = console.error.bind(console);
+const rawError = console.error;
+const origError = rawError.bind(console);
 console.error = (...args) => {
 try {
 const head = typeof args[0] === "string" ? args[0] : "";
@@ -4782,19 +4796,26 @@ post(text);
 } catch {}
 origError(...args);
 };
-try {
-window.addEventListener("unhandledrejection", (event) => {
+const onRejection = (event) => {
 try {
 const reason = event && event.reason;
 const text = reason instanceof Error ? (reason.stack || String(reason)) : String(reason);
 if (text.includes("slot") || text.includes("settings.section")) post("unhandledrejection: " + text);
 } catch {}
-});
-} catch {}
+};
+try { window.addEventListener("unhandledrejection", onRejection); } catch {}
+// Disabling the plugin has to hand console.error back and stop posting to a route
+// that no longer exists.
+return () => {
+try { if (console.error !== rawError) console.error = rawError; } catch {}
+try { window.removeEventListener("unhandledrejection", onRejection); } catch {}
+globalThis.__soneWxDiagHooked = false;
+};
 }
 
 function apply(ctx) {
-try { installDiagHook(); } catch {}
+let uninstallDiag = () => {};
+try { uninstallDiag = installDiagHook() || (() => {}); } catch {}
 const skin = applySkin(ctx);
 BRAND.applyBrand(ctx);
 applyTableStabilizer(ctx);
@@ -4815,6 +4836,7 @@ id: "sone-wx"
 return () => {
 offSection();
 offIcon();
+try { uninstallDiag(); } catch {}
 };
 }, "sone-wx: settings section");
 }

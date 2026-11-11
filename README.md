@@ -4,7 +4,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 由三个本地插件合并而来（2026-11-08）：
 
-- `dsh-wechat-skin`（移植自 licheng-ma/dsh-wechat-skin v1.0.0，本地已深度定制 79 轮）：绿色气泡、会话/消息头像、界面与正文两级字号、列表密度、对话宽度、侧边栏背景色、侧边栏入口排序、主题预设、输入框美化、设置页实时预览、适配自检、配置导出导入、输入框随内容自动增高、AI 头像开关（关闭后会话区左对齐）、我的头像开关（关闭后发送气泡贴右）、运行状态点圈、字体族/高对比度/头像形状、选中色与滚动条、深浅两套配色、对比度与交互收口。localStorage 键保持 `dsh-wechat-skin:*`，老数据直接延续。
+- `dsh-wechat-skin`（移植自 licheng-ma/dsh-wechat-skin v1.0.0，本地已深度定制 79 轮）：绿色气泡、会话/消息头像、界面与正文两级字号、列表密度、对话宽度、侧边栏背景色、侧边栏入口排序、主题预设、输入框美化、设置页实时预览、适配自检、配置导出导入、输入框随内容自动增高、AI 头像开关（关闭后会话区左对齐）、我的头像开关（关闭后发送气泡贴右）、运行状态点圈、字体族/高对比度/头像形状、行高、减少动效、输入框效果（毛玻璃/发送形变/光标）、选中色与滚动条、深浅两套配色、对比度与交互收口。localStorage 键保持 `dsh-wechat-skin:*`，老数据直接延续。
 - `dsh-brand-studio`：品牌标志/标题/文字标志图片，接管侧栏与新会话页品牌位。
 - `dsh-table-stabilizer`：宽表格悬停跳动修复（把 `--dsh-scrollbar-width` 绑到表格容器，实测滚动条高度），纯 client 行为，无设置项。数据从 `~/.dsh/dsh-brand-studio/brand/` 首次启动自动迁移到 `~/.dsh/sone-wx/brand/`，接口 `/sone-wx/brand`。
 
@@ -60,13 +60,29 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-11 v1.36.0 两路只读审计的落地（客户端 11 条 + 宿主/测试 12 条）：
+  - **按会话主题取头像色曾经静默失效**：`silhouetteAvatar` 有两份同名声明，后一份不带 `paletteForTopic`，覆盖了前一份。删掉重复声明，并新增 `test/duplicate-fn-test.mjs` 守住「同名函数只声明一次」——按名字抓函数的测试只会读到第一份，所以这类覆盖过去测不出来。
+  - 卸载不再残留：`installDiagHook` 改为返回卸载函数，交还 `console.error`、摘掉 `unhandledrejection` 监听（此前禁用插件后仍会向已失效的 `/sone-wx/diag` 发请求）。
+  - 「恢复默认」补齐三处：侧栏面板顺序（此前只删键、内存里的顺序仍在驱动 DOM）、自定义预设、输入框效果（此前重置成关、与默认开矛盾）。
+  - 头像上传不再吞失败：`localStorage` 写满会明确提示「本次生效但不会保留」，坏图片提示换一张；`getContext("2d")` 为空时直接 reject，不再让上传按钮永远无响应。
+  - 导入配置里的坏 base64 图片不再抛穿 `reader.onload`；头像缓存剪枝按标题而不是整行文本匹配。
+  - 光标层跟随输入框重渲染：切换父节点时摘掉旧父节点的 `data-dsh-wc-caret-host`，不再残留 `position: relative` 影响其它绝对定位子元素。
+  - 设置页搜索在预设增删后重新过滤（依赖补 `customPresets.length`）。
+  - 宿主接口围栏收紧：兜底路径要求 Host 本身就是本机（挡住 DNS rebinding），写请求必须带同源 Origin，图片 GET 仍放行（`<img>` 不发 Origin）；品牌写入串行化，两个并发 POST 不再互相覆盖；超限上传回 413 而不是「坏 JSON」，请求体 15 秒超时；同步 fs 全部包错误处理，500 只回 `io`，不回显绝对路径；diag 写失败如实回 `ok:false`。
+  - `peerDependencies` 从 `>=0.2.0-rc.1 <0.3.0` 改为 `>=0.2.2-rc.1 <0.3.0-0`：按标准 semver 预发布规则，旧区间其实**不满足**它声明兼容的 0.2.2-rc.1。
+  - 测试基座重做：新增 `test/fixtures.mjs`，每轮 run-all 先从插件源码与**已安装宿主**（`test/host.mjs` 直接读 app.asar）重生成 `sone-css.css`/`app.css`/`composer.css`——此前 8 套浏览器测试读的是过期 dump，等于在测上周的皮肤。
+  - 新增 `test/host-hash-test.mjs`：把皮肤引用的 96 个宿主哈希类名逐个对照已安装宿主校验（第三方 2 个另算）。DSH 升级导致的类名漂移从此是**测试失败**，而不是悄悄失效的主题。
+  - 新增 `test/host-routes-test.mjs`：27 项真路由集成测试（围栏/魔数/413/原子写/并发锁/diag 上限/错误不泄露路径），此前宿主侧零覆盖。
+  - 断言收口：`contrast-test` 改为从 CSS 真实令牌取色（此前是测试内硬编码 hex 互算，改坏了也绿）；`skin-extras` 字体断言改成精确栈；`ai-avatar`/`autogrow` 两套此前只打印不断言、且不在 run-all 名单，现补断言并纳入。
+  - playwright 收进 `devDependencies` 并统一走 `test/browser.mjs`（先本地、再桌面 profile），不再散落在 7 个文件里硬编码别人的 node_modules 路径。
+
 - 2026-11-10 v1.30.0 全插件体检：
   - 删掉 10 个只声明未使用的令牌（`--wc-green-deep`、`--wc-brand-hover`、`--wc-ink-3`、`--wc-fs-xl/lg`、`--wc-font-base/sm/xs`、`--wc-gap-flow/tight`），`--wc-fs-xl/lg` 已由 `--wc-body-*` 取代。
   - 卸载清理补齐：`dshWechatUserAvatar`、`dshWcFontFamily`、`dshWcContrast`、`dshWcAvatarShape`、`dshWcAvatarStyle` 五个 body 标记，以及 `--dsh-wechat-text-scale`；去掉已删除功能残留的 `dshWechatTail`。
   - 恢复默认漏清 `dsh-wechat-skin:text-font-level`，导致「正文字号」重置后重启又变回来；已补。
   - 导入配置后会重写「载荷里出现过」的键，把手改/越界的值落成实际生效值；没出现的键保持原状（不覆盖当前设置）。
   - 头像索引 `AVATAR_MAP_KEY` 超过 400 条时按当前会话列表剪枝，长期使用不再无限增长。
-  - 新增 `test/cleanup-test.mjs`（5 项静态守卫：标记清理齐全、字体缩放变量清理、无旧 tail 残留、恢复默认覆盖全部配置键），并入 run-all。
+  - 新增 `test/cleanup-test.mjs`（静态守卫：标记清理齐全、字体缩放变量清理、无旧 tail 残留、恢复默认覆盖全部配置键；v1.36.0 起真正并入 run-all）。
 
 - 2026-11-10 v1.29.0 宋体换成霞鹜文楷：
   - 「字体」五档改为：系统默认 / 微信体（苹方）/ 霞鹜文楷（LXGW WenKai、LXGWWenKai、霞鶩文楷、霞鹜文楷、Kaiti SC）/ 楷体 / 圆体。

@@ -7,5 +7,12 @@ const html=`<!doctype html><html><head><meta charset="utf-8"><link rel="styleshe
 </head><body class="dsh-wechat-skin-on"><div id="a">${mk(1)}</div><div id="b">${mk(4)}</div><div id="c">${mk(20)}</div>
 <script>const m=(s)=>{const c=document.querySelector(s+' .JZLxKW_card'),v=c.querySelector('.JZLxKW_scroll');return{card:Math.round(c.getBoundingClientRect().height),scroll:Math.round(v.getBoundingClientRect().height),overflow:v.scrollHeight>v.clientHeight};};document.title=JSON.stringify({one:m('#a'),four:m('#b'),twenty:m('#c')});</script></body></html>`;
 writeFileSync('/tmp/autogrow.html',html);
-const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom','file:///tmp/autogrow.html'],{encoding:'utf8'});
-console.log(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"').replace(/&lt;/g,'<'));
+const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom','file:///tmp/autogrow.html'],{encoding:'utf8',stdio:['ignore','pipe','ignore']});
+const m=JSON.parse(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"').replace(/&lt;/g,'<'));
+const fails=[];
+if(!(m.one.card<m.four.card&&m.four.card<m.twenty.card))fails.push('高度未随内容增长: '+JSON.stringify(m));
+if(m.one.overflow||m.four.overflow)fails.push('短内容不该出现内部滚动');
+if(m.twenty.scroll!==336)fails.push('未停在 --dsh-composer-text-max-height(336): '+m.twenty.scroll);
+if(!m.twenty.overflow)fails.push('超长内容应在框内滚动');
+if(fails.length){console.error('autogrow-test FAILED\n  '+fails.join('\n  '));process.exit(1);}
+console.log('autogrow-test OK（4 项）');

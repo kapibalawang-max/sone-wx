@@ -1,15 +1,11 @@
 // Sidebar avatar shape + status badge regression (v1.15.0).
 // Avatar is a 6px rounded square (WeChat list look); status rides as a corner badge.
-import { createRequire } from 'node:module';
 import { writeFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { chromium } from './browser.mjs'
 
 execFileSync(process.execPath, [new URL('./extract-css.mjs', import.meta.url).pathname], { stdio: 'ignore' });
 const css = readFileSync('/tmp/sone-css.css', 'utf8');
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/');
-let chromium;
-try { ({ chromium } = require('playwright')); } catch { console.error('playwright missing'); process.exit(1); }
-
 const av = (ch, hue) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><rect width='128' height='128' rx='30' fill='hsl(${hue},55%,58%)'/><text x='64' y='89' font-size='60' text-anchor='middle' fill='#fff'>${ch}</text></svg>`)}`;
 const rows = [
   { t: '运行中会话', time: '14:16', state: 'ongoing', ch: '运' },

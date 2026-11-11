@@ -1,8 +1,6 @@
 // 侧栏插件图标悬停旋转一圈：结构断言 + 真实浏览器量取。
 import { readFileSync, writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/')
-const { chromium } = require('playwright')
+import { chromium } from './browser.mjs'
 
 const src = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
 function grab(name) {

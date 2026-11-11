@@ -5,15 +5,13 @@
 //   node test/visual.mjs --update   -> rewrite baselines
 import { readFileSync, writeFileSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import os from 'node:os'
+import { chromium } from './browser.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
-const require = createRequire(join(process.env.HOME, '.dsh/profiles/desktop/node_modules/'))
-const { chromium } = require('playwright')
 
 const src = readFileSync(join(root, 'client.js'), 'utf8')
 function grab(name) {

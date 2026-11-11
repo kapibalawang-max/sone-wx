@@ -22,20 +22,27 @@ const token = (name) => {
   return m ? m[1] : null;
 };
 
+// Every skin colour comes from the stylesheet itself: hardcoded literals here would
+// keep passing after someone changed the token in client.js.
+const need = (name) => {
+  const v = token(name);
+  if (!v) { fails.push(`token --${name} not declared as a hex value`); return '#000000'; }
+  return v;
+};
+const fails = [];
 const cases = [
-  ['link ink on assistant bubble', '#0a7d43', '#ffffff', 4.5],
-  ['link ink on module fill', '#0a7d43', '#f2f2f2', 4.5],
-  ['primary button label', '#ffffff', '#0a7d43', 4.5],
-  ['selected row title', '#0a2e1a', '#4c9f6f', 4.5],
-  ['secondary ink on white', '#61666b', '#ffffff', 4.5],
-  ['danger button label', '#ffffff', '#b42318', 4.5],
+  ['link ink on assistant bubble', need('wc-link'), '#ffffff', 4.5],
+  ['link ink on module fill', need('wc-link'), '#f2f2f2', 4.5],
+  ['primary button label', '#ffffff', need('wc-brand-press'), 4.5],
+  ['selected row title', need('wc-sel-ink'), need('wc-sel-bg'), 4.5],
+  ['table header label', need('wc-th-ink'), need('wc-th-bg'), 4.5],
+  ['danger button label', '#ffffff', need('wc-danger'), 4.5],
+  ['brand text on white', need('wc-brand-text'), '#ffffff', 4.5],
   ['dark link on chat surface', '#7ee2a8', '#1d1d1f', 4.5],
   ['dark link on module fill', '#7ee2a8', '#2a2a2c', 4.5],
-  ['light link on white', '#0a7d43', '#ffffff', 4.5],
 ];
 
 let checks = 0;
-const fails = [];
 for (const [name, fg, bg, floor] of cases) {
   const r = ratio(fg, bg);
   checks++;

@@ -2,9 +2,7 @@
 // installComposerEffects() — sliding caret and send-flight. The installer is
 // extracted straight from client.js so the test cannot drift from the shipped code.
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
-const require = createRequire('/Users/user/.dsh/profiles/desktop/node_modules/');
-const { chromium } = require('playwright');
+import { chromium } from './browser.mjs'
 
 const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
 const start = src.indexOf('function installComposerEffects()');
@@ -25,7 +23,8 @@ function grabCss() {
   return css.join('\n');
 }
 const css = grabCss();
-const host = fs.readFileSync('/tmp/app.css', 'utf8') + '\n}';
+// fixtures.mjs already closes the host stylesheet's unterminated last rule.
+const host = fs.readFileSync('/tmp/app.css', 'utf8');
 const html = `<!doctype html><html><head><style>
 ${host}
 ${css}

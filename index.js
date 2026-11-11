@@ -97,10 +97,14 @@ async function saveImage(ctx, kind, req, res) {
     sendJson(res, 415, { ok: false, error: 'unsupported_type' })
     return
   }
-  const body = await readBody(req, MAX_IMAGE_BYTES)
-  if (body === null) {
-    res.once('finish', () => req.destroy())
+  const { body, over } = await readBody(req, MAX_IMAGE_BYTES)
+  if (over) {
+    res.once('finish', () => { try { req.destroy() } catch {} })
     sendJson(res, 413, { ok: false, error: 'too_large' })
+    return
+  }
+  if (body === null) {
+    sendJson(res, 400, { ok: false, error: 'bad_image' })
     return
   }
   if (body.length === 0 || !matchesSignature(type, body)) {
@@ -139,38 +143,58 @@ function looksLikeSvg(bytes) {
   return match !== null
 }
 
+const BODY_TIMEOUT_MS = 15000
+
+/** Resolves { body, over }: an oversized upload must answer 413, not "bad json",
+ *  and a stalled one must not hold the connection open forever. */
 function readBody(req, limit) {
   return new Promise((settle) => {
     const chunks = []
     let size = 0
-    let over = false
+    let settled = false
+    const finish = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      settle(result)
+    }
+    const timer = setTimeout(() => {
+      try { req.destroy() } catch {}
+      finish({ body: null, over: false })
+    }, BODY_TIMEOUT_MS)
+    if (typeof timer.unref === 'function') timer.unref()
     req.on('data', (chunk) => {
-      if (over) return
+      if (settled) return
       size += chunk.length
       if (size > limit) {
-        over = true
-        settle(null)
+        finish({ body: null, over: true })
         return
       }
       chunks.push(Buffer.from(chunk))
     })
-    req.on('end', () => {
-      if (!over) settle(Buffer.concat(chunks))
-    })
-    req.on('error', () => {
-      if (!over) settle(null)
-    })
+    req.on('end', () => finish({ body: Buffer.concat(chunks), over: false }))
+    req.on('error', () => finish({ body: null, over: false }))
   })
 }
 
 async function readJsonBody(req, limit) {
-  const body = await readBody(req, limit)
-  if (body === null) return null
+  const { body, over } = await readBody(req, limit)
+  if (over) return { payload: null, over: true }
+  if (body === null) return { payload: null, over: false }
   try {
-    return JSON.parse(body.toString('utf8'))
+    return { payload: JSON.parse(body.toString('utf8')), over: false }
   } catch {
-    return null
+    return { payload: null, over: false }
   }
+}
+
+/** One writer at a time: temp+rename makes a single write atomic, but two concurrent
+ *  read-modify-write cycles would still drop one of the updates. */
+let stateQueue = Promise.resolve()
+function withStateLock(job) {
+  const run = stateQueue.then(job, job)
+  stateQueue = run.then(() => {}, () => {})
+  return run
 }
 
 function sendJson(res, status, payload) {
@@ -196,12 +220,21 @@ function refusedOf(ctx, req) {
   if (typeof connection?.requestRejection === 'function') return connection.requestRejection(req)
   if (!isLoopback(req.socket.remoteAddress)) return 403
   const host = req.headers.host
-  if (host !== undefined) {
-    if (!URL.canParse(`http://${host}`)) return 403
-    const origin = req.headers.origin
-    if (origin !== undefined) return URL.canParse(origin) && new URL(origin).host === host ? undefined : 403
-  }
-  return undefined
+  // A loopback socket alone is not enough: DNS rebinding points an attacker's domain
+  // at 127.0.0.1, so the Host header has to name the local machine too.
+  if (host === undefined || !URL.canParse(`http://${host}`)) return 403
+  if (!isLoopbackHost(new URL(`http://${host}`).hostname)) return 403
+  // Writes must come from the GUI itself. Reads stay open to <img src>, which sends
+  // no Origin at all.
+  if (req.method === 'GET' || req.method === 'HEAD') return undefined
+  const origin = req.headers.origin
+  if (origin === undefined) return 403
+  return URL.canParse(origin) && new URL(origin).host === host ? undefined : 403
+}
+
+function isLoopbackHost(hostname) {
+  const plain = hostname.startsWith('[') && hostname.endsWith(']') ? hostname.slice(1, -1) : hostname
+  return plain === 'localhost' || isLoopback(plain)
 }
 
 function isLoopback(address) {
@@ -250,18 +283,22 @@ export function apply(ctx) {
       if (fenceRefused(ctx, req, res)) return
       if (req.method === 'PUT') {
         void saveImage(ctx, kind, req, res).catch((error) => {
-          if (!res.headersSent) sendJson(res, 500, { ok: false, error: String(error?.message ?? error) })
+          if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
         })
         return
       }
       if (req.method === 'DELETE') {
-        const dir = brandDir(ctx)
-        for (const extension of Object.values(IMAGE_TYPES)) rmSync(join(dir, `${kind}.${extension}`), { force: true })
-        if (kind === 'wordmark') {
-          const state = readState(dir)
-          if (state.wordmarkImage) writeState(dir, { ...state, wordmarkImage: false })
-        }
-        return sendJson(res, 200, answer(ctx))
+        return void withStateLock(() => {
+          const dir = brandDir(ctx)
+          for (const extension of Object.values(IMAGE_TYPES)) rmSync(join(dir, `${kind}.${extension}`), { force: true })
+          if (kind === 'wordmark') {
+            const state = readState(dir)
+            if (state.wordmarkImage) writeState(dir, { ...state, wordmarkImage: false })
+          }
+          sendJson(res, 200, answer(ctx))
+        }).catch(() => {
+          if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
+        })
       }
       const found = findImage(brandDir(ctx), kind)
       if (found === null) {
@@ -269,7 +306,10 @@ export function apply(ctx) {
         res.end()
         return
       }
-      const body = readFileSync(found.path)
+      let body = null
+      try { body = readFileSync(found.path) } catch {
+        return sendJson(res, 500, { ok: false, error: 'io' })
+      }
       res.writeHead(200, { ...IMAGE_HEADERS, 'content-type': found.type, 'content-length': String(body.byteLength) })
       res.end(req.method === 'HEAD' ? undefined : body)
     },
@@ -282,20 +322,23 @@ export function apply(ctx) {
       if (methodRefused(req, res, ['GET', 'HEAD', 'POST'])) return
       if (fenceRefused(ctx, req, res)) return
       if (req.method === 'POST') {
-        return void readJsonBody(req, 16 * 1024).then((payload) => {
+        return void readJsonBody(req, 16 * 1024).then(({ payload, over }) => {
+          if (over) return sendJson(res, 413, { ok: false, error: 'too_large' })
           if (payload === null) return sendJson(res, 400, { ok: false, error: 'bad_json' })
-          const dir = brandDir(ctx)
-          const current = readState(dir)
-          const next = {
-            ...current,
-            title: typeof payload.title === 'string' ? payload.title.trim().slice(0, MAX_TITLE_CHARS) : current.title,
-            wordmarkImage: typeof payload.wordmarkImage === 'boolean' ? payload.wordmarkImage : current.wordmarkImage,
-            heroMark: typeof payload.heroMark === 'boolean' ? payload.heroMark : current.heroMark,
-          }
-          writeState(dir, next)
-          sendJson(res, 200, answer(ctx))
+          return withStateLock(() => {
+            const dir = brandDir(ctx)
+            const current = readState(dir)
+            const next = {
+              ...current,
+              title: typeof payload.title === 'string' ? payload.title.trim().slice(0, MAX_TITLE_CHARS) : current.title,
+              wordmarkImage: typeof payload.wordmarkImage === 'boolean' ? payload.wordmarkImage : current.wordmarkImage,
+              heroMark: typeof payload.heroMark === 'boolean' ? payload.heroMark : current.heroMark,
+            }
+            writeState(dir, next)
+            sendJson(res, 200, answer(ctx))
+          })
         }).catch((error) => {
-          if (!res.headersSent) sendJson(res, 500, { ok: false, error: String(error?.message ?? error) })
+          if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
         })
       }
       // GET：返回当前品牌配置
@@ -311,8 +354,10 @@ export function apply(ctx) {
       if (methodRefused(req, res, ['GET', 'HEAD', 'POST'])) return
       if (fenceRefused(ctx, req, res)) return
       if (req.method === 'POST') {
-        return void readJsonBody(req, 64 * 1024).then((payload) => {
+        return void readJsonBody(req, 64 * 1024).then(({ payload, over }) => {
+          if (over) return sendJson(res, 413, { ok: false, error: 'too_large' })
           if (payload === null) return sendJson(res, 400, { ok: false, error: 'bad_json' })
+          let wrote = false
           try {
             mkdirSync(brandDir(ctx), { recursive: true })
             const incoming = Array.isArray(payload.entries) ? payload.entries : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
@@ -323,10 +368,11 @@ export function apply(ctx) {
             const temporary = tempPath(target)
             writeFileSync(temporary, JSON.stringify({ entries }, null, 2))
             renameSync(temporary, target)
+            wrote = true
           } catch {}
-          return sendJson(res, 200, { ok: true })
+          return sendJson(res, 200, { ok: wrote })
         }).catch((error) => {
-          if (!res.headersSent) sendJson(res, 500, { ok: false, error: String(error?.message ?? error) })
+          if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
         })
       }
       // GET：回读最近一次写入的诊断内容（便于排查）
