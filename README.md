@@ -16,6 +16,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.32.2 修表格悬停抖动：宿主对宽表用 `padding-bottom: var(--dsh-scrollbar-width)` 预留滚动条高度、悬停才切 `overflow-x: scroll`，而皮肤让滚动条常驻，预留仍在，悬停一下少 10px、内容上跳。改为容器 `padding-bottom: 0 !important` 并补 `:hover { overflow-x: auto; padding-bottom: 0 !important }`；新增 `test/table-stability-test.mjs`（4 项，hover 前后高度与 padding 不变）。
+
 - 2026-11-11 v1.32.1 表头换配色：淡绿 12% 改深绿实心（新增 `--wc-th-bg #3f7f5f` / `--wc-th-ink #ffffff`，深色 `#2f5c48`），白字 600、12px，去掉表头下边框改由色带分隔；白字对比 4.76:1。`test/markdown-test.mjs` 补白字与深绿色带断言（15 项）。
 
 - 2026-11-11 v1.32.0 会话区 AI 回复排版重做（标题、列表、链接、代码、引用、表格）：

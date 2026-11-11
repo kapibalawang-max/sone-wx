@@ -916,6 +916,14 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] mark { background
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] {
   margin: var(--wc-md-gap) 0 0; overflow-x: auto;
   scrollbar-width: thin; scrollbar-color: var(--wc-scroll-thumb) transparent;
+  /* Host reserves --dsh-scrollbar-width as bottom padding and only shows the
+     bar on hover; because we keep overflow at auto the bar is already there,
+     so that reserve must never apply — otherwise hover drops 10px of height
+     and the table jumps up. */
+  padding-bottom: 0 !important;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"]:hover {
+  overflow-x: auto; padding-bottom: 0 !important;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] table {
   border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
