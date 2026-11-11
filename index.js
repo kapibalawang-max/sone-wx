@@ -341,8 +341,12 @@ export function apply(ctx) {
           if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
         })
       }
-      // GET：返回当前品牌配置
-      sendJson(res, 200, answer(ctx))
+      // GET：返回当前品牌配置（statSync 仍可能因权限抛出，不能让它逃到宿主）
+      try {
+        sendJson(res, 200, answer(ctx))
+      } catch {
+        sendJson(res, 500, { ok: false, error: 'io' })
+      }
     },
   }
 
