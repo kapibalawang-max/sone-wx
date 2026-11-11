@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.33.3";
+const SKIN_VERSION = "1.34.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -769,6 +769,38 @@ body.dsh-wechat-skin-on .kB3qhq_panelGlyph {
 @keyframes dsh-wc-glyph-turn {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* New session entry: it should read like a plugin title row, not like a button —
+   flat surface, icon + 13px label on the left, tint only on hover. The rail
+   (icon-only) keeps its 36px square, so the left alignment is scoped with :has
+   to the version that actually renders a label. */
+body.dsh-wechat-skin-on .kB3qhq_newSession {
+  height: 36px;
+  margin: 0 0 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--dsw-alias-label-primary);
+}
+body.dsh-wechat-skin-on .kB3qhq_newSession:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+body.dsh-wechat-skin-on .kB3qhq_newSession:has(.kB3qhq_newSessionLabel) {
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0 calc(var(--dsh-sidebar-row-padding, 10px) - var(--dsh-sidebar-paint-inset, 0px));
+  margin: 0 calc(var(--dsh-sidebar-paint-inset, 0px) + 1px) 8px;
+}
+body.dsh-wechat-skin-on .kB3qhq_newSession:has(.kB3qhq_newSessionLabel) .kB3qhq_newSessionContent {
+  justify-content: flex-start;
+  gap: var(--dsh-sidebar-label-gap, 8px);
+  font-size: 13px;
+  font-weight: 500;
+}
+body.dsh-wechat-skin-on .kB3qhq_newSessionLabel {
+  font: inherit;
+  color: inherit;
 }
 
 /* The sent bubble pops in a touch more than the reply. */
