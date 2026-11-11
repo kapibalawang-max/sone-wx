@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.3";
+const SKIN_VERSION = "1.34.4";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1188,7 +1188,8 @@ body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [
     0 1px 3px rgba(0, 0, 0, 0.35) !important;
 }
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret-host] { position: relative; }
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret] { caret-color: transparent; }
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret],
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret] * { caret-color: transparent !important; }
 body.dsh-wechat-skin-on .dsh-wc-caret {
   position: absolute; z-index: 6; width: 1.8px; border-radius: 1px; opacity: 0;
   background: var(--wc-caret-ink, #111214); pointer-events: none;
@@ -2403,19 +2404,26 @@ try { return !!window.matchMedia("(prefers-reduced-motion: reduce)").matches; } 
 };
 const editor = () => document.querySelector("[data-composer-input]");
 
-const hideCaret = () => { if (layer) layer.style.opacity = "0"; };
+const hideCaret = () => {
+// The blink keyframes outrank an inline opacity, so hiding means display:none.
+for (const stale of document.querySelectorAll(".dsh-wc-caret")) stale.style.display = "none";
+if (layer) layer.style.display = "none";
+const ed = editor();
+if (ed) ed.removeAttribute("data-dsh-wc-caret");
+};
 
 function ensureLayer(ed) {
 const parent = ed.parentElement;
 if (!parent) return null;
-if (host !== parent) {
-if (layer && layer.parentNode) layer.parentNode.removeChild(layer);
+if (host === parent && layer && layer.parentNode === parent) return layer;
+// A composer re-render can move the editor under a fresh parent and leave the old
+// layer blinking wherever it stood — exactly one caret layer may exist.
+for (const stale of document.querySelectorAll(".dsh-wc-caret")) stale.remove();
 host = parent;
 parent.setAttribute("data-dsh-wc-caret-host", "");
 layer = document.createElement("div");
 layer.className = "dsh-wc-caret";
 parent.appendChild(layer);
-}
 return layer;
 }
 
@@ -2434,13 +2442,24 @@ const range = sel.getRangeAt(0);
 if (!ed.contains(range.startContainer)) { hideCaret(); return; }
 let rect = null;
 try { rect = range.getBoundingClientRect(); } catch (e) { rect = null; }
-if (!rect || !rect.height || (rect.width === 0 && rect.height === 0)) { hideCaret(); return; }
+// An empty editor collapses to a zero box in some builds; fall back to the text
+// origin so the caret still shows (instead of leaving the native one on screen).
+if ((!rect || !rect.height || (rect.width === 0 && rect.height === 0)) && !ed.textContent.trim()) {
+const cs = window.getComputedStyle(ed);
+const edBox = ed.getBoundingClientRect();
+rect = {
+left: edBox.left + (parseFloat(cs.paddingLeft) || 0),
+top: edBox.top + (parseFloat(cs.paddingTop) || 0),
+height: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6 || 22
+};
+}
+if (!rect || !rect.height) { hideCaret(); return; }
 ed.setAttribute("data-dsh-wc-caret", "");
 const hostBox = host.getBoundingClientRect();
+box.style.display = "block";
 box.style.left = Math.round(rect.left - hostBox.left) + "px";
 box.style.top = Math.round(rect.top - hostBox.top) + "px";
 box.style.height = Math.round(rect.height) + "px";
-box.style.opacity = "1";
 }
 
 function queueCaret() {

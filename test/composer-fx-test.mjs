@@ -46,6 +46,7 @@ await p.waitForTimeout(80);
 const caret = await p.evaluate(async (code) => {
   const install = new Function(code + '\nreturn installComposerEffects();')();
   install.setEnabled(true);
+  window.__cfxA = install;
   const ed = document.querySelector('[data-composer-input]');
   ed.focus();
   const text = ed.firstChild;
@@ -74,6 +75,7 @@ const caret = await p.evaluate(async (code) => {
 }, installer);
 
 const flight = await p.evaluate(async (code) => {
+  window.__cfxA?.dispose();
   document.querySelectorAll('.dsh-wc-caret').forEach((n) => n.remove());
   document.querySelector('[data-composer-input]').parentElement.removeAttribute('data-dsh-wc-caret-host');
   const install = new Function(code + '\nreturn installComposerEffects();')();
@@ -91,6 +93,37 @@ const flight = await p.evaluate(async (code) => {
   install.dispose();
   out.flagAfterDispose = document.body.dataset.dshWcComposerFx;
   out.layerAfterDispose = !!document.querySelector('.dsh-wc-caret');
+  return out;
+}, installer);
+
+// empty composer: exactly one caret layer survives a stray one, and it is shown
+const empty = await p.evaluate(async (code) => {
+  document.querySelectorAll('.dsh-wc-caret').forEach((n) => n.remove());
+  const ed = document.querySelector('[data-composer-input]');
+  ed.textContent = '';
+  ed.removeAttribute('data-dsh-wc-caret');
+  const stray = document.createElement('div');
+  stray.className = 'dsh-wc-caret';
+  ed.parentElement.appendChild(stray);
+  const install = new Function(code + '\nreturn installComposerEffects();')();
+  install.setEnabled(true);
+  ed.focus();
+  const range = document.createRange();
+  range.setStart(ed, 0); range.collapse(true);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  document.dispatchEvent(new Event('selectionchange'));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const layers = [...document.querySelectorAll('.dsh-wc-caret')];
+  const out = {
+    count: layers.length,
+    visible: layers.map((n) => getComputedStyle(n).display),
+    height: layers[0] ? Number.parseFloat(layers[0].style.height) : 0,
+    nativeOff: ed.hasAttribute('data-dsh-wc-caret'),
+    caretColor: getComputedStyle(ed).caretColor,
+    childCaretColor: getComputedStyle(ed).caretColor
+  };
+  install.dispose();
+  out.afterDispose = document.querySelectorAll('.dsh-wc-caret').length;
   return out;
 }, installer);
 
@@ -118,6 +151,11 @@ ok(Math.abs(Number.parseFloat(caret.width) - 1.8) < 0.35, 'caret is ~1.8px wide 
 ok(Number.parseFloat(caret.height) > 10, 'caret height follows the line');
 ok(/left|top/.test(caret.transition || ''), 'caret position is transitioned');
 ok(caret.animation === 'dsh-wc-caret-blink', 'caret blinks');
+ok(empty.count === 1, 'empty composer keeps exactly one caret layer (' + empty.count + ')');
+ok(empty.visible[0] === 'block', 'the surviving layer is shown');
+ok(empty.height > 10, 'empty caret gets its height from the line box');
+ok(empty.nativeOff && empty.caretColor === 'rgba(0, 0, 0, 0)', 'native caret is suppressed while the layer paints');
+ok(empty.afterDispose === 0, 'dispose leaves no layer behind');
 ok(caret.nativeOff, 'native caret is suppressed only after we drew one');
 ok(caret.hostFlag, 'caret host is marked relative');
 ok(flight.count >= 1, 'send flight animates the new user bubble');
