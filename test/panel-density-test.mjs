@@ -22,6 +22,12 @@ const list = rule('body.dsh-wechat-skin-on .kB3qhq_root:not(.kB3qhq_collapsed) .
 ok(/gap:\s*1px/.test(list), 'list gap is 1px');
 ok(/margin-bottom:\s*6px/.test(list), 'list leaves 6px under it');
 ok(!/\.kB3qhq_collapsed \.kB3qhq_panelRow\s*\{/.test(css), 'collapsed rail rows are not overridden');
+const proj = rule('body.dsh-wechat-skin-on .JoiKIa_projectRow');
+ok(/height:\s*32px/.test(proj), 'project header row is 32px');
+const projTitle = rule('body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title');
+ok(/font-size:\s*13px/.test(projTitle) && /line-height:\s*18px/.test(projTitle), 'project title is 13/18');
+const projMeta = rule('body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta');
+ok(/font-size:\s*12px/.test(projMeta) && /line-height:\s*14px/.test(projMeta), 'project path is 12/14');
 const ns = rule('body.dsh-wechat-skin-on .kB3qhq_newSession');
 ok(/height:\s*32px/.test(ns), 'new-session row matches at 32px');
 console.log(`panel-density-test ${pass}/${pass + fail}`);

@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.1";
+const SKIN_VERSION = "1.34.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -331,6 +331,17 @@ body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
    (specificity 0,4,1); the skin's flat WeChat fill has to outrank it. */
 html body.dsh-wechat-skin-on .PIRFFq_sidebarCol { background: var(--wc-sidebar) !important; border-right: none; }
 html body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .PIRFFq_sidebarCol { background: var(--wc-sidebar-dark) !important; }
+
+/* Project header rows: the host pins them at 34px while the title + path stack
+   needs 42px, so the text spills and the row reads loose next to the 32px plugin
+   rows. Tighten to two 13/18 and 11/14 lines that add up to exactly 32px. */
+body.dsh-wechat-skin-on .JoiKIa_projectRow {
+  height: 32px;
+  margin: 2px 0 0;
+}
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_projectText { gap: 0; }
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: 13px; line-height: 18px; font-weight: 500; }
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: 12px; line-height: 14px; }
 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
   position: relative; height: 40px; border-radius: var(--wc-radius-bubble); margin: 1px 0; gap: 1px;
