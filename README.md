@@ -16,6 +16,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.34.5 修「新会话按钮在深色模式下仍有底色」：macOS 侧栏把该按钮涂成 `#ffffff8c`（浅色）与 `#ffffff26`（深色），选择器是 `[data-platform=darwin] [data-ds-dark-theme] :where(.kB3qhq_root:not([role=dialog])) .kB3qhq_newSession`，权重 0,3,0，压过皮肤的 0,2,1，所以此前的 `background: transparent` 没生效。改为对 `border` / `background` / `box-shadow` 加 `!important`，悬停底色同样加固；浅色模式下那层半透明白也一并去掉。`test/new-session-test.mjs` 补入 macOS 真规则（两根属性分处 html 与 body，写成同一元素则永远不匹配），断言深浅两种模式下都是全透明。
+
 - 2026-11-11 v1.34.4 修「空输入框出现两个光标」：闪烁关键帧的优先级高于内联 opacity，所以此前 `hideCaret()` 设 opacity 0 根本不生效，本插件的光标会一直眨；再加上输入框重渲染时会把编辑器挪到新父节点、旧的光标层留在原处，就会出现两条。改为隐藏时 `display:none`（并移除原生光标透明标记）、每次建层前清掉残留的 `.dsh-wc-caret`、空内容时用行盒位置兜底画一条，同时原生光标在编辑器及其子树内统一 `caret-color: transparent !important`。`test/composer-fx-test.mjs` 扩到 22 项（唯一层、可见性、空内容兜底、原生抑制、dispose 无残留）。
 
 - 2026-11-11 v1.34.3 项目标题前的文件夹图标换新：宿主那枚方角实心文件夹在 13px 标题旁显得重，改成 16px 圆角描边文件夹（1.2px 描边、`#81858c` 三级墨色），用 `mask` 画在 `.JoiKIa_folder` 外壳上并隐藏原 svg——悬停换成 chevron、当前项目染成品牌绿这两条宿主行为照旧（走 currentColor）。

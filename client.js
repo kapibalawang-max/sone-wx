@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.4";
+const SKIN_VERSION = "1.34.5";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -797,16 +797,19 @@ body.dsh-wechat-skin-on .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelList {
    flat surface, icon + 13px label on the left, tint only on hover. The rail
    (icon-only) keeps its 36px square, so the left alignment is scoped with :has
    to the version that actually renders a label. */
+/* macOS paints this entry with #ffffff8c / #ffffff26 through
+   [data-platform=darwin] [data-ds-dark-theme] :where(...) (0,3,0), which outranks
+   the plain skin selector — hence !important on the surface properties. */
 body.dsh-wechat-skin-on .kB3qhq_newSession {
   height: 32px;
   margin: 0 0 8px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--dsw-alias-label-primary);
 }
 body.dsh-wechat-skin-on .kB3qhq_newSession:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-alias-interactive-bg-hover) !important;
 }
 body.dsh-wechat-skin-on .kB3qhq_newSession:has(.kB3qhq_newSessionLabel) {
   justify-content: flex-start;
