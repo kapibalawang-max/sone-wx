@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.2";
+const SKIN_VERSION = "1.34.3";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1059,6 +1059,23 @@ body.dsh-wechat-skin-on .JoiKIa_searchResultTitle { font-size: var(--wc-fs-md); 
 body.dsh-wechat-skin-on .JoiKIa_searchResultSnippet { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-secondary, #666); }
 body.dsh-wechat-skin-on .JoiKIa_dot { background: var(--wc-green); }
 body.dsh-wechat-skin-on .JoiKIa_pinIndicator { color: var(--wc-green); }
+/* Project folder glyph: the host ships a square-cornered solid folder that sits
+   heavy next to 13px titles. Swap it for a rounded outline drawn as a mask on the
+   wrapper, so the hover swap to the chevron and the active-project tint still work
+   through currentColor. */
+body.dsh-wechat-skin-on .JoiKIa_folder {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; flex: none;
+  color: var(--dsw-alias-label-tertiary, #81858c);
+}
+body.dsh-wechat-skin-on .JoiKIa_folder.JoiKIa_folderActive { color: var(--dsw-alias-state-business-primary, #07c160); }
+body.dsh-wechat-skin-on .JoiKIa_folder > svg { display: none; }
+body.dsh-wechat-skin-on .JoiKIa_folder::before {
+  content: ""; width: 16px; height: 16px; background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.4 5.1a1.2 1.2 0 0 1 1.2-1.2h2.3c.4 0 .8.2 1 .5l.7.9h4.8a1.2 1.2 0 0 1 1.2 1.2v5a1.2 1.2 0 0 1-1.2 1.2H3.6a1.2 1.2 0 0 1-1.2-1.2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M2.4 5.1a1.2 1.2 0 0 1 1.2-1.2h2.3c.4 0 .8.2 1 .5l.7.9h4.8a1.2 1.2 0 0 1 1.2 1.2v5a1.2 1.2 0 0 1-1.2 1.2H3.6a1.2 1.2 0 0 1-1.2-1.2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 body.dsh-wechat-skin-on .JoiKIa_arrow,
 body.dsh-wechat-skin-on .JoiKIa_chevron { color: var(--dsw-alias-label-tertiary, #999); }
 
