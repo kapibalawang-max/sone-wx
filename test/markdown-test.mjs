@@ -18,7 +18,7 @@ document.title=JSON.stringify({
   codeBg:code.backgroundColor, codeBorder:code.borderTopWidth,
   preBg:pre.backgroundColor, preRadius:pre.borderTopLeftRadius,
   bqBorder:bq.borderLeftWidth, bqBg:bq.backgroundColor,
-  thSticky:th.position
+  thSticky:th.position, thColor:th.color, thBg:th.backgroundColor
 });
 </script></body></html>`;
 const f='/tmp/markdown-test.html'; writeFileSync(f,html);
@@ -38,5 +38,7 @@ ok(r.preRadius==='10px','code block rounded');
 ok(r.bqBorder==='1px'||r.bqBorder==='0.5px','quote uses a hairline rule');
 ok(r.bqBg!=='rgba(0, 0, 0, 0)','quote has a quiet wash');
 ok(r.thSticky==='sticky','table head sticks');
+ok(r.thColor==='rgb(255, 255, 255)','header text is white');
+ok(r.thBg==='rgb(63, 127, 95)','header band uses the deep green');
 console.log(`markdown-test ${pass}/${pass+fail}`);
 process.exit(fail?1:0);

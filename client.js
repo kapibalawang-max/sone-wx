@@ -177,6 +177,8 @@ window.__ModuleLoader__.load({
   --wc-ink-2: var(--dsw-alias-label-secondary, #61666b);
   --wc-line: var(--wc-border-light);
   --wc-control-h: 28px;
+  --wc-th-bg: #3f7f5f;
+  --wc-th-ink: #ffffff;
   --wc-danger: #b42318;
   --wc-danger-hover: #991b1b;
   --wc-stop: #e5484d;
@@ -221,6 +223,7 @@ body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --wc-sel-bg: #35734f;
+  --wc-th-bg: #2f5c48; --wc-th-ink: #ffffff;
   --wc-sel-ink: #ffffff;
   --wc-sel-ink-dim: rgba(255, 255, 255, 0.82);
   --dsw-alias-state-business-primary: var(--wc-green) ;
@@ -243,6 +246,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
   --wc-sidebar: #efe8da;
   --wc-sel-bg: #4c9f6f;
+  --wc-th-bg: #3f7f5f; --wc-th-ink: #ffffff;
   --wc-sel-ink: #0a2e1a;
   --wc-sel-ink-dim: rgba(10, 46, 26, 0.72);
   --wc-surface: #f2ece0;
@@ -921,9 +925,9 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScr
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] thead th {
   position: sticky; top: 0; z-index: 1;
-  background: color-mix(in srgb, var(--wc-green) 12%, var(--dsw-alias-bg-base, #ffffff));
+  background: var(--wc-th-bg); color: var(--wc-th-ink);
   font-weight: 600; font-size: var(--wc-fs-sm); letter-spacing: 0.01em;
-  padding: 9px 12px !important; border-bottom: 0.5px solid var(--dsw-alias-border-l3, #d0d0d3) !important;
+  padding: 9px 12px !important; border-bottom: 0 !important;
   white-space: nowrap;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] td {
@@ -937,8 +941,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScr
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :first-child { margin-top: 0; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :last-child { margin-bottom: 0; }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] thead th {
-  background: color-mix(in srgb, var(--wc-green) 11%, #232325);
-  border-bottom-color: rgba(255, 255, 255, 0.18) !important;
+  background: var(--wc-th-bg); color: var(--wc-th-ink); border-bottom: 0 !important;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.035); }
 
