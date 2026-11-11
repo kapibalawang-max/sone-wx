@@ -82,6 +82,8 @@ window.__ModuleLoader__.load({
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
+// Bumped together with package.json (test/version-test.mjs keeps the two in sync).
+const SKIN_VERSION = "1.33.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1092,10 +1094,10 @@ body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
   background:
     linear-gradient(180deg,
-      color-mix(in srgb, #ffffff 40%, transparent),
-      color-mix(in srgb, #ffffff 60%, transparent) 46%,
-      color-mix(in srgb, #ffffff 70%, transparent)),
-    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 5%, transparent), color-mix(in srgb, var(--wc-green) 1.5%, transparent)) !important;
+      color-mix(in srgb, #ffffff 26%, transparent),
+      color-mix(in srgb, #ffffff 44%, transparent) 46%,
+      color-mix(in srgb, #ffffff 58%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 14%, transparent), color-mix(in srgb, var(--wc-green) 4%, transparent)) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.35);
   backdrop-filter: blur(20px) saturate(1.35);
   box-shadow:
@@ -1108,7 +1110,7 @@ body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [
     linear-gradient(180deg,
       color-mix(in srgb, #2a2a2c 62%, transparent),
       color-mix(in srgb, #2a2a2c 78%, transparent)),
-    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 10%, transparent), transparent) !important;
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 16%, transparent), transparent) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.10),
@@ -2041,6 +2043,7 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 
 		/** Inline styles for static (non-interactive) parts of the settings row. */
 		const styles = {
+versionTag: { color: "var(--dsw-alias-label-tertiary)", fontVariantNumeric: "tabular-nums" },
 			root: {
 				display: "flex",
 				flexDirection: "column",
@@ -2835,7 +2838,8 @@ children: status.kind
 ? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
 : [
 (0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : Object.assign({}, styles.dot, contextMissing.length ? { opacity: 0.5 } : null), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
-(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) })
+(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) }),
+(0, react_jsx_runtime.jsx)("span", { style: styles.versionTag, title: "SONE theme", children: "v" + SKIN_VERSION })
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {

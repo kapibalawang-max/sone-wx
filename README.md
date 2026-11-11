@@ -16,6 +16,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.33.2 让毛玻璃可见可核对：浅色下白层降到 26/44/58%，品牌绿提到 14%→4%，卡片呈淡薄荷色，与纯白卡片一眼可分（深色绿 16%）；设置卡底部自检行右侧打印当前加载的版本号（`SKIN_VERSION`，与 package.json 由 test/version-test.mjs 对齐），以后「开关没反应」先看这个数字是不是新版本。
+
 - 2026-11-11 v1.33.1 修毛玻璃无效：上一版把玻璃画在 `[data-composer-card]::before` 上并设 `z-index:-1`，在真实 dock 里被会话区的层叠上下文吞掉，卡片交出自己的底色后只剩一片白，开关看起来毫无作用。改为卡片自己承担玻璃——`background` 直接铺多段半透明白 + 5% 品牌绿，`backdrop-filter: blur(20px) saturate(1.35)` 挂在卡片上，顶边亮线与 0.5px 内描边仍走 `box-shadow`；深色块用 #2a2a2c 62/78% + 10% 绿。测试改为断言卡片自身的 `backdrop-filter` 与渐变（关闭时为 none）。
 
 - 2026-11-11 v1.33.0 输入框效果（设置 → 辅助 → 输入框效果，默认开）：①毛玻璃卡片——卡片交出底色，`[data-composer-card]::before` 铺一层 `--wc-surface`（深色用 `--wc-surface-dark`）的多段半透明渐变 + 4% 品牌绿薄雾，18px 的 `backdrop-filter: blur(20px) saturate(1.35)`，顶边亮线与 0.5px 内描边由卡片自身 `box-shadow` 交代；②光标滑动——按掉原生 caret（`caret-color: transparent`），自绘 1.8px 竖条挂在编辑面父元素（补 `data-dsh-wc-caret-host` 做定位上下文），位移走 80ms ease-out、1.06s 步进闪烁，量不到折叠 Range 时退回原生光标；③发送形变——回车发送时记下卡片矩形，观察器抓到新用户气泡后用 WAAPI 从卡片位置缩小落位（340ms，`cubic-bezier(.2,.8,.2,1)`），1.8 秒内没有新气泡就不动。三样都受「减少动效」与 `prefers-reduced-motion` 约束；新增 `test/composer-fx-test.mjs`（16 项：body 标记、光标层位置/宽度/闪烁/原生按掉、发送动画、dispose 回收、玻璃卡片透明与模糊）。
