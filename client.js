@@ -818,47 +818,136 @@ body.dsh-wechat-skin-on ._3j1mRa_label { font-size: var(--wc-fs-md); font-weight
 body.dsh-wechat-skin-on ._3j1mRa_metrics { font-size: var(--wc-fs-sm); color: var(--wc-ink-2); font-variant-numeric: tabular-nums; }
 body.dsh-wechat-skin-on ._3j1mRa_error { font-size: var(--wc-fs-sm); }
 
-/* Markdown inside assistant replies: WeChat reading rhythm, light chrome. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, ul, ol) { line-height: var(--wc-line-height, 1.6); }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a { color: var(--wc-link); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h1 { font-size: var(--wc-body-xl); font-weight: 600; line-height: 1.35; margin: 18px 0 8px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h2 { font-size: calc(var(--wc-body-lg) * 1.2); font-weight: 600; line-height: 1.4; margin: 16px 0 6px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(h3, h4) { font-size: var(--wc-body-lg); font-weight: 600; line-height: 1.45; margin: 12px 0 4px; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :not(pre) > code {
-  font-size: var(--wc-body-md); padding: 1px 5px; border-radius: var(--wc-radius-xs);
-  background: var(--dsw-alias-bg-module-platform, #f2f2f2); border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-}
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre {
-  border-radius: var(--wc-radius-md); border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-  background: var(--wc-code-bg); padding: 10px 12px; margin: 10px 0;
-}
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre code { font-size: var(--wc-body-md); line-height: 1.6; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote {
-  border-left: 0.5px solid var(--dsw-alias-border-l2, #dcdcdc); border-radius: 0 !important;
-  background: var(--wc-code-bg); color: var(--wc-bubble-ink);
-  margin: 10px 0; padding: 2px 0 2px 10px;
-}
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] hr { border: 0; border-top: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); margin: 14px 0; }
-/* Markdown tables only: host wraps each one in .tableScroll. The selector must not
-   be a bare table selector, or it also hits GenUI's own table component (V1MMBW_table*),
-   which brings its own frame — that double frame + our margins is what made the
-   GenUI table look shifted. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] table {
-  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-  border-collapse: separate; border-spacing: 0;
-  border-radius: var(--wc-radius-sm); overflow: hidden;
-  font-size: var(--wc-body-md); margin: 10px 0;
-}
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] th { background: var(--dsw-alias-bg-module-platform, #f2f2f2); font-weight: 600; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) {
-  padding: 7px 12px !important; border-bottom: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-}
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tr:last-child > :is(th, td) { border-bottom: 0; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: var(--dsw-alias-bg-module-platform, #f7f7f7); }
 /* GenUI renders a table inside its card, which already has its own 1px frame and
    padding; the inner table wrapper draws a second frame inside that padding, so the
    two borders read as a misaligned box. Drop the inner frame, keep the card's. */
 body.dsh-wechat-skin-on .V1MMBW_card .V1MMBW_tableWrap { border: 0; border-radius: 0; background: transparent; }
+
+/* ================= assistant content: type, rhythm, data tables ================= */
+/* Everything here is scoped to assistant-step markdown so GenUI cards, tool output
+   and the composer keep their own chrome. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 { --wc-md-gap: 12px; }
+
+/* Blocks: one vertical rhythm, no double margins at the edges. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :is(p, ul, ol, pre, blockquote, table, .tableScroll) { margin-top: var(--wc-md-gap); margin-bottom: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :first-child { margin-top: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :is(h1, h2, h3, h4) + * { margin-top: 6px; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, li) { line-height: var(--wc-line-height, 1.6); }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] strong { font-weight: 600; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] em { font-style: italic; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] del { color: var(--wc-ink-2); }
+
+/* Headings: weight and space carry the level, not another colour. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h1 {
+  font-size: calc(var(--wc-body-xl) * 1.08); font-weight: 600; line-height: 1.35;
+  letter-spacing: -0.01em; margin: 22px 0 0;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h2 {
+  font-size: calc(var(--wc-body-lg) * 1.22); font-weight: 600; line-height: 1.4;
+  margin: 20px 0 0; padding-bottom: 4px; border-bottom: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(h3, h4) {
+  font-size: var(--wc-body-lg); font-weight: 600; line-height: 1.45; margin: 16px 0 0;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h1:first-child,
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] h2:first-child { margin-top: 0; padding-bottom: 0; border-bottom: 0; }
+
+/* Lists: hanging indent, quieter markers, tighter nesting. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(ul, ol) { padding-left: 1.35em; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] li { margin: 3px 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] li::marker { color: var(--dsw-alias-label-tertiary, #9a9a9d); }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(ul, ol) :is(ul, ol) { margin: 3px 0 3px 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] li > :is(p, ul, ol) { margin: 3px 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.35em; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] input[type="checkbox"] {
+  accent-color: var(--wc-green); width: 13px; height: 13px; margin: 0 6px 0 0; vertical-align: -1px;
+}
+
+/* Links: colour alone at rest, underline on hover (WeChat does not underline links). */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a {
+  color: var(--wc-link); text-decoration: none; text-underline-offset: 2px; text-decoration-thickness: 0.5px;
+  border-radius: 3px; transition: color 250ms ease-out;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:hover { color: var(--wc-brand-press); text-decoration: underline; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:focus-visible { outline: 2px solid color-mix(in srgb, var(--wc-green) 45%, transparent); outline-offset: 2px; }
+
+/* Media and rules. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(img, video) {
+  max-width: 100%; height: auto; border-radius: var(--wc-radius-md);
+  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); vertical-align: middle;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] hr { border: 0; border-top: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); margin: 18px 0; }
+
+/* Quotes: quiet wash, hairline rule, no italic. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote {
+  border-left: 0.5px solid var(--dsw-alias-border-l3, #c9c9cc); border-radius: 0 !important;
+  background: color-mix(in srgb, var(--dsw-alias-bg-module-platform, #f2f2f2) 72%, transparent);
+  color: var(--wc-bubble-ink); font-style: normal;
+  margin: var(--wc-md-gap) 0 0; padding: 8px 12px;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote > :first-child { margin-top: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote > :last-child { margin-bottom: 0; }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] blockquote {
+  background: rgba(255, 255, 255, 0.05); border-left-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Code: a panel, not a box of text — fixed padding, own scroll, tab size. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre {
+  border-radius: var(--wc-radius-md); border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+  background: var(--wc-code-bg); padding: 12px 14px; margin: var(--wc-md-gap) 0 0;
+  line-height: 1.65; tab-size: 2; overflow-x: auto;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] pre code { font-size: var(--wc-body-md); }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :not(pre) > code {
+  font-size: var(--wc-body-md); padding: 1px 5px; border-radius: var(--wc-radius-xs);
+  background: color-mix(in srgb, var(--wc-green) 7%, var(--dsw-alias-bg-module-platform, #f2f2f2));
+  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(kbd, mark) {
+  font-size: var(--wc-fs-sm); border-radius: var(--wc-radius-xs); padding: 1px 5px;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] mark { background: color-mix(in srgb, var(--wc-green) 22%, transparent); color: inherit; }
+
+/* Tables: tinted header, zebra, row hover, sticky head, hairline grid. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] {
+  margin: var(--wc-md-gap) 0 0; overflow-x: auto;
+  scrollbar-width: thin; scrollbar-color: var(--wc-scroll-thumb) transparent;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] table {
+  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
+  border-collapse: separate; border-spacing: 0;
+  border-radius: var(--wc-radius-md); overflow: hidden;
+  margin: 0; font-size: var(--wc-body-md); font-variant-numeric: tabular-nums;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: color-mix(in srgb, var(--wc-green) 12%, var(--dsw-alias-bg-base, #ffffff));
+  font-weight: 600; font-size: var(--wc-fs-sm); letter-spacing: 0.01em;
+  padding: 9px 12px !important; border-bottom: 0.5px solid var(--dsw-alias-border-l3, #d0d0d3) !important;
+  white-space: nowrap;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] td {
+  padding: 9px 12px !important; vertical-align: top; line-height: 1.55;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6) !important;
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:last-child > td { border-bottom: 0 !important; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: color-mix(in srgb, var(--dsw-alias-label-primary, #1b1b1c) 3.2%, var(--dsw-alias-bg-base, #ffffff)); }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:hover { background: var(--wc-hover-accent); }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] td:first-child { font-weight: 500; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :first-child { margin-top: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :last-child { margin-bottom: 0; }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] thead th {
+  background: color-mix(in srgb, var(--wc-green) 11%, #232325);
+  border-bottom-color: rgba(255, 255, 255, 0.18) !important;
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.035); }
+
+/* Details / summary blocks render as small disclosure cards. */
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] details {
+  border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); border-radius: var(--wc-radius-md);
+  padding: 8px 12px; margin: var(--wc-md-gap) 0 0; background: var(--dsw-alias-bg-module-platform, #f7f7f7);
+}
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] summary { cursor: pointer; font-weight: 500; }
 
 /* ================= right panel, popups, session list, actions ================= */
 /* Right panel: same surface language as the sidebar. */

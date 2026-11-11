@@ -13,7 +13,7 @@ const fillWrap=getComputedStyle(document.querySelector('._tableFill_abc_9'));
 document.title=JSON.stringify({
   wrapBorder:cs.borderTopWidth, wrapStyle:cs.borderTopStyle, wrapRadius:cs.borderTopLeftRadius,
   tableBorder:ts.borderTopWidth, collapse:ts.borderCollapse, tableRadius:ts.borderTopLeftRadius,
-  thPadLeft:hs.paddingLeft, lastPadRight:ls.paddingRight, thBg:hs.backgroundColor,
+  thPadLeft:hs.paddingLeft, lastPadRight:ls.paddingRight, thBg:hs.backgroundColor, thPos:hs.position,
   lastRowBottom:lastRow.borderBottomWidth, fillRadius:fillWrap.borderTopLeftRadius, fillOverflow:fillWrap.overflow
 });
 </script></body></html>`;
@@ -29,7 +29,8 @@ ok(r.collapse==='separate','frame uses separated borders');
 ok(r.thPadLeft==='12px','first cell padding is even');
 ok(r.lastPadRight==='12px','last cell padding is even');
 ok(r.thBg!=='rgba(0, 0, 0, 0)','header has a fill');
+ok(r.thPos==='sticky','header sticks inside the scroll box');
 ok(r.lastRowBottom==='0px','last row drops its bottom border');
-ok(r.tableRadius==='6px','table rounded to the frame');
+ok(r.tableRadius==='10px','table rounded to the frame');
 console.log(`table-test ${pass}/${pass+fail}`);
 process.exit(fail?1:0);
