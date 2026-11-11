@@ -16,6 +16,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
+- 2026-11-11 v1.34.6 修深色模式下回复内容里「有一行看不清」：①引用块文字用了发送气泡的墨色 `--wc-bubble-ink`（#101010），深色底下等于黑字压黑底 → 改为 `color: inherit`，跟随会话区正文色；②链接色 `--wc-link` 固定 #0a7d43，深色下对比只有 2.9:1 → 深色块改 #7ee2a8（对 #1d1d1f 约 11:1），悬停另起 `--wc-link-hover`（浅 #06673a / 深 #a6f0c2），不再复用按钮的 `--wc-brand-press`。contrast-test 增 4 项（深色链接两组、引用块继承正文色、深色链接令牌存在）。
+
 - 2026-11-11 v1.34.5 修「新会话按钮在深色模式下仍有底色」：macOS 侧栏把该按钮涂成 `#ffffff8c`（浅色）与 `#ffffff26`（深色），选择器是 `[data-platform=darwin] [data-ds-dark-theme] :where(.kB3qhq_root:not([role=dialog])) .kB3qhq_newSession`，权重 0,3,0，压过皮肤的 0,2,1，所以此前的 `background: transparent` 没生效。改为对 `border` / `background` / `box-shadow` 加 `!important`，悬停底色同样加固；浅色模式下那层半透明白也一并去掉。`test/new-session-test.mjs` 补入 macOS 真规则（两根属性分处 html 与 body，写成同一元素则永远不匹配），断言深浅两种模式下都是全透明。
 
 - 2026-11-11 v1.34.4 修「空输入框出现两个光标」：闪烁关键帧的优先级高于内联 opacity，所以此前 `hideCaret()` 设 opacity 0 根本不生效，本插件的光标会一直眨；再加上输入框重渲染时会把编辑器挪到新父节点、旧的光标层留在原处，就会出现两条。改为隐藏时 `display:none`（并移除原生光标透明标记）、每次建层前清掉残留的 `.dsh-wc-caret`、空内容时用行盒位置兜底画一条，同时原生光标在编辑器及其子树内统一 `caret-color: transparent !important`。`test/composer-fx-test.mjs` 扩到 22 项（唯一层、可见性、空内容兜底、原生抑制、dispose 无残留）。

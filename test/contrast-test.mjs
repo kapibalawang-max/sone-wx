@@ -29,6 +29,9 @@ const cases = [
   ['selected row title', '#0a2e1a', '#4c9f6f', 4.5],
   ['secondary ink on white', '#61666b', '#ffffff', 4.5],
   ['danger button label', '#ffffff', '#b42318', 4.5],
+  ['dark link on chat surface', '#7ee2a8', '#1d1d1f', 4.5],
+  ['dark link on module fill', '#7ee2a8', '#2a2a2c', 4.5],
+  ['light link on white', '#0a7d43', '#ffffff', 4.5],
 ];
 
 let checks = 0;
@@ -45,6 +48,13 @@ for (const [name, want] of [['wc-brand-ink', '#0a7d43'], ['wc-link', '#0a7d43'],
   const got = token(name);
   if (got !== want) fails.push(`token --${name}: got ${got}, want ${want}`);
 }
+// a reply's quote text inherits the chat ink; the sent-bubble ink is dark and
+// disappears on a dark surface.
+checks++;
+if (!/\[data-chat-flow-kind="assistant-step"\] blockquote \{[^}]*color: inherit/.test(css)) fails.push('blockquote does not inherit the chat ink');
+checks++;
+if (!/--wc-link: #7ee2a8/.test(css)) fails.push('dark mode has no light link ink');
+
 // the old low-contrast literals must be gone from text roles
 checks++;
 if (/\[data-chat-flow-kind="assistant-step"\] a \{ color: var\(--wc-green\)/.test(css)) fails.push('link rule still uses --wc-green');

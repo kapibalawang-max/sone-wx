@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.34.5";
+const SKIN_VERSION = "1.34.6";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -178,6 +178,7 @@ const SKIN_VERSION = "1.34.5";
   --wc-brand-press: #0a7d43;
   --wc-brand-ink: #0a7d43;
   --wc-link: #0a7d43;
+  --wc-link-hover: #06673a;
   --wc-ink-2: var(--dsw-alias-label-secondary, #61666b);
   --wc-line: var(--wc-border-light);
   --wc-control-h: 28px;
@@ -241,6 +242,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
   --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
   --wc-code-bg: #2b2b2d ;
+  --wc-link: #7ee2a8 ;
+  --wc-link-hover: #a6f0c2 ;
   --wc-scroll-thumb: rgba(255, 255, 255, 0.22);
   --wc-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
 }
@@ -933,7 +936,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a {
   color: var(--wc-link); text-decoration: none; text-underline-offset: 2px; text-decoration-thickness: 0.5px;
   border-radius: 3px; transition: color 250ms ease-out;
 }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:hover { color: var(--wc-brand-press); text-decoration: underline; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:hover { color: var(--wc-link-hover); text-decoration: underline; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:focus-visible { outline: 2px solid color-mix(in srgb, var(--wc-green) 45%, transparent); outline-offset: 2px; }
 
 /* Media and rules. */
@@ -947,7 +950,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] hr { border: 0; b
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote {
   border-left: 0.5px solid var(--dsw-alias-border-l3, #c9c9cc); border-radius: 0 !important;
   background: color-mix(in srgb, var(--dsw-alias-bg-module-platform, #f2f2f2) 72%, transparent);
-  color: var(--wc-bubble-ink); font-style: normal;
+  color: inherit; font-style: normal;
   margin: var(--wc-md-gap) 0 0; padding: 8px 12px;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] blockquote > :first-child { margin-top: 0; }
