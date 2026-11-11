@@ -48,7 +48,7 @@ const SYSTEM_STACK = '-apple-system, "system-ui", "Segoe UI", "PingFang SC", "Hi
 ok(base.ff === SYSTEM_STACK, 'default font stack is the system stack', base.ff)
 ok(base.avRadius === '6px' && base.slotRadius === '6px', 'default avatar radius 6px', base)
 ok(/rgba?\(0, 0, 0/.test(base.sb), 'scrollbar thumb colour applied', base.sb)
-ok(base.border === '#e0e0e0', 'default border token', base.border)
+ok(base.border === '#d9d9e0', 'default border token is slate6', base.border)
 
 const wenkai = probe('data-dsh-wc-font-family="wenkai"')
 ok(/LXGW WenKai|LXGWWenKai|Kaiti SC/.test(wenkai.ff), 'wenkai typeface', wenkai.ff)

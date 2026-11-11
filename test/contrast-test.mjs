@@ -17,9 +17,18 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-const token = (name) => {
-  const m = css.match(new RegExp('--' + name + ':\\s*(#[0-9a-fA-F]{6})'));
-  return m ? m[1] : null;
+// Resolve a token to its light-mode hex, following var() aliases. Taking the
+// first declaration matters: dark/paper blocks redeclare the same names later.
+const token = (name, depth = 0) => {
+  if (depth > 8) return null;
+  const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+  if (!m) return null;
+  const raw = m[1].trim();
+  const hexOnly = raw.match(/^(#[0-9a-fA-F]{6})$/);
+  if (hexOnly) return hexOnly[1];
+  const ref = raw.match(/^var\(\s*--([\w-]+)\s*(?:,\s*(#[0-9a-fA-F]{6})\s*)?\)$/);
+  if (ref) return token(ref[1], depth + 1) || ref[2] || null;
+  return null;
 };
 
 // Every skin colour comes from the stylesheet itself: hardcoded literals here would

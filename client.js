@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.36.0";
+const SKIN_VERSION = "1.37.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -147,56 +147,80 @@ const SKIN_VERSION = "1.36.0";
    from the live theme snapshot, so it works with any theme provider). */
 
 :root {
-  --wc-green: #07c160;
-  --wc-green-hover: #06ad56;
-  --wc-bubble: #95ec69;              /* sent bubble */
+  /* ================= accent ramp =================
+     One hue (152 deg), five steps. Every UI green resolves to one of these:
+       soft   tinted fill / hover wash
+       line   accent border
+       bright brand mark, status dots, pulse. NEVER carries text: #07c160 on
+              white is 2.38:1, so it is decoration only.
+       solid  fill that carries white content (5.21:1)
+       press  pressed state
+     The three bubble colours below are sampled WeChat brand assets, not UI
+     accents, so they keep their own hue on purpose. */
+  --wc-accent-soft: #eaf6ef;
+  --wc-accent-line: #bcdcc8;
+  --wc-accent-bright: #07c160;
+  --wc-accent-solid: #0a7d43;
+  --wc-accent-press: #06673a;
+  --wc-bubble: #95ec69;              /* sent bubble, sampled from WeChat */
   --wc-bubble-ink: #101010;
   --wc-bubble-link: #0a5c33;
   --wc-bubble-code-ink: #0a2e1a;
-  /* Sampled from WeChat 4.x on macOS: session list fill = rgb(238,238,240). */
-  --wc-sidebar: #eeeef0;
-  /* selected session row: WeChat deep green with white text */
-  --wc-sel-bg: #4c9f6f;
-  --wc-sel-ink: #0a2e1a;
-  --wc-sel-ink-dim: #0a2e1a;
-  --wc-sidebar-dark: #1a1a1b;
-  --wc-surface: #f2f2f2;
-  --wc-surface-dark: #252527;
-  --wc-overlay-dark: #2f2f31;
-  --wc-border-light: #e0e0e0;
-  --wc-border-dark: #303033;
+
+  /* ================= neutral surfaces =================
+     Radix Slate 1/2/3/4/6. Adjacent steps differ by 1.0 / 3.1 / 2.8 / 5.2 L*,
+     so depth reads as a surface change instead of relying on a border line.
+     The old palette packed six surfaces into 6 L* (0.6-1.8 apart), which the
+     eye cannot separate. */
+  --wc-bg: #fcfcfd;                  /* slate1  conversation canvas */
+  --wc-surface: #f9f9fb;             /* slate2  cards, module fill */
+  --wc-sidebar: #e8e8ec;             /* slate4  session list */
+  --wc-border-light: #d9d9e0;        /* slate6  5.2 L* below the sidebar */
+  --wc-sidebar-dark: #18191b;        /* slate dark2 */
+  --wc-surface-dark: #212225;        /* slate dark3 */
+  --wc-overlay-dark: #2e3135;        /* slate dark5 */
+  --wc-border-dark: #363a3f;         /* slate dark6: 4.0 L* above the overlay;
+                                        the old #303033 was 0.5 apart = invisible */
   --wc-scroll-thumb: rgba(0, 0, 0, 0.18);
   --wc-scroll-thumb-hover: rgba(0, 0, 0, 0.30);
-  --wc-avatar-user-a: #ffb37b;
-  --wc-avatar-user-b: #f97316;
-  --wc-avatar-sel-a: #58c98e;
-  --wc-avatar-sel-b: #2fae6d;
+
+  /* ================= ink ladder =================
+     Three levels that stay >=4.5:1 on EVERY surface the skin paints, including
+     the sidebar. Level 2 was pushed darker rather than level 3 lighter, because
+     lightening level 3 breaks 4.5:1 on the sidebar. Result: 15.98 / 8.14 / 5.79
+     on the canvas and 13.41 / 6.83 / 4.86 on the sidebar, ~21 and ~9 L* apart.
+     The host aliases are overridden too, otherwise host-rendered text keeps the
+     old two-level look next to the skin's three. */
+  --wc-ink-1: #1c2024;               /* slate12 */
+  --wc-ink-2: #4a4e56;
+  --wc-ink-3: #60646c;               /* slate11 */
+
+  /* ================= selection & structure =================
+     Selection is the accent's solid step, so "green" means exactly one thing:
+     action or selected. Table headers are STRUCTURE, not brand, so they use a
+     neutral surface -- that removes the fourth competing green. */
+  --wc-sel-ink: #ffffff;
+  --wc-sel-ink-dim: rgba(255, 255, 255, 0.92);
+  --wc-th-bg: #f0f0f3;               /* slate3 */
+  --wc-code-bg: #f0f0f3;             /* slate3 */
+
+  /* ================= semantic hues =================
+     One hue per meaning. Amber belongs to warnings only, which is why the chat
+     avatar no longer uses a saturated orange next to it. */
   --wc-dot-warning: #d97706;
   --wc-dot-error: #dc2626;
-  /* semantic colour source: fill vs ink. brand-press/brand-ink are FILLS that
-     carry white content (5.2:1); brand-text is the same green used AS TEXT and
-     must flip in dark mode, where #0a7d43 on #151517 only reaches 3.5:1. */
-  --wc-brand-press: #0a7d43;
-  --wc-brand-ink: #0a7d43;
-  --wc-brand-text: #0a7d43;
-  --wc-link: #0a7d43;
-  --wc-link-hover: #06673a;
-  --wc-ink-2: var(--dsw-alias-label-secondary, #61666b);
-  /* quiet meta ink: the host's label-tertiary (#81858c) only reaches 3.7:1 on
-     white, so timestamps and suffixes use this instead (>=4.5:1 on every
-     light/paper surface the skin paints). */
-  --wc-ink-3: #666b71;
-  --wc-control-h: 28px;
-  --wc-th-bg: #3f7f5f;
-  --wc-th-ink: #ffffff;
   --wc-danger: #b42318;
   --wc-danger-hover: #991b1b;
   --wc-stop: #e5484d;
   --wc-stop-hover: #d13438;
-  --wc-btn-idle-bg: #f0f0f0;
-  --wc-btn-idle-ink: #9b9b9b;
   --wc-sched-badge: #3b82f6;
-  --wc-code-bg: #f7f7f7;
+  --wc-avatar-user-a: #f7f0e8;
+  --wc-avatar-user-b: #a08256;
+
+  /* fills vs ink: -press/-ink are FILLS carrying white content; -text is the
+     same accent used AS TEXT and must flip in dark mode. */
+  --wc-control-h: 28px;
+  --wc-btn-idle-bg: #e8e8ec;         /* slate4 */
   /* 字阶：四档（12/13/15/18），全部随字号档位等比缩放；clamp 保底，任何档位都不低于 12px */
   --wc-text-xl: 18px;
   --wc-text-lg: 15px;
@@ -218,39 +242,75 @@ const SKIN_VERSION = "1.36.0";
   --wc-radius-xs: 4px;
 }
 
+/* ================= token aliases =================
+   These resolve var() and MUST sit on the same element the dark/paper blocks
+   override. Declared on :root they would be computed there once, and a later
+   --wc-ink-1 override on body would never reach them. */
+body.dsh-wechat-skin-on {
+  --wc-green: var(--wc-accent-bright);
+  --wc-green-hover: var(--wc-accent-press);
+  --dsw-alias-label-primary: var(--wc-ink-1);
+  --dsw-alias-label-secondary: var(--wc-ink-2);
+  --dsw-alias-label-tertiary: --wc-ink-3;
+  --wc-sel-bg: var(--wc-accent-solid);
+  --wc-th-ink: var(--wc-ink-1);
+  /* Identity marks need presence at 26px: soft→line was a pale smudge, so the
+     fallback avatar spans line→solid instead (still inside the ramp). */
+  --wc-avatar-sel-a: var(--wc-accent-line);
+  --wc-avatar-sel-b: var(--wc-accent-solid);
+  --wc-brand-press: var(--wc-accent-press);
+  --wc-brand-ink: var(--wc-accent-solid);
+  --wc-brand-text: var(--wc-accent-solid);
+  --wc-link: var(--wc-accent-solid);
+  --wc-link-hover: var(--wc-accent-press);
+  --wc-btn-idle-ink: --wc-ink-3;   /* 4.86:1 on the idle fill; #9b9b9b was 2.27 */
+}
+
 /* ================= palette ================= */
 body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
-  --dsw-alias-state-business-primary: var(--wc-green) ;
-  --dsw-alias-state-business-tertiary: #e8f7ee ;
-  --dsw-alias-state-success-primary: var(--wc-green) ;
-  --dsw-alias-button-info-fill: var(--wc-green) ;
-  --dsw-alias-button-info-hover: var(--wc-green-hover) ;
-  --dsw-alias-brand-primary: var(--wc-green) ;
+  --dsw-alias-state-business-primary: var(--wc-accent-solid) ;
+  --dsw-alias-state-business-tertiary: var(--wc-accent-soft) ;
+  --dsw-alias-state-success-primary: var(--wc-accent-solid) ;
+  --dsw-alias-button-info-fill: var(--wc-accent-solid) ;
+  --dsw-alias-button-info-hover: var(--wc-accent-press) ;
+  --dsw-alias-brand-primary: var(--wc-accent-solid) ;
   --dsw-alias-brand-text: #ffffff ;
   --dsw-specific-bubble: var(--wc-bubble) ;
+  --dsw-alias-bg-base: var(--wc-bg) ;
   --dsw-alias-bg-module-platform: var(--wc-surface) ;
   --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
-  --wc-sel-bg: #35734f;
-  --wc-th-bg: #2f5c48; --wc-th-ink: #ffffff;
-  --wc-sel-ink: #ffffff;
-  --wc-sel-ink-dim: rgba(255, 255, 255, 0.9);
-  --dsw-alias-state-business-primary: var(--wc-green) ;
-  --dsw-alias-state-business-tertiary: #16281f ;
-  --dsw-alias-state-success-primary: var(--wc-green) ;
-  --dsw-alias-button-info-fill: var(--wc-green) ;
-  --dsw-alias-button-info-hover: var(--wc-green-hover) ;
-  --dsw-alias-brand-primary: var(--wc-green) ;
-  --dsw-alias-brand-text: #ffffff ;
-  --dsw-specific-bubble: var(--wc-bubble) ;
-  --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
-  --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
-  --wc-code-bg: #2b2b2d ;
+  /* dark accent: the bright step is legible here (6.67:1 on the card), so brand
+     marks keep it; anything used AS TEXT moves to the light tint. */
+  --wc-accent-soft: #16281f;
+  --wc-accent-line: #2c4a38;
+  --wc-ink-1: #edeef0;               /* slate dark12 */
+  --wc-ink-2: #b0b4ba;               /* slate dark11 */
+  --wc-ink-3: #9a9ea6;               /* 5.92:1 on the card, 4.86:1 on the overlay */
+  --wc-th-bg: #272a2d;               /* slate dark4, structure stays neutral */
+  --wc-code-bg: #16181a;             /* recessed 5.1 L* below the card, so a code
+                                        panel reads as inset instead of vanishing
+                                        into the host's layer2 (old delta 0.5) */
+  --wc-btn-idle-bg: #272a2d;
+  /* Despite the legacy name this token means "the hairline for the current
+     scheme". Left at its light value it drew #d9d9e0 lines on dark cards
+     (images, file cards, quoted text had no dark override of their own). */
+  --wc-border-light: var(--wc-border-dark);
   --wc-link: #7ee2a8 ;
   --wc-link-hover: #a6f0c2 ;
   --wc-brand-text: #7ee2a8 ;
-  --wc-ink-3: #adb2b8 ;
+  --dsw-alias-state-business-primary: var(--wc-green) ;
+  --dsw-alias-state-business-tertiary: var(--wc-accent-soft) ;
+  --dsw-alias-state-success-primary: var(--wc-green) ;
+  --dsw-alias-button-info-fill: var(--wc-accent-solid) ;
+  --dsw-alias-button-info-hover: var(--wc-accent-press) ;
+  --dsw-alias-brand-primary: var(--wc-green) ;
+  --dsw-alias-brand-text: #ffffff ;
+  --dsw-specific-bubble: var(--wc-bubble) ;
+  --dsw-alias-bg-base: #111113 ;
+  --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
+  --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
   --wc-scroll-thumb: rgba(255, 255, 255, 0.22);
   --wc-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
 }
@@ -258,23 +318,32 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
 /* ================= paper preset ================= */
 /* 纸张：暖白画布 + 牛皮纸气泡，无尾巴。仅浅色主题生效。 */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) {
-  --wc-sidebar: #efe8da;
-  --wc-sel-bg: #4c9f6f;
-  --wc-th-bg: #3f7f5f; --wc-th-ink: #ffffff;
-  --wc-sel-ink: #0a2e1a;
-  --wc-sel-ink-dim: #0a2e1a;
-  --wc-surface: #f2ece0;
-  --wc-border-light: #e3dac8;
+  /* paper: Radix Sand neutrals (warm, h90) with a MOSS accent from the same warm
+     family. The old preset paired warm paper with the cool h154 UI green, two
+     unrelated families on one screen. */
+  --wc-accent-soft: #eef1e4;
+  --wc-accent-line: #cdd8b4;
+  --wc-accent-solid: #55703f;
+  --wc-accent-press: #4a6337;
+  --wc-bg: #fdfdfc;                  /* sand1 */
+  --wc-surface: #f9f9f8;             /* sand2 */
+  --wc-sidebar: #e9e8e6;             /* sand4 */
+  --wc-border-light: #dad9d6;        /* sand6 */
+  --wc-ink-1: #21201c;               /* sand12 */
+  --wc-ink-2: #4c4c47;
+  --wc-ink-3: #63635e;               /* sand11, 4.93:1 on the sidebar */
+  --wc-th-bg: #f1f0ef;               /* sand3 */
+  --wc-code-bg: #f1f0ef;
+  --wc-btn-idle-bg: #e9e8e6;
   --wc-bubble: #ded3ba;
   --wc-bubble-ink: #3a3325;
   --wc-bubble-link: #6b4f1d;
   --wc-bubble-code-ink: #3a3325;
-  --dsw-alias-bg-base: #faf6ee;
-  --dsw-alias-bg-module-platform: #f2ece0;
+  --dsw-alias-bg-base: #fdfdfc;
+  --dsw-alias-bg-module-platform: #f9f9f8;
   --dsw-specific-bubble: #ded3ba;
-  --wc-code-bg: #f4eee2;
 }
-body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) .kiGsTW_header { background: #faf6ee; }
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) .kiGsTW_header { background: var(--wc-bg); }
 
 /* ================= input surface: selection, scrollbars, typeface ================= */
 body.dsh-wechat-skin-on ::selection { background: color-mix(in srgb, var(--wc-green, #07c160) 24%, transparent); color: inherit; }
@@ -482,7 +551,7 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-
 }
 /* timestamps: one step up from the host's 10px so they stay readable at a glance */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_time {
-  font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: var(--wc-ink-2);
+  font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: --wc-ink-3;
 }
 /* archived sessions recede until hovered */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_archived { opacity: .55; }
@@ -603,8 +672,8 @@ body.dsh-wechat-skin-on ._markdown_rve47_5 {
 }
 /* DARK scheme: raised dark bubble (#2a2a2d on the #111214 wallpaper) */
 body.dsh-wechat-skin-on.dsh-wechat-match[data-dsh-wechat-dark="1"] .XNZzAa_body {
-  background: #2a2a2d;
-  border-color: rgba(255, 255, 255, 0.10);
+  background: var(--wc-overlay-dark);
+  border-color: var(--wc-border-dark);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
@@ -666,7 +735,7 @@ body.dsh-wechat-skin-on .JZLxKW_select {
 }
 body.dsh-wechat-skin-on .JZLxKW_select:hover:not(:disabled) {
   background-color: color-mix(in srgb, var(--wc-green) 20%, transparent);
-  color: var(--wc-brand-press);
+  color: var(--wc-brand-text);
 }
 body.dsh-wechat-skin-on .JZLxKW_select:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--wc-green) 45%, transparent);
@@ -705,15 +774,15 @@ body.dsh-wechat-skin-on:lang(ja) .JZLxKW_primary::after { content: none; }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_primary {
   background: rgba(255, 255, 255, 0.12); color: rgba(242, 242, 243, 0.5);
 }
-body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled) { background: var(--wc-brand-press); color: #ffffff; }
-body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):hover { background: var(--wc-link-hover); }
+body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled) { background: var(--wc-brand-ink); color: #ffffff; }
+body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):hover { background: var(--wc-brand-press); }
 body.dsh-wechat-skin-on .JZLxKW_primary:not(:disabled):active { transform: scale(0.94); }
 /* while the model is generating the button is a "stop" action (native stop icon, red) */
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"],
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i] { background: var(--wc-stop); color: #ffffff; }
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="停止"]:hover,
 body.dsh-wechat-skin-on .JZLxKW_primary[aria-label*="stop" i]:hover { background: var(--wc-stop-hover); }
-body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-green); color: #ffffff; }
+body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-brand-ink); color: #ffffff; }
 /* thin scrollbar + soft fade for long drafts */
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar { width: 6px; }
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar-thumb {
@@ -1071,7 +1140,7 @@ body.dsh-wechat-skin-on .JoiKIa_searchResultRow:hover { background: var(--wc-hov
 body.dsh-wechat-skin-on .JoiKIa_searchResultTitle { font-size: var(--wc-fs-md); font-weight: 500; }
 body.dsh-wechat-skin-on .JoiKIa_searchResultSnippet { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-secondary, #666); }
 body.dsh-wechat-skin-on .JoiKIa_dot { background: var(--wc-green); }
-body.dsh-wechat-skin-on .JoiKIa_pinIndicator { color: var(--wc-green); }
+body.dsh-wechat-skin-on .JoiKIa_pinIndicator { color: var(--wc-brand-text); }
 /* Project folder glyph: the host ships a square-cornered solid folder that sits
    heavy next to 13px titles. Swap it for a rounded outline drawn as a mask on the
    wrapper, so the hover swap to the chevron and the active-project tint still work
@@ -1112,19 +1181,36 @@ body.dsh-wechat-skin-on .r52wTW_label { font-size: var(--wc-fs-sm); color: var(-
 body.dsh-wechat-skin-on .r52wTW_label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--wc-dot-warning); box-shadow: 0 0 0 2px rgba(255,197,61,0.25); animation: dsh-wc-pulse 1.2s ease-in-out infinite; }
 @keyframes dsh-wc-pulse { 0%,100%{ transform:scale(1); opacity:1 } 50%{ transform:scale(0.7); opacity:0.6 } }
 
-/* Paper preset, dark flavour: warm charcoal instead of neutral black. */
+/* Paper preset, dark flavour: a full warm-charcoal ladder plus the moss accent.
+   Overriding only the surfaces used to leave the cool slate hairline, ink and
+   accent in place, so the scheme mixed two colour families on one screen. */
 body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"] {
-  --wc-sidebar: #221f1a;
-  --wc-sidebar-dark: #221f1a;
-  --wc-surface: #26231d;
-  --wc-surface-dark: #26231d;
-  --wc-code-bg: #26231d;
+  --wc-bg: #141210;
+  --wc-sidebar: #191713;
+  --wc-sidebar-dark: #191713;
+  --wc-surface: #1e1b17;
+  --wc-surface-dark: #1e1b17;
+  --wc-overlay-dark: #2a2620;
+  --wc-border-dark: #3a352d;        /* 7.0 L* above the overlay, so edges read */
+  --wc-code-bg: #100e0c;            /* recessed 5.9 L* below the card */
+  --wc-th-bg: #242019;
+  --wc-btn-idle-bg: #242019;
+  --wc-ink-1: #efece6;              /* 14.55 / 8.23 / 6.22 on the card */
+  --wc-ink-2: #b9b3a8;
+  --wc-ink-3: #a29b8f;
+  --wc-accent-soft: #1f2a17;
+  --wc-accent-line: #3a4a2a;
+  --wc-accent-solid: #55703f;       /* white on it: 5.56:1 */
+  --wc-accent-press: #4a6337;
+  --wc-link: #b9d69a;
+  --wc-link-hover: #cde5b4;
+  --wc-brand-text: #b9d69a;
   --wc-bubble: #3d3829;
   --wc-bubble-ink: #efe8d8;
   --wc-bubble-link: #d9c48f;
   --wc-bubble-code-ink: #efe8d8;
-  --dsw-alias-bg-base: #1b1813;
-  --dsw-alias-bg-module-platform: #26231d;
+  --dsw-alias-bg-base: #141210;
+  --dsw-alias-bg-module-platform: #1e1b17;
   --dsw-specific-bubble: #3d3829;
 }
 
@@ -1192,8 +1278,8 @@ body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card] {
   background:
     linear-gradient(180deg,
-      color-mix(in srgb, #2a2a2c 62%, transparent),
-      color-mix(in srgb, #2a2a2c 78%, transparent)),
+      color-mix(in srgb, var(--wc-overlay-dark) 62%, transparent),
+      color-mix(in srgb, var(--wc-overlay-dark) 78%, transparent)),
     linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 16%, transparent), transparent) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -1235,12 +1321,12 @@ body .dsh-wc-btn-primary {
 	font-size: var(--wc-fs-md);
 	line-height: 20px;
 	color: #ffffff;
-	background: var(--wc-brand-press);
+	background: var(--wc-brand-ink);
 }
 body .dsh-wc-btn-danger { border: none; padding: 4px 14px; font-size: var(--wc-fs-md); line-height: 20px; color: #ffffff; background: var(--wc-danger); }
 body .dsh-wc-btn-danger:hover { background: var(--wc-danger-hover); }
-body .dsh-wc-btn-primary:hover { background: var(--wc-brand-ink); }
-body .dsh-wc-btn-primary:active { background: #086636; }
+body .dsh-wc-btn-primary:hover { background: var(--wc-brand-press); }
+body .dsh-wc-btn-primary:active { background: var(--wc-accent-press); filter: brightness(0.92); }
 body .dsh-wc-btn-secondary {
 	border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
 	padding: 4px 14px;
