@@ -94,19 +94,17 @@ const flight = await p.evaluate(async (code) => {
   return out;
 }, installer);
 
-// glass: attribute on -> card transparent, ::before blurs
+// glass: attribute on -> the card itself is translucent and blurs its backdrop
 const glass = await p.evaluate(() => {
-  document.body.dataset.dshWcComposerFx = '1';
   const card = document.querySelector('[data-composer-card]');
-  const cs = getComputedStyle(card);
-  const before = getComputedStyle(card, '::before');
-  const out = {
-    bg: cs.backgroundColor,
-    filter: before.backdropFilter || before.webkitBackdropFilter || '',
-    beforeContent: before.content
-  };
   document.body.dataset.dshWcComposerFx = '0';
-  out.bgOff = getComputedStyle(card).backgroundColor;
+  const off = getComputedStyle(card);
+  const out = { offFilter: off.backdropFilter || off.webkitBackdropFilter || '', offImage: off.backgroundImage };
+  document.body.dataset.dshWcComposerFx = '1';
+  const on = getComputedStyle(card);
+  out.onFilter = on.backdropFilter || on.webkitBackdropFilter || '';
+  out.onImage = on.backgroundImage;
+  out.onColor = on.backgroundColor; out.css = on.getPropertyValue('backdrop-filter') || on.getPropertyValue('-webkit-backdrop-filter');
   return out;
 });
 await b.close();
@@ -125,9 +123,10 @@ ok(caret.hostFlag, 'caret host is marked relative');
 ok(flight.count >= 1, 'send flight animates the new user bubble');
 ok(flight.flagAfterDispose === undefined, 'dispose clears the body flag');
 ok(!flight.layerAfterDispose, 'dispose removes its own caret layer');
-ok(glass.bg === 'rgba(0, 0, 0, 0)', 'glass card gives up its own background');
-ok(/blur/.test(glass.filter), 'glass layer blurs what is behind it');
-ok(glass.beforeContent === '""', 'glass layer is a pseudo element');
-ok(glass.bgOff !== 'rgba(0, 0, 0, 0)', 'card keeps its background when the effect is off');
+ok(/blur\(20px\)/.test(glass.onFilter), 'glass card blurs its backdrop');
+ok(/gradient/.test(glass.onImage), 'glass card paints a gradient (not a flat fill)');
+ok(glass.onColor !== 'rgb(255, 255, 255)', 'glass card gives up the opaque background');
+ok(glass.offFilter === 'none', 'no backdrop blur while the effect is off');
+ok(glass.offImage === 'none', 'no glass gradient while the effect is off');
 console.log(`composer-fx-test ${pass}/${pass + fail}`);
 process.exit(fail ? 1 : 0);

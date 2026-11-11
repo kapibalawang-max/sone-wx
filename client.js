@@ -1085,36 +1085,34 @@ body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
   }
 }
 
-/* ---- composer effects: glass card, sliding caret, send flight ---- */
+/* ---- composer effects: glass card, sliding caret, send flight ----
+   The glass is painted by the card itself (semi-transparent background +
+   backdrop-filter). A ::before with z-index:-1 looked right in isolation but
+   disappears inside the real dock, which stacks its own layers. */
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
-  position: relative; background: transparent !important;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, #ffffff 40%, transparent),
+      color-mix(in srgb, #ffffff 60%, transparent) 46%,
+      color-mix(in srgb, #ffffff 70%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 5%, transparent), color-mix(in srgb, var(--wc-green) 1.5%, transparent)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  backdrop-filter: blur(20px) saturate(1.35);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 0 0 0.5px var(--wc-border-light),
     0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card]::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card] {
   background:
     linear-gradient(180deg,
-      color-mix(in srgb, var(--wc-surface, #ffffff) 34%, transparent),
-      color-mix(in srgb, var(--wc-surface, #ffffff) 58%, transparent) 46%,
-      color-mix(in srgb, var(--wc-surface, #ffffff) 70%, transparent)),
-    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 4%, transparent), color-mix(in srgb, var(--wc-green) 1.5%, transparent));
-  -webkit-backdrop-filter: blur(20px) saturate(1.35); backdrop-filter: blur(20px) saturate(1.35);
-}
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card] {
+      color-mix(in srgb, #2a2a2c 62%, transparent),
+      color-mix(in srgb, #2a2a2c 78%, transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 10%, transparent), transparent) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     inset 0 0 0 0.5px rgba(255, 255, 255, 0.10),
     0 1px 3px rgba(0, 0, 0, 0.35) !important;
-}
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card]::before {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--wc-surface-dark, #2a2a2c) 62%, transparent),
-      color-mix(in srgb, var(--wc-surface-dark, #2a2a2c) 74%, transparent)),
-    linear-gradient(180deg, color-mix(in srgb, var(--wc-green) 9%, transparent), transparent);
 }
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret-host] { position: relative; }
 body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-dsh-wc-caret] { caret-color: transparent; }
