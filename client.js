@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.37.0";
+const SKIN_VERSION = "1.37.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -419,8 +419,8 @@ body.dsh-wechat-skin-on .JoiKIa_projectRow {
   margin: 2px 0 0;
 }
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_projectText { gap: 0; }
-body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: 13px; line-height: 18px; font-weight: 500; }
-body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: 12px; line-height: 14px; }
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: var(--wc-fs-md); line-height: 18px; font-weight: 500; }
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: var(--wc-fs-sm); line-height: 14px; }
 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
   position: relative; height: 40px; border-radius: var(--wc-radius-bubble); margin: 1px 0; gap: 1px;
@@ -689,7 +689,7 @@ body.dsh-wechat-skin-on .JZLxKW_card {
   border: 0.5px solid var(--wc-border-light);
   border-radius: var(--wc-radius-card);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.05);
-  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+  transition: border-color 250ms ease-out, box-shadow 250ms ease-out;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card {
   background: var(--wc-sidebar-dark);
@@ -899,7 +899,7 @@ body.dsh-wechat-skin-on .kB3qhq_newSession:has(.kB3qhq_newSessionLabel) {
 body.dsh-wechat-skin-on .kB3qhq_newSession:has(.kB3qhq_newSessionLabel) .kB3qhq_newSessionContent {
   justify-content: flex-start;
   gap: var(--dsh-sidebar-label-gap, 8px);
-  font-size: 13px;
+  font-size: var(--wc-fs-md);
   font-weight: 500;
 }
 body.dsh-wechat-skin-on .kB3qhq_newSessionLabel {
@@ -2512,7 +2512,14 @@ let observer = null;
 let lastCardRect = null;
 let lastSignal = 0;
 const reduced = () => {
-try { return !!window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+// Either signal counts: the OS setting OR our own in-app toggle. Without the
+// dataset check the animated caret layer keeps being painted and the native
+// caret stays suppressed, while the CSS reduce block freezes the blink keyframe
+// at opacity 0 - typing shows no caret at all.
+try {
+if (document.body && document.body.dataset.dshWcReduceMotion === "1") return true;
+return !!window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+} catch (e) { return false; }
 };
 const editor = () => document.querySelector("[data-composer-input]");
 

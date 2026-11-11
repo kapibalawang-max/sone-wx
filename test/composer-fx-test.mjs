@@ -139,6 +139,42 @@ const glass = await p.evaluate(() => {
   out.onColor = on.backgroundColor; out.css = on.getPropertyValue('backdrop-filter') || on.getPropertyValue('-webkit-backdrop-filter');
   return out;
 });
+// in-app reduce-motion (our own switch, not the OS one) must fall back to the
+// native caret and skip the flight animation — the CSS block freezes the blink
+// keyframe at opacity 0, so painting the layer anyway would show nothing.
+const inAppReduce = await p.evaluate(async (code) => {
+  document.querySelectorAll('.dsh-wc-caret').forEach((n) => n.remove());
+  document.body.dataset.dshWcReduceMotion = '1';
+  const ed = document.querySelector('[data-composer-input]');
+  ed.removeAttribute('data-dsh-wc-caret');
+  const install = new Function(code + '\nreturn installComposerEffects();')();
+  install.setEnabled(true);
+  ed.focus();
+  const text = ed.firstChild || ed.appendChild(document.createTextNode('x'));
+  const range = document.createRange();
+  range.setStart(text, 1); range.collapse(true);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  document.dispatchEvent(new Event('selectionchange'));
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const layer = document.querySelector('.dsh-wc-caret');
+  const out = {
+    layerShown: !!layer && getComputedStyle(layer).display !== 'none',
+    nativeSuppressed: ed.hasAttribute('data-dsh-wc-caret'),
+    caretColor: getComputedStyle(ed).caretColor,
+  };
+  // send flight must not animate either
+  ed.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  await new Promise((r) => setTimeout(r, 30));
+  const row = document.createElement('div');
+  row.setAttribute('data-chat-flow-kind', 'user');
+  row.style.cssText = 'width:300px;height:40px;margin:200px 0 0 180px;background:#95ec69';
+  document.getElementById('chat').appendChild(row);
+  await new Promise((r) => setTimeout(r, 120));
+  out.flight = row.getAnimations ? row.getAnimations().length : -1;
+  install.dispose();
+  delete document.body.dataset.dshWcReduceMotion;
+  return out;
+}, installer);
 await b.close();
 
 let pass = 0, fail = 0;
@@ -165,5 +201,8 @@ ok(/gradient/.test(glass.onImage), 'glass card paints a gradient (not a flat fil
 ok(glass.onColor !== 'rgb(255, 255, 255)', 'glass card gives up the opaque background');
 ok(glass.offFilter === 'none', 'no backdrop blur while the effect is off');
 ok(glass.offImage === 'none', 'no glass gradient while the effect is off');
+ok(!inAppReduce.layerShown, 'in-app reduce-motion never shows the caret layer');
+ok(!inAppReduce.nativeSuppressed && inAppReduce.caretColor !== 'rgba(0, 0, 0, 0)', 'in-app reduce-motion keeps the native caret visible');
+ok(inAppReduce.flight === 0, 'in-app reduce-motion skips the send flight');
 console.log(`composer-fx-test ${pass}/${pass + fail}`);
 process.exit(fail ? 1 : 0);

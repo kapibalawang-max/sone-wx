@@ -20,9 +20,11 @@ function probe(scale, textScale = scale) {
 <span class="JoiKIa_timestamp" id="d">12:00</span>
 <span class="JoiKIa_searchResultHeading" id="e">搜索标题</span>
 <button class="dsh-wc-btn dsh-wc-btn-secondary" id="f">按钮</button>
+<div class="JoiKIa_projectRow"><span class="JoiKIa_projectText"><span class="JoiKIa_title" id="i">项目</span><span class="JoiKIa_meta" id="j">/path</span></span></div>
+<div class="kB3qhq_newSession"><span class="kB3qhq_newSessionContent" id="k"><span class="kB3qhq_newSessionLabel">新会话</span></span></div>
 <span class="dsh-wc-seg-item" id="g">分段</span>
 <script>
-const ids=['a','b','c','d','e','f','g','h']; const out={};
+const ids=['a','b','c','d','e','f','g','h','i','j','k']; const out={};
 for (const id of ids) out[id]=parseFloat(getComputedStyle(document.getElementById(id)).fontSize);
 document.title=JSON.stringify(out);
 </script></body></html>`
@@ -35,7 +37,10 @@ document.title=JSON.stringify(out);
 let fail = 0
 for (const scale of [0.85, 0.92, 1.0, 1.08, 1.18]) {
   const r = probe(scale)
+  // i/j/k are the sidebar project + new-session texts: they must ride the UI
+  // scale token, not a hardcoded px (D2 guard)
   const ok = r.b > r.a && r.a >= r.c && r.c >= r.d && r.d >= r.e && r.d >= 12 && r.e >= 12 && r.b >= 13 && r.b <= 21 && r.f >= 12
+    && r.i === r.a && r.k === r.a && r.j === r.e && r.i >= 12 && r.j >= 12
   if (!ok) fail += 1
   console.log(String(scale).padEnd(5), JSON.stringify(r), ok ? 'OK' : 'FAIL')
 }
@@ -52,5 +57,5 @@ const checks = [
 for (const [name, ok] of checks) {
   if (!ok) { fail += 1; console.log('FAIL', name, JSON.stringify({ base, bodyOnly, uiOnly })) }
 }
-console.log(fail ? `${fail}/11 FAIL` : '11/11 OK')
+console.log(fail ? `${fail}/11 FAIL` : '11/11 OK（含侧栏三处字号随档）')
 process.exit(fail ? 1 : 0)
