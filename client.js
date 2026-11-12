@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.39.1";
+const SKIN_VERSION = "1.39.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -194,6 +194,8 @@ const SKIN_VERSION = "1.39.1";
      old two-level look next to the skin's three. */
   --wc-ink-1: #1c2024;               /* slate12 */
   --wc-ink-2: #4a4e56;
+  --wc-count-bg: #f9f9fb;            /* slate2 chip on the slate4 sidebar */
+  --wc-count-ink: #4a4e56;
   --wc-ink-3: #60646c;               /* slate11 */
 
   /* ================= selection & structure =================
@@ -294,6 +296,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
                                         panel reads as inset instead of vanishing
                                         into the host's layer2 (old delta 0.5) */
   --wc-btn-idle-bg: #272a2d;
+  --wc-count-bg: #2a2d31;            /* one step above the dark sidebar */
+  --wc-count-ink: #c3c8ce;
   /* Despite the legacy name this token means "the hairline for the current
      scheme". Left at its light value it drew #d9d9e0 lines on dark cards
      (images, file cards, quoted text had no dark override of their own). */
@@ -329,6 +333,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --wc-bg: #fdfdfc;                  /* sand1 */
   --wc-bubble-bg: #f1ede2;           /* warm sand bubble on the near-white paper canvas */
   --wc-surface: #f9f9f8;             /* sand2 */
+  --wc-count-bg: #fbfaf8;            /* chip: a hair lighter than the sand4 sidebar */
+  --wc-count-ink: #4c4c47;
   --wc-sidebar: #e9e8e6;             /* sand4 */
   --wc-border-light: #dad9d6;        /* sand6 */
   --wc-ink-1: #21201c;               /* sand12 */
@@ -425,15 +431,26 @@ body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: var(--wc-f
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: var(--wc-fs-sm); line-height: 14px; }
 /* Group session count: the stamping code sets data-dsh-wc-count on the title
    span. It must live on the title itself — .JoiKIa_projectText is a column
-   flex, so a badge on the container drops onto a second line under the name. */
+   flex, so a badge on the container drops onto a second line under the name.
+   Chip height equals the title's 18px line box, so vertical-align:top fills
+   the line box and centres optically without nudging the baseline. */
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title[data-dsh-wc-count]::after {
   content: attr(data-dsh-wc-count);
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 18px;
   margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--wc-count-bg);
+  color: var(--wc-count-ink);
   font-size: var(--wc-fs-sm);
-  line-height: 14px;
+  line-height: 18px;
   font-weight: 500;
+  text-align: center;
   font-variant-numeric: tabular-nums;
-  color: var(--wc-ink-2);
+  vertical-align: top;
 }
 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
@@ -1204,6 +1221,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"
   --wc-surface: #1e1b17;
   --wc-surface-dark: #1e1b17;
   --wc-overlay-dark: #2a2620;
+  --wc-count-bg: #2a2620;
+  --wc-count-ink: #b9b3a8;
   --wc-border-dark: #3a352d;        /* 7.0 L* above the overlay, so edges read */
   --wc-code-bg: #100e0c;            /* recessed 5.9 L* below the card */
   --wc-th-bg: #242019;

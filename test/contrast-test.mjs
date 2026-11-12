@@ -49,6 +49,10 @@ const cases = [
   ['brand text on white', need('wc-brand-text'), '#ffffff', 4.5],
   ['dark link on chat surface', '#7ee2a8', '#1d1d1f', 4.5],
   ['dark link on module fill', '#7ee2a8', '#2a2a2c', 4.5],
+  ['group count chip, light', need('wc-count-ink'), need('wc-count-bg'), 4.5],
+  ['group count chip, dark', '#c3c8ce', '#2a2d31', 4.5],
+  ['group count chip, paper', '#4c4c47', '#fbfaf8', 4.5],
+  ['group count chip, paper dark', '#b9b3a8', '#2a2620', 4.5],
 ];
 
 let checks = 0;
