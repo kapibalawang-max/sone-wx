@@ -119,6 +119,10 @@ stampSandbox.stampGroupCounts(new Map([['ws1', 7], ['ws2', 0], ['', 3]]));
 check(rows[0].title.dataset.dshWcCount === '7', `ws1 stamped 7 on the title span, got ${rows[0].title.dataset.dshWcCount}`);
 check(rows[1].title.dataset.dshWcCount === undefined, 'empty group loses its badge');
 check(rows[2].title.dataset.dshWcCount === '3', `ungrouped stamped 3, got ${rows[2].title.dataset.dshWcCount}`);
+stampSandbox.stampGroupCounts(new Map([['ws1', 1]]));
+check(rows[0].title.dataset.dshWcCount === undefined, 'a single session does not show the badge');
+stampSandbox.stampGroupCounts(new Map([['ws1', 100]]));
+check(rows[0].title.dataset.dshWcCount === '99+', `counts above 99 collapse to 99+, got ${rows[0].title.dataset.dshWcCount}`);
 stampSandbox.stampGroupCounts(new Map([['ws1', 0]]));
 check(rows[0].title.dataset.dshWcCount === undefined, 'count dropping to 0 removes the badge');
 
@@ -137,4 +141,4 @@ check(/row\.querySelector\("\.JoiKIa_projectText \.JoiKIa_title"\)/.test(src), '
 check(src.includes("JoiKIa_projectRow[data-row-key^=\"workspace:\"]"), 'stamping targets group header rows only');
 
 if (fails.length) { console.error('group-count-test FAILED\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('group-count-test OK（' + 18 + ' 项）');
+console.log('group-count-test OK（' + 20 + ' 项）');

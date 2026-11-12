@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.39.2";
+const SKIN_VERSION = "1.39.3";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -2287,7 +2287,9 @@ function stampGroupCounts(counts) {
 		const title = row.querySelector(".JoiKIa_projectText .JoiKIa_title");
 		if (!title) continue;
 		const count = counts.get(key) || 0;
-		if (count > 0) title.dataset.dshWcCount = String(count);
+		// A single session needs no counter; triple digits collapse to "99+".
+		const label = count > 99 ? "99+" : count >= 2 ? String(count) : "";
+		if (label) title.dataset.dshWcCount = label;
 		else if (title.dataset.dshWcCount !== undefined) delete title.dataset.dshWcCount;
 	}
 }

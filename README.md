@@ -60,6 +60,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-12 v1.39.3 分组计数阈值：少于 2 个会话不显示徽标（单数字没有信息量），超过 99 显示「99+」，计数本身仍精确。group-count-test 增两条边界断言（20 项）。
+
 - 2026-11-12 v1.39.2 分组计数徽标加圆形底：数字改为 18px 胶囊（单数字即圆），底色走新令牌 `--wc-count-bg/--wc-count-ink`，四套主题各配一对——浅 #f9f9fb 底 + #4a4e56 字（7.94:1）、深 #2a2d31 底 + #c3c8ce 字（8.22:1）、纸浅 #fbfaf8 + #4c4c47（8.28:1）、纸深 #2a2620 + #b9b3a8（7.22:1），全部 ≥4.5:1 且比所在侧栏底亮/暗一档。胶囊高度等于标题 18px 行框，`vertical-align:top` 光学居中不挤基线。contrast-test 增 4 组断言，group-count-test 增胶囊形状与令牌守卫（18 项）。
 
 - 2026-11-12 v1.39.1 修「数字不在分组标题同一行」：徽标原本挂在 `.JoiKIa_projectText` 上，而宿主这个容器是 `display:flex; flex-direction:column`（为「标题 + 路径」两行准备），所以 `::after` 被排成第三行、掉到标题下方。改为挂在叶子节点 `.JoiKIa_title` 上，实测行高仍是 32px、标题块 16px 单行。测试补两条守卫：徽标规则必须落在 title、且不留 projectText 版本；桩 DOM 改成按真实查询串 `.JoiKIa_projectText .JoiKIa_title` 命中。
