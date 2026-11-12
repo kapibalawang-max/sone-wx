@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.38.1";
+const SKIN_VERSION = "1.39.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -423,6 +423,17 @@ body.dsh-wechat-skin-on .JoiKIa_projectRow {
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_projectText { gap: 0; }
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: var(--wc-fs-md); line-height: 18px; font-weight: 500; }
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: var(--wc-fs-sm); line-height: 14px; }
+/* Group session count: the stamping code sets data-dsh-wc-count on the label
+   span; React never sees it, and ::after renders the number after the title. */
+body.dsh-wechat-skin-on .JoiKIa_projectText[data-dsh-wc-count]::after {
+  content: attr(data-dsh-wc-count);
+  margin-left: 6px;
+  font-size: var(--wc-fs-sm);
+  line-height: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--wc-ink-2);
+}
 
 body.dsh-wechat-skin-on .JoiKIa_sessionRow {
   position: relative; height: 40px; border-radius: var(--wc-radius-bubble); margin: 1px 0; gap: 1px;
@@ -2197,6 +2208,103 @@ document.body.classList.remove(PANEL_DRAGGING_CLASS);
 }
 //#endregion
 
+//#region dsh-wechat-skin: group session counts
+/**
+ * Exact per-group session counts, derived from the host's own stores the same
+ * way the official sidebar derives its rows (subagent/blank/archived hidden,
+ * stray sessions in the ungrouped bucket). Stamped as a React-safe
+ * data attribute on the group label; CSS renders the number via ::after.
+ */
+/** Persisted view store of the official workspace browser (archivedFilter). */
+const GROUP_COUNT_VIEW_KEY = "dsh.workspace.view.v5";
+
+function computeGroupCounts(wsState, sessState, archivedFilter) {
+	const byId = (sessState && sessState.byId) || {};
+	const archived = new Set((wsState && wsState.archivedSessionIds) || []);
+	let current = null;
+	for (const session of Object.values(byId)) {
+		if (((session.retainedBy && session.retainedBy.mainView) || 0) > 0) { current = session.id; break; }
+	}
+	const visible = (session) => {
+		if (!session || session.origin === "subagent") return false;
+		if (session.blank && session.id !== current) return false;
+		if (archivedFilter === "show") return true;
+		if (archivedFilter === "only") return archived.has(session.id);
+		return !archived.has(session.id);
+	};
+	const counts = new Map();
+	const accounted = new Set();
+	for (const workspace of (wsState && wsState.items) || []) {
+		let count = 0;
+		for (const id of workspace.sessionIds || []) {
+			accounted.add(id);
+			if (visible(byId[id])) count += 1;
+		}
+		counts.set(String(workspace.workspaceId), count);
+	}
+	let stray = 0;
+	for (const id of (sessState && sessState.ids) || []) {
+		if (accounted.has(id)) continue;
+		if (visible(byId[id])) stray += 1;
+	}
+	counts.set("", stray);
+	return counts;
+}
+
+/** The archived slice the official browser currently shows (view store mirror). */
+function groupCountArchivedFilter() {
+	try {
+		const view = JSON.parse(localStorage.getItem(GROUP_COUNT_VIEW_KEY) || "{}");
+		return view && typeof view.archivedFilter === "string" ? view.archivedFilter : "default";
+	} catch (e) { return "default"; }
+}
+
+/** Stamp counts onto visible group header rows; groups without members lose the badge. */
+function stampGroupCounts(counts) {
+	const rows = document.querySelectorAll('.JoiKIa_projectRow[data-row-key^="workspace:"]');
+	for (const row of rows) {
+		const key = (row.getAttribute("data-row-key") || "").slice("workspace:".length);
+		const text = row.querySelector(".JoiKIa_projectText");
+		if (!text) continue;
+		const count = counts.get(key) || 0;
+		if (count > 0) text.dataset.dshWcCount = String(count);
+		else if (text.dataset.dshWcCount !== undefined) delete text.dataset.dshWcCount;
+	}
+}
+
+/** Subscribe to the host's workspaces/sessions snapshot stores and keep badges fresh. */
+function initGroupCounts(ctx) {
+	let workspaces = null;
+	let sessions = null;
+	try { workspaces = ctx.get("workspaces"); } catch (e) { workspaces = null; }
+	try { sessions = ctx.get("sessions"); } catch (e) { sessions = null; }
+	const list = (service) => (service && service.list && typeof service.list.getSnapshot === "function" && typeof service.list.subscribe === "function" ? service.list : null);
+	const wsList = list(workspaces);
+	const sessList = list(sessions);
+	if (!wsList || !sessList) return { stamp: () => {}, dispose: () => {} };
+	const refresh = () => {
+		try { stampGroupCounts(computeGroupCounts(wsList.getSnapshot(), sessList.getSnapshot(), groupCountArchivedFilter())); } catch (e) {}
+	};
+	refresh();
+	let disposed = false;
+	const unsubscribe = (store) => {
+		try { const off = store.subscribe(refresh); return typeof off === "function" ? off : null; } catch (e) { return null; }
+	};
+	const off1 = unsubscribe(wsList);
+	const off2 = unsubscribe(sessList);
+	return {
+		stamp: refresh,
+		dispose: () => {
+			if (disposed) return;
+			disposed = true;
+			try { if (off1) off1(); } catch (e) {}
+			try { if (off2) off2(); } catch (e) {}
+			for (const text of document.querySelectorAll(".JoiKIa_projectText[data-dsh-wc-count]")) delete text.dataset.dshWcCount;
+		}
+	};
+}
+//#endregion
+
 		/** Toggle row slot store: enabled flag + font level. */
 		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx) {
 		  return (0, _runtime_client.defineStore)({
@@ -3237,6 +3345,10 @@ applyTextFontLevel(textFontLevel);
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
 scanHooks.push(composerScrollScan);
+			// Group session counts live in the host's own stores; subscribe once per apply.
+			let groupCounts = null;
+			try { groupCounts = initGroupCounts(ctx); } catch (e) { groupCounts = null; }
+			if (groupCounts) scanHooks.push(groupCounts.stamp);
 			const injected = (actions) => {
 				bound = actions;
 				sync();
@@ -3828,12 +3940,15 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 				if (typeof composerEffects !== "undefined") composerEffects.dispose();
 				if (panelDragCleanup) { panelDragCleanup(); panelDragCleanup = null; }
 				document.body?.classList.remove(PANEL_DRAGGING_CLASS);
-				// Both hooks are pushed per apply(); leaving either behind runs it twice
+				// All hooks are pushed per apply(); leaving any behind runs it twice
 				// after a disable/enable cycle.
-				for (const hook of [applyPanelOrder, composerScrollScan]) {
+				const removableHooks = [applyPanelOrder, composerScrollScan];
+				if (groupCounts) removableHooks.push(groupCounts.stamp);
+				for (const hook of removableHooks) {
 					const at = scanHooks.indexOf(hook);
 					if (at >= 0) scanHooks.splice(at, 1);
 				}
+				if (groupCounts) groupCounts.dispose();
 				unbindComposerFade();
 				if (scheduled) { cancelAnimationFrame(scheduled); scheduled = null; }
 				for (const entry of panelEntries()) entry.el.style.removeProperty("order");

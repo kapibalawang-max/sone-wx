@@ -37,7 +37,7 @@ const notReset = [...new Set(configKeys)].filter((k) => k !== 'CONFIG_SKIN_KEYS'
 ok(notReset.length === 0, `resetSkin clears every CONFIG_SKIN_KEYS entry${notReset.length ? ': missing ' + notReset.join(', ') : ''}`);
 // scan hooks are pushed per apply(): both must be spliced out again, the pending
 // scan frame cancelled, and the composer scroll listener unbound.
-ok(/for \(const hook of \[applyPanelOrder, composerScrollScan\]\)/.test(cleanup), 'cleanup removes both scan hooks');
+ok(/const removableHooks = \[applyPanelOrder, composerScrollScan\];[\s\S]*?for \(const hook of removableHooks\)/.test(cleanup), 'cleanup removes all scan hooks');
 ok(/cancelAnimationFrame\(scheduled\)/.test(cleanup), 'cleanup cancels the pending scan frame');
 ok(/unbindComposerFade\(\)/.test(cleanup), 'cleanup unbinds the composer scroll listener');
 const bindIdx = src.indexOf('composerFadeBound.set(view, onScroll)');
