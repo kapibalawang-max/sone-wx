@@ -84,10 +84,8 @@ window.__ModuleLoader__.load({
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
-/** Host persistence namespace for per-session right-panel layouts (sidebar-right/persistence.ts). */
-const SIDEBAR_RIGHT_PERSISTENCE = "dsh.sidebar-right.v1";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.41.0";
+const SKIN_VERSION = "1.41.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -2362,17 +2360,40 @@ function initGroupCounts(ctx) {
 
 		//#region dsh-wechat-skin: right panel auto-open
 		/**
-		 * Open the host right panel the first time a session is visited.
-		 * The panel's expansion is persisted per session under
-		 * `dsh.sidebar-right.v1.<sessionId>`; a session without a saved layout
-		 * has never been expanded by the user, so auto-opening it once respects
-		 * every later manual collapse.
+		 * Open the host right panel when entering a session. The host writes a
+		 * persisted layout for every visited session right away, so "no saved
+		 * layout" cannot identify untouched sessions; instead the preference
+		 * simply means "while ON, a session you enter starts with the right
+		 * panel open". A manual collapse keeps holding while you stay in the
+		 * session (ticks only fire when the selected session changes).
+		 * toggleExpanded() throws until the session surface is mounted, so the
+		 * attempt retries a few times before giving up.
 		 */
 		function initRightbarAuto(ctx) {
-			let service = null;
-			try { service = ctx.get("sidebarRight") || null; } catch (e) { service = null; }
 			let lastSessionId = null;
 			let pending = null;
+			let attempts = 0;
+			// The sidebarRight service may be provided after this skin boots;
+			// resolve it lazily on every attempt instead of capturing it once.
+			const getService = () => {
+				try { return ctx.get("sidebarRight") || null; } catch (e) { return null; }
+			};
+			const isExpanded = (service) => !!(service && typeof service.isExpanded === "function" && service.isExpanded());
+			const stop = () => { if (pending) { clearTimeout(pending); pending = null; } attempts = 0; };
+			const attempt = () => {
+				if (attempts >= 6) { stop(); return; }
+				attempts += 1;
+				const service = getService();
+				if (isExpanded(service)) { stop(); return; }
+				if (service && typeof service.toggleExpanded === "function") {
+					try { service.toggleExpanded(); } catch (e) {}
+				}
+				pending = setTimeout(() => {
+					pending = null;
+					if (isExpanded(getService())) { stop(); return; }
+					attempt();
+				}, 300);
+			};
 			const tick = () => {
 				let row = null;
 				try { row = document.querySelector(".JoiKIa_sessionRow.JoiKIa_selected"); } catch (e) { row = null; }
@@ -2381,22 +2402,10 @@ function initGroupCounts(ctx) {
 				if (!sessionId || sessionId === lastSessionId) return;
 				lastSessionId = sessionId;
 				if (readJson(RIGHTBAR_AUTO_KEY, false) !== true) return;
-				if (pending) { clearTimeout(pending); pending = null; }
-				pending = setTimeout(() => {
-					pending = null;
-					let saved = null;
-					try { saved = window.localStorage.getItem(SIDEBAR_RIGHT_PERSISTENCE + "." + sessionId); } catch (e) { saved = null; }
-					// A saved layout means the user already expressed a preference for this session.
-					if (saved !== null) return;
-					try {
-						if (service && typeof service.isExpanded === "function" && typeof service.toggleExpanded === "function" && !service.isExpanded()) service.toggleExpanded();
-					} catch (e) {}
-				}, 0);
+				stop();
+				attempt();
 			};
-			return {
-				tick,
-				dispose: () => { if (pending) { clearTimeout(pending); pending = null; } }
-			};
+			return { tick, dispose: stop };
 		}
 		//#endregion
 

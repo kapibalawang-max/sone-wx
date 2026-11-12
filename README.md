@@ -60,7 +60,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
-- 2026-11-12 v1.41.0 右侧面板默认展开（新设置）：官方没有「所有会话默认打开右侧栏」的设置——展开状态按会话存 localStorage `dsh.sidebar-right.v1.<sessionId>`，新会话初始收起，布局服务（`ctx.sidebarRight`）只暴露 isExpanded/toggleExpanded。新增「右侧面板默认展开」开关（设置页布局组，默认关）：进入会话时若该会话从未有过保存布局（即没手动收起或调整过）且面板当前收起，自动 toggleExpanded 打开一次；手动收起过的会话保持关闭。数据键 `dsh-wechat-skin:rightbar-auto` 纳入导出/导入/恢复默认；新增 `test/rightbar-auto-test.mjs`（10 场景 + 接线守卫），设置行单项重置计数 15。
+- 2026-11-12 v1.41.1 修正 v1.41.0 的「右侧面板默认展开」不生效：宿主在进入会话时就会立刻写入该会话的右侧栏保存布局（`dsh.sidebar-right.v1.<sessionId>`），「无保存布局才自动打开」的判断永远不成立。改为直接语义——开关打开时，每次切换会话若右侧栏处于收起状态就自动展开（toggleExpanded 在会话面板尚未挂载时会抛错，带 300ms × 6 次重试）；在同一会话内手动收起后不会被强行弹回。
+- 2026-11-12 v1.41.0 右侧面板默认展开（新设置）：官方没有「所有会话默认打开右侧栏」的设置——展开状态按会话存 localStorage `dsh.sidebar-right.v1.<sessionId>`，新会话初始收起，布局服务（`ctx.sidebarRight`）只暴露 isExpanded/toggleExpanded。新增「右侧面板默认展开」开关（设置页布局组，默认关）。数据键 `dsh-wechat-skin:rightbar-auto` 纳入导出/导入/恢复默认；新增 `test/rightbar-auto-test.mjs`，设置行单项重置计数 15。
 - 2026-11-12 v1.40.4 修复新会话页品牌图与标语的垂直对齐：宿主标题 span 的行盒行高大于标语行高，基线对齐使标语字形相对 logo 偏上；标题 span 改为 flex 容器并 align-items:center，标语与品牌图中心线严格对齐。
 - 2026-11-12 v1.40.3 新会话页 hero 区不再显示「预览版」徽章（用户要求）：WECHAT_CSS 对 hero headline 内的 `_previewBadge` 施加 display:none，不影响其他区域的徽章类元素。
 - 2026-11-12 v1.40.2 新会话标语改为直接替换 hero 标题文字（此前 v1.40.1 是标题下方另起一行，与预期不符）：官方标题 span 以 CSS font-size:0 隐藏，标语经其 ::after 以原标题字号（26px/500/--wc-ink-1）在原位置渲染；取值与开关仍在 body（--dsh-wc-hero-tagline + data-dsh-wc-tagline-set），React 重渲染零干预，清空恢复官方默认。真实页面探针验证设值/打字重渲染/清空三态，brand-tagline-test 更新为替换语义。

@@ -1,6 +1,7 @@
-// Right-panel auto-open: the watcher must expand the host right panel only for
-// sessions that have never carried a saved layout, only while the preference is
-// on, and exactly once per session visit.
+// Right-panel auto-open: while the preference is ON, every session the user
+// enters must start with the right panel open. toggleExpanded() throws until
+// the host mounts the session surface, so the watcher retries before giving
+// up. A manual collapse keeps holding while the user stays in the session.
 import fs from 'node:fs';
 import path from 'node:path';
 import nodevm from 'node:vm';
@@ -33,10 +34,8 @@ const fnSrc = (name) => {
 const constAt = src.indexOf('const RIGHTBAR_AUTO_KEY');
 check(constAt > 0, 'RIGHTBAR_AUTO_KEY not defined in client.js');
 const constLine = src.slice(constAt, src.indexOf(';', constAt) + 1);
-const persistAt = src.indexOf('const SIDEBAR_RIGHT_PERSISTENCE');
-const persistLine = src.slice(persistAt, src.indexOf(';', persistAt) + 1);
 
-function makeSandbox({ storage, selectedKey, service }) {
+function makeSandbox({ storage, selectedKey, isExpanded, toggle }) {
   const store = new Map(Object.entries(storage || {}));
   const sb = {
     window: { localStorage: {
@@ -44,75 +43,77 @@ function makeSandbox({ storage, selectedKey, service }) {
       setItem: (k, v) => { store.set(k, String(v)); },
       removeItem: (k) => { store.delete(k); },
     } },
-    localStorage: null,
     document: { querySelector: () => (selectedKey === undefined ? null : { getAttribute: () => selectedKey }) },
-    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    // Compress the 300ms retry gap so the suite stays fast.
+    setTimeout: (fn, ms) => setTimeout(fn, Math.min(ms || 0, 5)),
     clearTimeout: (id) => clearTimeout(id),
     JSON, Object, String, Array,
   };
-  sb.window.localStorage.getItem = sb.window.localStorage.getItem.bind({ store });
   // readJson reads window.localStorage; provide it in-scope.
   const readJsonSrc = 'const readJson = (key, fallback) => { try { const v = window.localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };\n';
   nodevm.createContext(sb);
-  nodevm.runInContext(readJsonSrc + constLine + '\n' + persistLine + '\n' + fnSrc('initRightbarAuto'), sb);
-  return { sb, store };
+  nodevm.runInContext(readJsonSrc + constLine + '\n' + fnSrc('initRightbarAuto'), sb);
+  const state = { expanded: !!isExpanded, toggles: 0, throws: 0 };
+  const service = {
+    isExpanded: () => state.expanded,
+    toggleExpanded: () => {
+      if (state.throws > 0) { state.throws -= 1; throw new Error('sidebarRight: no session surface is mounted'); }
+      state.toggles += 1;
+      state.expanded = !state.expanded;
+      if (toggle) toggle(state);
+    },
+  };
+  return { sb, state, ctl: sb.initRightbarAuto({ get: () => service }) };
 }
 
 const KEY = 'dsh-wechat-skin:rightbar-auto';
-const PERSIST = 'dsh.sidebar-right.v1';
-const flush = () => new Promise((resolve) => setTimeout(resolve, 15));
+const flush = (ms = 80) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function scenario() {
   // A: preference off -> never expands.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: {}, selectedKey: 'session:a', service: { isExpanded: () => false, toggleExpanded: () => calls.push('a') } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push('a') }) });
+    const { ctl, state } = makeSandbox({ storage: {}, selectedKey: 'session:a' });
     ctl.tick();
     await flush();
-    check(calls.length === 0, 'A: expands while the preference is off');
+    check(state.toggles === 0, 'A: expands while the preference is off');
   }
-  // B: preference on, no saved layout, collapsed -> expands once.
+  // B: preference on + collapsed -> expands.
   {
-    const calls = [];
-    const make = () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) });
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:b', service: make() });
-    const ctl = sb.initRightbarAuto({ get: () => make() });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:b' });
     ctl.tick();
     await flush();
-    check(calls.length === 1, 'B: does not expand exactly once (got ' + calls.length + ')');
-
+    check(state.toggles === 1, 'B: does not expand exactly once (got ' + state.toggles + ')');
+    check(state.expanded === true, 'B: session ends up collapsed');
   }
-  // C: session already has a saved layout -> respects it.
+  // C: preference on + already expanded -> no toggle.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true', [PERSIST + '.c']: '{"bySession":{}}' }, selectedKey: 'session:c', service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:c', isExpanded: true });
     ctl.tick();
     await flush();
-    check(calls.length === 0, 'C: expands a session that already has a saved layout');
+    check(state.toggles === 0, 'C: toggles an already-expanded panel');
   }
   // D: repeated ticks on the same session -> one expansion only.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:d', service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:d' });
     ctl.tick(); ctl.tick(); ctl.tick();
     await flush();
-    check(calls.length === 1, 'D: repeated ticks expand more than once (got ' + calls.length + ')');
+    check(state.toggles === 1, 'D: repeated ticks expand more than once (got ' + state.toggles + ')');
   }
-  // E: service already expanded -> no toggle.
+  // E: toggleExpanded throws until the surface mounts -> retries and succeeds.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:e', service: { isExpanded: () => true, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => true, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:e' });
+    state.throws = 2;
     ctl.tick();
     await flush();
-    check(calls.length === 0, 'E: toggles an already-expanded panel');
+    check(state.expanded === true, 'E: retry does not open the panel after mount');
+    check(state.toggles === 1, 'E: successful toggle count wrong (got ' + state.toggles + ')');
   }
   // F: service unavailable -> no throw.
   {
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:f', service: undefined });
+    const sb = { window: { localStorage: { getItem: () => 'true' } }, document: { querySelector: () => ({ getAttribute: () => 'session:f' }) }, setTimeout, clearTimeout, JSON, Object };
+    const readJsonSrc = 'const readJson = (key, fallback) => { try { const v = window.localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } };\n';
+    nodevm.createContext(sb);
+    nodevm.runInContext(readJsonSrc + constLine + '\n' + fnSrc('initRightbarAuto'), sb);
     const ctl = sb.initRightbarAuto({ get: () => undefined });
     let threw = false;
     try { ctl.tick(); await flush(); } catch (e) { threw = true; }
@@ -120,44 +121,38 @@ async function scenario() {
   }
   // G: no selected row / non-session key -> no expansion.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: undefined, service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: undefined });
     ctl.tick();
     await flush();
-    check(calls.length === 0, 'G: expands without a selected row');
+    check(state.toggles === 0, 'G: expands without a selected row');
   }
   // H: non-session row key (workspace:) -> no expansion.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'workspace:ws1', service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'workspace:ws1' });
     ctl.tick();
     await flush();
-    check(calls.length === 0, 'H: expands for a non-session row key');
+    check(state.toggles === 0, 'H: expands for a non-session row key');
   }
-  // I: switching sessions expands the new one too.
+  // I: switching sessions expands the new one too (even after a manual collapse).
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:i1', service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const svc = { isExpanded: () => false, toggleExpanded: () => calls.push(1) };
-    const ctl = sb.initRightbarAuto({ get: () => svc });
+    const { sb, ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:i1' });
     ctl.tick();
     await flush();
+    check(state.toggles === 1, 'I: first session does not expand');
+    state.expanded = false; // the user collapsed the panel manually
     sb.document.querySelector = () => ({ getAttribute: () => 'session:i2' });
     ctl.tick();
     await flush();
-    check(calls.length === 2, 'I: a second session does not expand (got ' + calls.length + ')');
+    check(state.toggles === 2, 'I: a second session does not expand (got ' + state.toggles + ')');
   }
-  // J: dispose clears a pending timer without throwing.
+  // J: dispose cancels a pending retry without throwing.
   {
-    const calls = [];
-    const { sb } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:j', service: { isExpanded: () => false, toggleExpanded: () => calls.push(1) } });
-    const ctl = sb.initRightbarAuto({ get: () => ({ isExpanded: () => false, toggleExpanded: () => calls.push(1) }) });
+    const { ctl, state } = makeSandbox({ storage: { [KEY]: 'true' }, selectedKey: 'session:j' });
+    state.throws = 5;
     ctl.tick();
     ctl.dispose();
     await flush();
-    check(calls.length === 0, 'J: dispose does not cancel the pending expansion');
+    check(state.expanded === false, 'J: dispose does not cancel the pending retry');
   }
 }
 await scenario();
@@ -174,13 +169,13 @@ check(src.includes('setRightbarAuto: (on) =>'), 'wiring: injected.setRightbarAut
 check(src.includes('window.localStorage.removeItem(RIGHTBAR_AUTO_KEY)'), 'wiring: resetSkin does not clear RIGHTBAR_AUTO_KEY');
 check(src.includes('applyRightbarAuto(rightbarAuto);'), 'wiring: applyRightbarAuto not applied on init/import');
 check(src.includes('title: t("rightbarAutoTitle")'), 'wiring: settings row rightbarAutoTitle missing');
-check(src.includes('SIDEBAR_RIGHT_PERSISTENCE + "." + sessionId'), 'wiring: saved-layout key must use the host namespace + session id');
 for (const key of ['rightbarAutoTitle', 'rightbarAutoHint', 'rightbarAutoOn', 'rightbarAutoOff']) {
   const hits = (src.match(new RegExp('"' + key + '":', 'g')) || []).length;
   check(hits >= 2, 'locale: ' + key + ' must exist in zh and en (found ' + hits + ')');
 }
 check(src.includes('delete document.body.dataset.dshWcRightbarAuto'), 'wiring: cleanup must clear the body flag');
-check(src.includes('const SKIN_VERSION = "1.41.0";'), 'version: SKIN_VERSION should be 1.41.0');
+check(!region.includes('SIDEBAR_RIGHT_PERSISTENCE'), 'wiring: must not gate on the per-session saved layout (it is written on entry)');
+check(src.includes('const SKIN_VERSION = "1.41.1";'), 'version: SKIN_VERSION should be 1.41.1');
 
 if (fails.length) {
   console.error('FAIL (' + fails.length + '):\n' + fails.map((f) => '  - ' + f).join('\n'));
