@@ -60,6 +60,8 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-12 v1.40.0 新会话标语可自定义：品牌卡新增「新会话标语」输入行（40 字上限，Enter/失焦保存、Esc 还原，留空回到官方默认「探索未至之境」）。宿主 HeroShell 的标语没有 slot，只有 DOM 文本，改法是定位 `_8tPydW_titleGroup` 里第一个无类名 span 写 `textContent`，官方原文先存 `dataset.dsh-wc-hero-default`，清空时原样还原；「预览版」徽标（带类名的第二个 span）不受影响。React 重挂载由 body 级 MutationObserver（rAF 合并）跟进，停用皮肤即还原。数据走 `/sone-wx/brand` 的 `heroTagline` 字段（index.js 读时截断 40 字、写时 trim+截断）。新增 `test/brand-tagline-test.mjs`（8 项行为 + 接线守卫），套件总数 39。随 DSH 0.2.2-rc.2 顺带重映射两个漂移类名：`._markdown_rve47_5→._markdown_13jw0_5`、`._toast_hr9yd_6→._toast_af3m1_6`（host-hash-test 恢复 96/96）。
+
 - 2026-11-12 v1.39.3 分组计数阈值：少于 2 个会话不显示徽标（单数字没有信息量），超过 99 显示「99+」，计数本身仍精确。group-count-test 增两条边界断言（20 项）。
 
 - 2026-11-12 v1.39.2 分组计数徽标加圆形底：数字改为 18px 胶囊（单数字即圆），底色走新令牌 `--wc-count-bg/--wc-count-ink`，四套主题各配一对——浅 #f9f9fb 底 + #4a4e56 字（7.94:1）、深 #2a2d31 底 + #c3c8ce 字（8.22:1）、纸浅 #fbfaf8 + #4c4c47（8.28:1）、纸深 #2a2620 + #b9b3a8（7.22:1），全部 ≥4.5:1 且比所在侧栏底亮/暗一档。胶囊高度等于标题 18px 行框，`vertical-align:top` 光学居中不挤基线。contrast-test 增 4 组断言，group-count-test 增胶囊形状与令牌守卫（18 项）。

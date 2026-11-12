@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.39.3";
+const SKIN_VERSION = "1.40.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -697,7 +697,7 @@ body.dsh-wechat-skin-on.dsh-wechat-match .XNZzAa_body {
 }
 /* markdown 正文：宿主用 font: var(--dsw-font-markdown-base) 简写，字号走 --dsh-content-font-size；
    这里再显式钉一次正文档，避免宿主派生 token 被别的皮肤/主题覆盖时正文不跟随 */
-body.dsh-wechat-skin-on ._markdown_rve47_5 {
+body.dsh-wechat-skin-on ._markdown_13jw0_5 {
   font-size: var(--wc-body-lg);
   line-height: calc(var(--wc-body-lg) * var(--wc-line-height, 1.6));
 }
@@ -1000,12 +1000,12 @@ body.dsh-wechat-skin-on .V1MMBW_card .V1MMBW_tableWrap { border: 0; border-radiu
 /* ================= assistant content: type, rhythm, data tables ================= */
 /* Everything here is scoped to assistant-step markdown so GenUI cards, tool output
    and the composer keep their own chrome. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 { --wc-md-gap: 12px; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 { --wc-md-gap: 12px; }
 
 /* Blocks: one vertical rhythm, no double margins at the edges. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :is(p, ul, ol, pre, blockquote, table, .tableScroll) { margin-top: var(--wc-md-gap); margin-bottom: 0; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :first-child { margin-top: 0; }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_rve47_5 > :is(h1, h2, h3, h4) + * { margin-top: 6px; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 > :is(p, ul, ol, pre, blockquote, table, .tableScroll) { margin-top: var(--wc-md-gap); margin-bottom: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 > :first-child { margin-top: 0; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 > :is(h1, h2, h3, h4) + * { margin-top: 6px; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] :is(p, li) { line-height: var(--wc-line-height, 1.6); }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] strong { font-weight: 600; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] em { font-style: italic; }
@@ -1201,7 +1201,7 @@ body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--wc-hover); colo
 body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: var(--wc-fs-sm); color: var(--wc-ink-3); }
 
 /* Toast: same top-center pill, tuned to the skin's radius and weight. */
-body.dsh-wechat-skin-on ._toast_hr9yd_6 {
+body.dsh-wechat-skin-on ._toast_af3m1_6 {
   top: 24px; padding: 10px 16px; border-radius: var(--wc-radius-md);
   font-size: var(--wc-fs-md); line-height: 1.5; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
@@ -3998,6 +3998,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
         var IMAGE_TYPES = { png: 'image/png', svg: 'image/svg+xml', webp: 'image/webp' }
     var MAX_BYTES = 2 * 1024 * 1024
     var MAX_TITLE = 40
+    var MAX_TAGLINE = 40
     /** Host 只回错误码，文案在这里按当前语言取。 */
     var ERROR_KEYS = { unsupported_type: 'typeError', too_large: 'sizeError', bad_image: 'badImage', unauthorized: 'authError', forbidden: 'authError' }
 
@@ -4011,6 +4012,9 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
         title: '品牌标题',
         titleDesc: '显示在标志右侧。留空则回到宿主默认标题。',
         titlePlaceholder: '留空使用默认',
+        tagline: '新会话标语',
+        taglineDesc: '新会话页大标志旁的标语文字。留空显示官方默认。',
+        taglinePlaceholder: '留空使用默认',
         wordmark: '用图片代替标题',
         wordmarkDesc: '标题改用一张文字标志图片（PNG / SVG / WebP）。',
         hero: '新会话页同步',
@@ -4044,6 +4048,9 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
         title: 'Brand title',
         titleDesc: 'Shown beside the mark. Leave it empty to fall back to the host title.',
         titlePlaceholder: 'Empty uses the default',
+        tagline: 'New-session tagline',
+        taglineDesc: 'The headline text beside the mark on the new-session page. Leave it empty to keep the default.',
+        taglinePlaceholder: 'Empty uses the default',
         wordmark: 'Use an image as the title',
         wordmarkDesc: 'Replace the title with a wordmark image (PNG / SVG / WebP).',
         hero: 'Sync the new-session page',
@@ -4078,6 +4085,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
       title: '',
       wordmarkImage: false,
       heroMark: true,
+      heroTagline: '',
       mark: null,
       wordmark: null
     }
@@ -4107,9 +4115,11 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
         title: typeof payload.title === 'string' ? payload.title : '',
         wordmarkImage: payload.wordmarkImage === true,
         heroMark: payload.heroMark !== false,
+        heroTagline: typeof payload.heroTagline === 'string' ? payload.heroTagline : '',
         mark: payload.mark || null,
         wordmark: payload.wordmark || null
       })
+      stampHeroTagline()
     }
 
     /** 解析 Host 的失败响应：错误码翻成本地文案，认不出来的保留原文。 */
@@ -4192,6 +4202,72 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
       var info = state[kind]
       if (!info) return null
       return IMAGE_URLS[kind] + '?v=' + encodeURIComponent(info.version || '0')
+    }
+
+    /**
+     * 把新会话页标语换成自定义文案；tagline 为空时还原官方标语。
+     * 宿主 HeroShell 结构：headline > fishHitbox(slot) + titleGroup；
+     * titleGroup 里第一个无类名 span 是标语（hero.headline），第二个是带
+     * previewBadge 类名的「预览版」徽标，不能动。官方原文先存进 dataset，
+     * 关闭自定义时原样还原。
+     */
+    function applyHeroTagline(root, tagline) {
+      if (!root || typeof root.querySelectorAll !== 'function') return 0
+      var groups = root.querySelectorAll('[class*="_titleGroup"]')
+      var wanted = String(tagline || '')
+      var changed = 0
+      for (var i = 0; i < groups.length; i++) {
+        var first = groups[i].firstElementChild
+        if (!first || first.tagName !== 'SPAN' || first.className !== '') continue
+        if (wanted === '') {
+          if (first.dataset.dshWcTagline === '1') {
+            first.textContent = first.dataset.dshWcHeroDefault || ''
+            delete first.dataset.dshWcTagline
+            delete first.dataset.dshWcHeroDefault
+            changed++
+          }
+          continue
+        }
+        if (first.dataset.dshWcTagline !== '1') first.dataset.dshWcHeroDefault = first.textContent
+        if (first.textContent !== wanted) {
+          first.textContent = wanted
+          changed++
+        }
+        first.dataset.dshWcTagline = '1'
+      }
+      return changed
+    }
+
+    function stampHeroTagline() {
+      if (typeof document === 'undefined') return
+      applyHeroTagline(document, state.heroTagline)
+    }
+
+    var heroTaglineObserver = null
+    var heroTaglineScheduled = false
+
+    /** React 会重挂载 hero 区；用轻量 MutationObserver 跟进，rAF 合并高频回调。 */
+    function watchHeroTagline() {
+      if (heroTaglineObserver !== null) return
+      if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return
+      heroTaglineObserver = new MutationObserver(function () {
+        if (heroTaglineScheduled) return
+        heroTaglineScheduled = true
+        var run = function () {
+          heroTaglineScheduled = false
+          stampHeroTagline()
+        }
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run)
+        else setTimeout(run, 16)
+      })
+      heroTaglineObserver.observe(document.body, { childList: true, subtree: true })
+    }
+
+    function unwatchHeroTagline() {
+      if (heroTaglineObserver !== null) {
+        heroTaglineObserver.disconnect()
+        heroTaglineObserver = null
+      }
     }
 
     //#endregion
@@ -4566,12 +4642,15 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
     function BrandStudioSection() {
       var snap = useBrandState()
       var title = useState(snap.title)
+      var tagline = useState(snap.heroTagline)
       var status = useState({ kind: '', detail: '' })
       var dirty = title[0] !== snap.title
+      var taglineDirty = tagline[0] !== snap.heroTagline
 
       useEffect(function () {
         title[1](snap.title)
-      }, [snap.title])
+        tagline[1](snap.heroTagline)
+      }, [snap.title, snap.heroTagline])
 
       function setStatus(kind, detail) {
         status[1]({ kind: kind, detail: detail || '' })
@@ -4586,6 +4665,13 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
       function saveTitle() {
         if (!dirty) return
         post({ title: title[0].trim() }).then(function () {
+          setStatus('ok', t('saved'))
+        }).catch(reportError)
+      }
+
+      function saveTagline() {
+        if (!taglineDirty) return
+        post({ heroTagline: tagline[0].trim() }).then(function () {
           setStatus('ok', t('saved'))
         }).catch(reportError)
       }
@@ -4613,7 +4699,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
           removeImage('mark').catch(function () {}),
           removeImage('wordmark').catch(function () {})
         ]).then(function () {
-          return post({ title: '', wordmarkImage: false, heroMark: true })
+          return post({ title: '', wordmarkImage: false, heroMark: true, heroTagline: '' })
         }).then(function () {
           setStatus('ok', t('resetDone'))
           load()
@@ -4686,6 +4772,32 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
               className: 'dsh-wc-btn dsh-wc-btn-primary',
               disabled: !dirty,
               onClick: saveTitle
+            }, t('save')))),
+        h('div', { style: S.item },
+          h('div', { style: S.itemMain },
+            h('div', { style: S.itemTitle }, t('tagline')),
+            h('div', { style: S.itemHint }, t('taglineDesc'))),
+          h('div', { style: S.itemControl },
+            h('input', {
+              style: S.input,
+              value: tagline[0],
+              maxLength: MAX_TAGLINE,
+              placeholder: t('taglinePlaceholder'),
+              onChange: function (event) {
+                tagline[1](event.target.value)
+                setStatus('', '')
+              },
+              onKeyDown: function (event) {
+                if (event.key === 'Enter') { event.preventDefault(); saveTagline() }
+                if (event.key === 'Escape') { tagline[1](snap.heroTagline); setStatus('', '') }
+              },
+              onBlur: function () { if (taglineDirty) saveTagline() }
+            }),
+            h('button', {
+              type: 'button',
+              className: 'dsh-wc-btn dsh-wc-btn-primary',
+              disabled: !taglineDirty,
+              onClick: saveTagline
             }, t('save')))),
         h('div', { style: S.item },
           h('div', { style: S.itemMain },
@@ -4773,6 +4885,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 
 
           load()
+          watchHeroTagline()
 
           var onBrandReload = function () { load() }
           window.addEventListener('sone-wx:brand-reload', onBrandReload)
@@ -4785,6 +4898,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 
           return function () {
             if (typeof offLocale === 'function') offLocale()
+            unwatchHeroTagline()
             for (var i = 0; i < offDicts.length; i++) offDicts[i]()
             translateRef = null
             window.removeEventListener('sone-wx:brand-reload', onBrandReload)

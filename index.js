@@ -18,6 +18,7 @@ const IMAGE_PATHS = { mark: `${ROUTE}/mark`, wordmark: `${ROUTE}/wordmark` }
 const IMAGE_TYPES = { 'image/png': 'png', 'image/svg+xml': 'svg', 'image/webp': 'webp' }
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 const MAX_TITLE_CHARS = 40
+const MAX_TAGLINE_CHARS = 40
 
 const SIGNATURES = {
   'image/png': [{ offset: 0, bytes: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]) }],
@@ -34,6 +35,7 @@ const DEFAULT_STATE = {
   title: '',
   wordmarkImage: false,
   heroMark: true,
+  heroTagline: '',
 }
 
 export const inject = ['webServer']
@@ -67,6 +69,7 @@ function readState(dir) {
     title: typeof raw.title === 'string' ? raw.title.slice(0, MAX_TITLE_CHARS) : '',
     wordmarkImage: raw.wordmarkImage === true,
     heroMark: raw.heroMark !== false,
+    heroTagline: typeof raw.heroTagline === 'string' ? raw.heroTagline.slice(0, MAX_TAGLINE_CHARS) : '',
   }
 }
 
@@ -86,6 +89,7 @@ function answer(ctx) {
     title: state.title,
     wordmarkImage: state.wordmarkImage,
     heroMark: state.heroMark,
+    heroTagline: state.heroTagline,
     mark: findImage(dir, 'mark')?.state ?? null,
     wordmark: findImage(dir, 'wordmark')?.state ?? null,
   }
@@ -333,6 +337,7 @@ export function apply(ctx) {
               title: typeof payload.title === 'string' ? payload.title.trim().slice(0, MAX_TITLE_CHARS) : current.title,
               wordmarkImage: typeof payload.wordmarkImage === 'boolean' ? payload.wordmarkImage : current.wordmarkImage,
               heroMark: typeof payload.heroMark === 'boolean' ? payload.heroMark : current.heroMark,
+              heroTagline: typeof payload.heroTagline === 'string' ? payload.heroTagline.trim().slice(0, MAX_TAGLINE_CHARS) : current.heroTagline,
             }
             writeState(dir, next)
             sendJson(res, 200, answer(ctx))
