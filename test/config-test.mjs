@@ -17,6 +17,7 @@ const KEY = {
   AVATAR_SHAPE_KEY: 'dsh-wechat-skin:avatar-shape',
   AVATAR_STYLE_KEY: 'dsh-wechat-skin:avatar-style',
   COMPOSER_FX_KEY: 'dsh-wechat-skin:composer-fx',
+  RIGHTBAR_AUTO_KEY: 'dsh-wechat-skin:rightbar-auto',
   CUSTOM_PRESETS_KEY: 'dsh-wechat-skin:presets',
   COMPOSER_H_KEY: 'dsh-wechat-skin:composer-height'
 };
@@ -65,6 +66,7 @@ const sandbox = {
   applyLineHeight: (v) => { calls.push(['lineHeight', v]); },
   applyReducedMotion: (v) => { calls.push(['motion', v]); },
   applyFontFamily: (v) => { calls.push(['fontFamily', v]); },
+  applyRightbarAuto: (v) => { calls.push(['rightbarAuto', v]); },
   applyContrast: (v) => { calls.push(['contrast', v]); },
   applyAvatarShape: (v) => { calls.push(['avatarShape', v]); },
   applyAvatarStyle: (v) => { calls.push(['avatarStyle', v]); },

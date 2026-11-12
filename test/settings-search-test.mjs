@@ -20,7 +20,7 @@ ok('group titles are tagged', (src.match(/dsh-wc-group-title/g) || []).length >=
 ok('empty groups collapse', src.includes('card.style.display = hitRow ? "" : "none";'));
 ok('filter hides non-matching rows', src.includes('rowEl.style.display = hit ? "" : "none";'));
 ok('empty state wired', src.includes('className: "dsh-wc-empty"'));
-ok('per-row reset on every settable row', (src.match(/resetLabel: t\("rowReset"\)/g) || []).length === 14);
+ok('per-row reset on every settable row', (src.match(/resetLabel: t\("rowReset"\)/g) || []).length === 15);
 ok('reset button hover-revealed', /body \.dsh-wc-row:hover \.dsh-wc-reset/.test(src));
 ok('zh has search copy', src.includes('"searchSettings": "搜索设置"'));
 ok('en has search copy', src.includes('"searchSettings": "Search settings"'));

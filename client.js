@@ -82,8 +82,12 @@ window.__ModuleLoader__.load({
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
+/** Open the host right panel automatically on a session's first visit. */
+const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
+/** Host persistence namespace for per-session right-panel layouts (sidebar-right/persistence.ts). */
+const SIDEBAR_RIGHT_PERSISTENCE = "dsh.sidebar-right.v1";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.40.4";
+const SKIN_VERSION = "1.41.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -104,7 +108,7 @@ const SKIN_VERSION = "1.40.4";
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -1952,6 +1956,13 @@ if (rows.length > 0) sessionListPrimed = true;
 			else delete document.body.dataset.dshWechatDensity;
 		}
 
+		/** Apply the right-panel auto-open preference (body flag read by the auto-open watcher). */
+		function applyRightbarAuto(on) {
+			if (!document.body) return;
+			if (on) document.body.dataset.dshWcRightbarAuto = "1";
+			else delete document.body.dataset.dshWcRightbarAuto;
+		}
+
 		/** Show/hide the sent-row (my) avatar; hiding it also drops the reserved 42px column. */
 		function applyUserAvatar(on) {
 		  if (document.body) document.body.dataset.dshWechatUserAvatar = on ? "1" : "0";
@@ -2349,12 +2360,52 @@ function initGroupCounts(ctx) {
 }
 //#endregion
 
+		//#region dsh-wechat-skin: right panel auto-open
+		/**
+		 * Open the host right panel the first time a session is visited.
+		 * The panel's expansion is persisted per session under
+		 * `dsh.sidebar-right.v1.<sessionId>`; a session without a saved layout
+		 * has never been expanded by the user, so auto-opening it once respects
+		 * every later manual collapse.
+		 */
+		function initRightbarAuto(ctx) {
+			let service = null;
+			try { service = ctx.get("sidebarRight") || null; } catch (e) { service = null; }
+			let lastSessionId = null;
+			let pending = null;
+			const tick = () => {
+				let row = null;
+				try { row = document.querySelector(".JoiKIa_sessionRow.JoiKIa_selected"); } catch (e) { row = null; }
+				const key = row ? (row.getAttribute("data-row-key") || "") : "";
+				const sessionId = key.indexOf("session:") === 0 ? key.slice("session:".length) : "";
+				if (!sessionId || sessionId === lastSessionId) return;
+				lastSessionId = sessionId;
+				if (readJson(RIGHTBAR_AUTO_KEY, false) !== true) return;
+				if (pending) { clearTimeout(pending); pending = null; }
+				pending = setTimeout(() => {
+					pending = null;
+					let saved = null;
+					try { saved = window.localStorage.getItem(SIDEBAR_RIGHT_PERSISTENCE + "." + sessionId); } catch (e) { saved = null; }
+					// A saved layout means the user already expressed a preference for this session.
+					if (saved !== null) return;
+					try {
+						if (service && typeof service.isExpanded === "function" && typeof service.toggleExpanded === "function" && !service.isExpanded()) service.toggleExpanded();
+					} catch (e) {}
+				}, 0);
+			};
+			return {
+				tick,
+				dispose: () => { if (pending) { clearTimeout(pending); pending = null; } }
+			};
+		}
+		//#endregion
+
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx) {
+		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx, initialRightbarAuto) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, composerFx: initialComposerFx, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, composerFx: initialComposerFx, rightbarAuto: initialRightbarAuto, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle, composerFx) => {
+		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle, composerFx, rightbarAuto) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -2372,6 +2423,7 @@ function initGroupCounts(ctx) {
 		        d.avatarStyle = avatarStyle;
 
 		        d.composerFx = composerFx;
+		        d.rightbarAuto = rightbarAuto;
 		        d.revision = revision;
 					}
 				}
@@ -2850,7 +2902,7 @@ bind();
 return { setEnabled, dispose };
 }
 
-function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
 const density = useStore((s) => s.density);
@@ -2877,6 +2929,7 @@ const contrast = useStore((s) => s.contrast) || "normal";
 const avatarShape = useStore((s) => s.avatarShape) || "rounded";
 const avatarStyle = useStore((s) => s.avatarStyle) || "silhouette";
 const composerFx = useStore((s) => s.composerFx) === true;
+const rightbarAuto = useStore((s) => s.rightbarAuto) === true;
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -2982,6 +3035,10 @@ const lineHeightOptions = [
 const composerFxOptions = [
 { value: false, label: t("fxOff") },
 { value: true, label: t("fxOn") }
+];
+const rightbarAutoOptions = [
+{ value: false, label: t("rightbarAutoOff") },
+{ value: true, label: t("rightbarAutoOn") }
 ];
 const motionOptions = [
 { value: false, label: t("motionFull") },
@@ -3178,6 +3235,12 @@ hint: t("lineHeightHint"),
 onReset: () => { if (setLineHeight) setLineHeight("normal"); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: lineHeight, options: lineHeightOptions, onChange: (value) => { if (setLineHeight) setLineHeight(value); } })
 }),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("rightbarAutoTitle"),
+hint: t("rightbarAutoHint"),
+onReset: () => { if (setRightbarAuto) setRightbarAuto(false); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: rightbarAuto, options: rightbarAutoOptions, onChange: (value) => { if (setRightbarAuto) setRightbarAuto(value); } })
+}),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAssist"), children: [
 (0, react_jsx_runtime.jsx)(SkinRow, {
@@ -3360,6 +3423,8 @@ applyTextFontLevel(textFontLevel);
 			let composerFxOn = readJson(COMPOSER_FX_KEY, true) !== false;
 			const composerEffects = installComposerEffects();
 			composerEffects.setEnabled(composerFxOn);
+			let rightbarAuto = readJson(RIGHTBAR_AUTO_KEY, false) === true;
+			applyRightbarAuto(rightbarAuto);
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
@@ -3380,11 +3445,11 @@ applyTextFontLevel(textFontLevel);
 			applyAvatarShape(avatarShape);
 			let avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 			applyAvatarStyle(avatarArt);
-			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn);
+			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn);
+				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -3393,6 +3458,10 @@ scanHooks.push(composerScrollScan);
 			let groupCounts = null;
 			try { groupCounts = initGroupCounts(ctx); } catch (e) { groupCounts = null; }
 			if (groupCounts) scanHooks.push(groupCounts.stamp);
+			// Right-panel auto-open watches the selected session row per scan.
+			let rightbarAutoCtl = null;
+			try { rightbarAutoCtl = initRightbarAuto(ctx); } catch (e) { rightbarAutoCtl = null; }
+			if (rightbarAutoCtl) scanHooks.push(rightbarAutoCtl.tick);
 			const injected = (actions) => {
 				bound = actions;
 				sync();
@@ -3510,6 +3579,8 @@ scanHooks.push(composerScrollScan);
 						const importedMotion = importedValue(MOTION_KEY);
 						const importedComposerFx = importedValue(COMPOSER_FX_KEY);
 						if (importedComposerFx !== undefined && typeof importedComposerFx !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedRightbarAuto = importedValue(RIGHTBAR_AUTO_KEY);
+						if (importedRightbarAuto !== undefined && typeof importedRightbarAuto !== "boolean") return Promise.reject(new Error("invalid config"));
 						if (importedMotion !== undefined && typeof importedMotion !== "boolean") return Promise.reject(new Error("invalid config"));
 						const importedFontLevel = importedValue(FONT_LEVEL_KEY);
 						if (importedFontLevel !== undefined && !(Number(importedFontLevel) >= 1 && Number(importedFontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
@@ -3600,6 +3671,8 @@ scanHooks.push(composerScrollScan);
 						applyAvatarStyle(avatarArt);
 						composerFxOn = readJson(COMPOSER_FX_KEY, true) !== false;
 						composerEffects.setEnabled(composerFxOn);
+						rightbarAuto = readJson(RIGHTBAR_AUTO_KEY, false) === true;
+						applyRightbarAuto(rightbarAuto);
 						const userAvatar = readJson(USER_AVATAR_KEY, null);
 						if (typeof userAvatar === "string" && userAvatar) setUserAvatar(userAvatar);
 						const aiAvatar = readJson(AI_AVATAR_KEY, null);
@@ -3616,7 +3689,7 @@ scanHooks.push(composerScrollScan);
 							[LINE_HEIGHT_KEY, lineHeight], [MOTION_KEY, reduceMotion],
 							[FONT_FAMILY_KEY, fontFamily], [CONTRAST_KEY, contrast],
 							[AVATAR_SHAPE_KEY, avatarShape], [AVATAR_STYLE_KEY, avatarArt],
-							[COMPOSER_FX_KEY, composerFxOn]
+							[COMPOSER_FX_KEY, composerFxOn], [RIGHTBAR_AUTO_KEY, rightbarAuto]
 						];
 						canonical.forEach(([key, value]) => {
 							if (Object.prototype.hasOwnProperty.call(skin, key)) writeJson(key, value);
@@ -3701,6 +3774,12 @@ scanHooks.push(composerScrollScan);
 					  composerEffects.setEnabled(composerFxOn);
 					  sync();
 					},
+					setRightbarAuto: (on) => {
+					  rightbarAuto = !!on;
+					  writeJson(RIGHTBAR_AUTO_KEY, rightbarAuto);
+					  applyRightbarAuto(rightbarAuto);
+					  sync();
+					},
 					setAvatarStyle: (value) => {
 					avatarArt = value === "initial" ? "initial" : "silhouette";
 					writeJson(AVATAR_STYLE_KEY, avatarArt);
@@ -3742,6 +3821,7 @@ window.localStorage.removeItem(FONT_FAMILY_KEY);
 window.localStorage.removeItem(CONTRAST_KEY);
 window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 window.localStorage.removeItem(COMPOSER_FX_KEY);
+window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -3766,6 +3846,7 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 						window.localStorage.removeItem(AVATAR_STYLE_KEY);
 						avatarArt = "silhouette"; applyAvatarStyle(avatarArt);
 						composerFxOn = true; composerEffects.setEnabled(true);
+						rightbarAuto = false; applyRightbarAuto(rightbarAuto);
 						// Deleting the key is not enough: the in-memory order keeps driving the DOM
 						// until the next reload, and saved presets would survive a "restore defaults".
 						sidebarOrder = []; applyPanelOrder();
@@ -3814,6 +3895,10 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 "fxOff": "关闭",
 "composerFxTitle": "输入框效果",
 "composerFxHint": "毛玻璃卡片、光标滑动、发送时气泡从输入框落下",
+"rightbarAutoTitle": "右侧面板默认展开",
+"rightbarAutoHint": "进入会话时自动打开右侧面板；手动收起过的会话不再自动打开",
+"rightbarAutoOn": "开启",
+"rightbarAutoOff": "关闭",
 "motionReduced": "减少",
 "fontFamilyTitle": "字体",
 "fontFamilySystem": "系统默认",
@@ -3911,6 +3996,10 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 "fxOff": "Off",
 "composerFxTitle": "Composer effects",
 "composerFxHint": "Glass card, sliding caret, send-flight into the bubble",
+"rightbarAutoTitle": "Open right panel by default",
+"rightbarAutoHint": "Opens the right panel when entering a session; sessions you collapsed manually stay closed",
+"rightbarAutoOn": "On",
+"rightbarAutoOff": "Off",
 "motionReduced": "Reduced",
 "fontFamilyTitle": "Typeface",
 "fontFamilySystem": "System",
@@ -3988,15 +4077,18 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 				// after a disable/enable cycle.
 				const removableHooks = [applyPanelOrder, composerScrollScan];
 				if (groupCounts) removableHooks.push(groupCounts.stamp);
+				if (rightbarAutoCtl) removableHooks.push(rightbarAutoCtl.tick);
 				for (const hook of removableHooks) {
 					const at = scanHooks.indexOf(hook);
 					if (at >= 0) scanHooks.splice(at, 1);
 				}
 				if (groupCounts) groupCounts.dispose();
+				if (rightbarAutoCtl) rightbarAutoCtl.dispose();
 				unbindComposerFade();
 				if (scheduled) { cancelAnimationFrame(scheduled); scheduled = null; }
 				for (const entry of panelEntries()) entry.el.style.removeProperty("order");
 				if (document.body) delete document.body.dataset.dshWcSidebarInk;
+				if (document.body) delete document.body.dataset.dshWcRightbarAuto;
 				document.documentElement.style.removeProperty("--dsh-wc-sidebar-color");
 				document.documentElement.style.removeProperty("--dsh-wechat-font-scale");
 				document.documentElement.style.removeProperty("--dsh-wechat-text-scale");
