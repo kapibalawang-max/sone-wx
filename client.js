@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.37.1";
+const SKIN_VERSION = "1.38.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -173,6 +173,7 @@ const SKIN_VERSION = "1.37.1";
      The old palette packed six surfaces into 6 L* (0.6-1.8 apart), which the
      eye cannot separate. */
   --wc-bg: #fcfcfd;                  /* slate1  conversation canvas */
+  --wc-bubble-bg: #f0f0f3;           /* slate3  WeChat reply surface: the bubble separates by BACKGROUND, not a hairline */
   --wc-surface: #f9f9fb;             /* slate2  cards, module fill */
   --wc-sidebar: #e8e8ec;             /* slate4  session list */
   --wc-border-light: #d9d9e0;        /* slate6  5.2 L* below the sidebar */
@@ -201,8 +202,8 @@ const SKIN_VERSION = "1.37.1";
      neutral surface -- that removes the fourth competing green. */
   --wc-sel-ink: #ffffff;
   --wc-sel-ink-dim: rgba(255, 255, 255, 0.92);
-  --wc-th-bg: #f0f0f3;               /* slate3 */
-  --wc-code-bg: #f0f0f3;             /* slate3 */
+  --wc-th-bg: #e8e8ec;               /* slate4 - stays readable inside the slate3 bubble */
+  --wc-code-bg: #e8e8ec;             /* slate4 */
 
   /* ================= semantic hues =================
      One hue per meaning. Amber belongs to warnings only, which is why the chat
@@ -326,14 +327,15 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --wc-accent-solid: #55703f;
   --wc-accent-press: #4a6337;
   --wc-bg: #fdfdfc;                  /* sand1 */
+  --wc-bubble-bg: #f1ede2;           /* warm sand bubble on the near-white paper canvas */
   --wc-surface: #f9f9f8;             /* sand2 */
   --wc-sidebar: #e9e8e6;             /* sand4 */
   --wc-border-light: #dad9d6;        /* sand6 */
   --wc-ink-1: #21201c;               /* sand12 */
   --wc-ink-2: #4c4c47;
   --wc-ink-3: #63635e;               /* sand11, 4.93:1 on the sidebar */
-  --wc-th-bg: #f1f0ef;               /* sand3 */
-  --wc-code-bg: #f1f0ef;
+  --wc-th-bg: #e5e1d5;               /* sand4 - reads inside the #f1ede2 bubble */
+  --wc-code-bg: #e5e1d5;
   --wc-btn-idle-bg: #e9e8e6;
   --wc-bubble: #ded3ba;
   --wc-bubble-ink: #3a3325;
@@ -343,7 +345,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --dsw-alias-bg-module-platform: #f9f9f8;
   --dsw-specific-bubble: #ded3ba;
 }
-body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"]) .kiGsTW_header { background: var(--wc-bg); }
+
 
 /* ================= input surface: selection, scrollbars, typeface ================= */
 body.dsh-wechat-skin-on ::selection { background: color-mix(in srgb, var(--wc-green, #07c160) 24%, transparent); color: inherit; }
@@ -651,11 +653,11 @@ body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) co
 body.dsh-wechat-skin-on .tnXGgG_column [class*="_bubble_"]:not([data-portal]) pre { background: rgba(0, 0, 0, 0.08) !important; color: var(--wc-bubble-code-ink) !important; }
 
 /* ================= assistant replies: white WeChat bubble ================= */
-/* .XNZzAa_body = the assistant message body. White bubble on light, a raised dark
-   card on dark (WeChat-dark style), so replies read as a bubble in both schemes. */
+/* .XNZzAa_body = the assistant message body. The WeChat model: the reply bubble
+   carries its own surface colour (delta L* ~5 below the canvas), so it reads as a
+   bubble without any hairline - a border would make it a card. Canvas untouched. */
 body.dsh-wechat-skin-on.dsh-wechat-match .XNZzAa_body {
-  background: #ffffff;
-  border: 0.5px solid var(--wc-border-light);
+  background: var(--wc-bubble-bg);
   border-radius: var(--wc-radius-bubble);
   padding: 10px 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -673,7 +675,6 @@ body.dsh-wechat-skin-on ._markdown_rve47_5 {
 /* DARK scheme: raised dark bubble (#2a2a2d on the #111214 wallpaper) */
 body.dsh-wechat-skin-on.dsh-wechat-match[data-dsh-wechat-dark="1"] .XNZzAa_body {
   background: var(--wc-overlay-dark);
-  border-color: var(--wc-border-dark);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 

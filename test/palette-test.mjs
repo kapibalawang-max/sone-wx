@@ -51,7 +51,8 @@ let pass = 0; const fails = [];
 const ok = (cond, msg, extra = '') => { if (cond) pass++; else fails.push(msg + (extra ? ' — ' + extra : '')); };
 
 // ---- 1. light surface ladder: every step must be perceptible ----
-const ladder = ['wc-bg', 'wc-surface', 'wc-code-bg', 'wc-sidebar', 'wc-border-light'].map(tok);
+// v1.38: the reply bubble owns the slate3 step; code/table sink to slate4.
+const ladder = ['wc-bg', 'wc-surface', 'wc-bubble-bg', 'wc-code-bg', 'wc-border-light'].map(tok);
 ok(ladder.every(Boolean), 'light surface ladder resolves to hex', JSON.stringify(ladder));
 for (let i = 1; i < ladder.length; i++) {
   const d = L(ladder[i - 1]) - L(ladder[i]);
@@ -59,8 +60,8 @@ for (let i = 1; i < ladder.length; i++) {
   const floor = i === 1 ? 0.8 : 2.5;
   ok(d >= floor, `surface step ${i} separates by >=${floor} L*`, `${ladder[i - 1]}→${ladder[i]} Δ${d.toFixed(1)}`);
 }
-ok(L(ladder[0]) - L(ladder[3]) >= 6, 'canvas and sidebar differ by >=6 L* overall',
-  `Δ${(L(ladder[0]) - L(ladder[3])).toFixed(1)}`);
+ok(L(ladder[0]) - L(tok('wc-sidebar')) >= 6, 'canvas and sidebar differ by >=6 L* overall',
+  `Δ${(L(ladder[0]) - L(tok('wc-sidebar'))).toFixed(1)}`);
 
 // ---- 2. ink ladder: three levels, all readable on every light surface ----
 const inks = ['wc-ink-1', 'wc-ink-2', 'wc-ink-3'].map(tok);
@@ -192,4 +193,27 @@ for (const m of rootBlock.matchAll(/--(wc-[\w-]+):\s*(#[0-9a-fA-F]{6})/g)) {
 ok(orphans.length === 0, 'no one-off greens in :root outside the ramp', orphans.join(', '));
 
 if (fails.length) { console.error('palette-test FAILED\n  ' + fails.join('\n  ')); process.exit(1); }
+// ---- 7. WeChat bubble model (v1.38): the reply carries its own surface, the
+// canvas stays the untouched DSH base, and code/table surfaces read BELOW the bubble ----
+{
+  const bubbleBg = tok('wc-bubble-bg');
+  ok(bubbleBg, 'light replies paint --wc-bubble-bg (not a hardcoded white)');
+  ok(/XNZzAa_body\s*\{[^}]*background:\s*var\(--wc-bubble-bg\)/.test(css), 'the bubble rule uses the surface token');
+  ok(!/XNZzAa_body[^{]*\{[^}]*border:/.test(css), 'no hairline on the reply bubble (border would make it a card)');
+  const canvasDelta = L(tok('wc-bg')) - L(bubbleBg);
+  ok(canvasDelta >= 3 && canvasDelta <= 6, 'bubble sits 3-6 L* under the canvas', `Δ${canvasDelta.toFixed(1)}`);
+  const innerDelta = L(bubbleBg) - L(tok('wc-code-bg'));
+  ok(innerDelta >= 2.5, 'code/table surfaces read below the bubble, not into it', `Δ${innerDelta.toFixed(1)}`);
+  const pBubble = inBlock(paperSel, 'wc-bubble-bg');
+  ok(pBubble, 'paper declares its own bubble surface', String(pBubble));
+  const pCanvas = inBlock(paperSel, 'dsw-alias-bg-base') || '#fdfdfc';
+  const pDelta = L(pCanvas) - L(pBubble);
+  ok(pDelta >= 3 && pDelta <= 6, 'paper bubble reads 3-6 L* under the paper canvas', `Δ${pDelta.toFixed(1)}`);
+  ok(L(pBubble) - L(inBlock(paperSel, 'wc-code-bg')) >= 2.5, 'paper code surface stays below the paper bubble');
+  const dSel = 'body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"]';
+  const dBubble = inBlock(dSel, 'wc-overlay-dark') || tok('wc-overlay-dark');
+  ok(dBubble && L(dBubble) - L('#111113') >= 8, 'dark bubble still floats >=8 L* above the dark canvas',
+    dBubble ? `Δ${(L(dBubble) - L('#111113')).toFixed(1)}` : 'missing');
+}
+
 console.log(`palette-test OK（${pass} 项）`);
