@@ -112,6 +112,7 @@ check(src.includes("tagline: '新会话标语'") && src.includes("tagline: 'New-
 check(src.includes('maxLength: MAX_TAGLINE'), 'tagline input maxLength missing');
 check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after'), 'tagline CSS ::after rule missing');
 check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {'), 'tagline CSS hide rule missing');
+check(src.includes('font-size: 0 !important;\n  display: flex;\n  align-items: center;'), 'title span must be flex-centered so the slogan aligns with the mark');
 check(src.includes("body.setAttribute('data-dsh-wc-tagline-set', '1')"), 'applyHeroTagline does not set the body switch');
 check(src.includes("document.body.removeAttribute('data-dsh-wc-tagline-set')"), 'applyHeroTagline does not clear the body switch');
 check(src.includes('var(--dsh-wc-hero-tagline, none)'), 'tagline CSS var fallback missing');

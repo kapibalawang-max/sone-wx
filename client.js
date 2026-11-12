@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.40.3";
+const SKIN_VERSION = "1.40.4";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1338,6 +1338,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: #f
    未设置时开关不存在，官方标题原样显示 */
 body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {
   font-size: 0 !important;
+  display: flex;
+  align-items: center;
 }
 body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after {
   content: var(--dsh-wc-hero-tagline, none);
