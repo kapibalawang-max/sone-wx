@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.40.0";
+const SKIN_VERSION = "1.40.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1331,6 +1331,20 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: #f
 @keyframes dsh-wc-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   body.dsh-wechat-skin-on .dsh-wc-caret { animation: none; transition: none; }
+}
+/* 新会话页自定义标语：值在 body 变量 --dsh-wc-hero-tagline（JSON 字符串），
+   hero stack 的 ::after 渲染为标题下方小字；变量未设时 content:none 不占位 */
+body.dsh-wechat-skin-on [class*="_stack"]:has(> [class*="_headline"])::after {
+  content: var(--dsh-wc-hero-tagline, none);
+  display: block;
+  margin: 8px auto 0;
+  max-width: min(640px, 82%);
+  font-size: var(--wc-fs-sm);
+  line-height: 1.55;
+  color: var(--wc-ink-2);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 `;
 
@@ -4205,69 +4219,27 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
     }
 
     /**
-     * 把新会话页标语换成自定义文案；tagline 为空时还原官方标语。
-     * 宿主 HeroShell 结构：headline > fishHitbox(slot) + titleGroup；
-     * titleGroup 里第一个无类名 span 是标语（hero.headline），第二个是带
-     * previewBadge 类名的「预览版」徽标，不能动。官方原文先存进 dataset，
-     * 关闭自定义时原样还原。
+     * 在新会话页 hero 区渲染自定义标语：标语值写在 body 的 CSS 变量
+     * --dsh-wc-hero-tagline 上，由 WECHAT_CSS 在 hero stack 的 ::after
+     * 渲染成标题下方小字。body 不是 React 管辖节点，变量一次写入全局
+     * 生效，hero 区重挂载后自动带上，无需任何 DOM 插入/文本改写/
+     * MutationObserver 跟随——那些做法都会和 React 的重渲染打架
+     * （表现即标题与标语叠写、元素反复消失）。
      */
     function applyHeroTagline(root, tagline) {
-      if (!root || typeof root.querySelectorAll !== 'function') return 0
-      var groups = root.querySelectorAll('[class*="_titleGroup"]')
-      var wanted = String(tagline || '')
-      var changed = 0
-      for (var i = 0; i < groups.length; i++) {
-        var first = groups[i].firstElementChild
-        if (!first || first.tagName !== 'SPAN' || first.className !== '') continue
-        if (wanted === '') {
-          if (first.dataset.dshWcTagline === '1') {
-            first.textContent = first.dataset.dshWcHeroDefault || ''
-            delete first.dataset.dshWcTagline
-            delete first.dataset.dshWcHeroDefault
-            changed++
-          }
-          continue
-        }
-        if (first.dataset.dshWcTagline !== '1') first.dataset.dshWcHeroDefault = first.textContent
-        if (first.textContent !== wanted) {
-          first.textContent = wanted
-          changed++
-        }
-        first.dataset.dshWcTagline = '1'
-      }
-      return changed
+      if (typeof document === 'undefined' || !document.body || !document.body.style) return 0
+      var wanted = String(tagline || '').trim()
+      var current = document.body.style.getPropertyValue('--dsh-wc-hero-tagline') || ''
+      var next = wanted === '' ? '' : JSON.stringify(wanted)
+      if (current === next) return 0
+      if (next === '') document.body.style.removeProperty('--dsh-wc-hero-tagline')
+      else document.body.style.setProperty('--dsh-wc-hero-tagline', next)
+      return 1
     }
 
     function stampHeroTagline() {
       if (typeof document === 'undefined') return
       applyHeroTagline(document, state.heroTagline)
-    }
-
-    var heroTaglineObserver = null
-    var heroTaglineScheduled = false
-
-    /** React 会重挂载 hero 区；用轻量 MutationObserver 跟进，rAF 合并高频回调。 */
-    function watchHeroTagline() {
-      if (heroTaglineObserver !== null) return
-      if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') return
-      heroTaglineObserver = new MutationObserver(function () {
-        if (heroTaglineScheduled) return
-        heroTaglineScheduled = true
-        var run = function () {
-          heroTaglineScheduled = false
-          stampHeroTagline()
-        }
-        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run)
-        else setTimeout(run, 16)
-      })
-      heroTaglineObserver.observe(document.body, { childList: true, subtree: true })
-    }
-
-    function unwatchHeroTagline() {
-      if (heroTaglineObserver !== null) {
-        heroTaglineObserver.disconnect()
-        heroTaglineObserver = null
-      }
     }
 
     //#endregion
@@ -4885,7 +4857,6 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 
 
           load()
-          watchHeroTagline()
 
           var onBrandReload = function () { load() }
           window.addEventListener('sone-wx:brand-reload', onBrandReload)
@@ -4898,7 +4869,6 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 
           return function () {
             if (typeof offLocale === 'function') offLocale()
-            unwatchHeroTagline()
             for (var i = 0; i < offDicts.length; i++) offDicts[i]()
             translateRef = null
             window.removeEventListener('sone-wx:brand-reload', onBrandReload)
