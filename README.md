@@ -60,6 +60,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-12 v1.40.3 新会话页 hero 区不再显示「预览版」徽章（用户要求）：WECHAT_CSS 对 hero headline 内的 `_previewBadge` 施加 display:none，不影响其他区域的徽章类元素。
 - 2026-11-12 v1.40.2 新会话标语改为直接替换 hero 标题文字（此前 v1.40.1 是标题下方另起一行，与预期不符）：官方标题 span 以 CSS font-size:0 隐藏，标语经其 ::after 以原标题字号（26px/500/--wc-ink-1）在原位置渲染；取值与开关仍在 body（--dsh-wc-hero-tagline + data-dsh-wc-tagline-set），React 重渲染零干预，清空恢复官方默认。真实页面探针验证设值/打字重渲染/清空三态，brand-tagline-test 更新为替换语义。
 - 2026-11-12 v1.40.1 修复新会话页「标题和标语重叠」：v1.40.0 把标语写进宿主标题 span 的 `textContent`，React 重渲染会按虚拟 DOM 恢复标题文本，两条文案在 hero 区叠写。改为把标语存到 hero stack 的 `data-dsh-wc-hero-tagline` 属性，由 WECHAT_CSS 的 `[data-dsh-wc-hero-tagline]::after` 渲染成标题下方独立小字（`--wc-fs-sm`、`--wc-ink-2`、居中、`max-width: min(640px, 82%)`、可换行），不再插入或改写任何 React 管辖节点；宿主标题保持官方原文，清空即移除属性。brand-tagline-test 重写为属性语义（12 项），CSS 快照更新。
 

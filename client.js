@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.40.2";
+const SKIN_VERSION = "1.40.3";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1347,6 +1347,10 @@ body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > sp
   color: var(--wc-ink-1, #1c2024);
   white-space: normal;
   overflow-wrap: anywhere;
+}
+/* 新会话页 hero 区不显示「预览版」徽章 */
+body.dsh-wechat-skin-on [class*="_headline"] [class*="_previewBadge"] {
+  display: none !important;
 }
 `;
 
