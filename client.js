@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.44.0";
+const SKIN_VERSION = "1.45.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -2457,6 +2457,60 @@ function initGroupCounts(ctx) {
 		}
 		//#endregion
 
+		//#region dsh-wechat-skin: right panel default width
+		/**
+		 * Default right-panel width: 35% of the viewport instead of the host's
+		 * 45%. Only applies until the user grabs the right-panel drag handle
+		 * once (tracked locally), after which the host's own value always wins.
+		 * Re-applies on window resize so the ratio keeps holding while untouched.
+		 */
+		const RIGHTBAR_TOUCHED_KEY = "dsh-wechat-skin:rightbar-touched";
+		const RIGHTBAR_WIDTH_RATIO = 0.35;
+		function rightbarTouched() { return readJson(RIGHTBAR_TOUCHED_KEY, false) === true; }
+		function applyRightbarDefault(layout) {
+			if (rightbarTouched()) return false;
+			if (!layout || !layout.panels || typeof layout.panels.setRightbar !== "function") return false;
+			const width = Math.round(window.innerWidth * RIGHTBAR_WIDTH_RATIO);
+			if (!(width >= 300)) return false;
+			try { layout.panels.setRightbar(width); } catch (e) { return false; }
+			return true;
+		}
+		function initRightbarWidth(ctx) {
+			let layout = null;
+			let attempts = 0;
+			let pending = null;
+			const stop = () => { if (pending) { clearTimeout(pending); pending = null; } };
+			const attempt = () => {
+				stop();
+				if (layout) { applyRightbarDefault(layout); return; }
+				try { layout = ctx.get("layout") || null; } catch (e) { layout = null; }
+				if (layout && layout.panels && typeof layout.panels.setRightbar === "function") {
+					applyRightbarDefault(layout);
+					return;
+				}
+				layout = null;
+				if (attempts < 6) { attempts += 1; pending = setTimeout(attempt, 300); }
+			};
+			const onResize = () => { if (layout) applyRightbarDefault(layout); };
+			const onTouch = (event) => {
+				const el = event.target && event.target.closest ? event.target.closest('.PIRFFq_handle[data-side="rightbar"]') : null;
+				if (!el) return;
+				writeJson(RIGHTBAR_TOUCHED_KEY, true);
+				document.removeEventListener("pointerdown", onTouch, true);
+			};
+			document.addEventListener("pointerdown", onTouch, true);
+			window.addEventListener("resize", onResize);
+			attempt();
+			return {
+				dispose() {
+					stop();
+					document.removeEventListener("pointerdown", onTouch, true);
+					window.removeEventListener("resize", onResize);
+				}
+			};
+		}
+		//#endregion
+
 		/** Toggle row slot store: enabled flag + font level. */
 		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx, initialRightbarAuto) {
 		  return (0, _runtime_client.defineStore)({
@@ -3686,6 +3740,9 @@ scanHooks.push(composerScrollScan);
 			let starsCtl = null;
 			try { starsCtl = initSessionStars(); } catch (e) { starsCtl = null; }
 			if (starsCtl) scanHooks.push(starsCtl.stamp);
+			// Right-panel default width (35% until the user drags the handle).
+			let rightbarWidthCtl = null;
+			try { rightbarWidthCtl = initRightbarWidth(ctx); } catch (e) { rightbarWidthCtl = null; }
 			const injected = (actions) => {
 				bound = actions;
 				sync();
@@ -4331,6 +4388,7 @@ window.localStorage.removeItem(STAR_KEY);
 				if (groupCounts) groupCounts.dispose();
 				if (rightbarAutoCtl) rightbarAutoCtl.dispose();
 				if (starsCtl) starsCtl.dispose();
+				if (rightbarWidthCtl) rightbarWidthCtl.dispose();
 				unbindComposerFade();
 				if (scheduled) { cancelAnimationFrame(scheduled); scheduled = null; }
 				for (const entry of panelEntries()) entry.el.style.removeProperty("order");
