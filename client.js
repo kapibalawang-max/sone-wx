@@ -85,7 +85,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.41.1";
+const SKIN_VERSION = "1.41.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1140,7 +1140,7 @@ body.dsh-wechat-skin-on {
 }
 /* Paint only when open: the panel is a full-height overlay that stays translated
    off-canvas when closed, so an always-on background shows as a slab over chat. */
-body.dsh-wechat-skin-on .Dv5QdW_panel[data-sidebar-right-open] { background: var(--dsw-alias-bg-base, #ffffff); border-left: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6); }
+body.dsh-wechat-skin-on .Dv5QdW_panel[data-sidebar-right-open] { background: var(--dsw-alias-bg-base, #ffffff); }
 body.dsh-wechat-skin-on .Dv5QdW_panelBody { padding: 10px 12px; }
 body.dsh-wechat-skin-on .Dv5QdW_tabTitle { font-size: var(--wc-fs-md); font-weight: 600; }
 body.dsh-wechat-skin-on .Dv5QdW_tabBody { font-size: var(--wc-fs-sm); }
