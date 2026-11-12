@@ -15,6 +15,11 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 - 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；样式改 `client.js` 内 WECHAT_CSS（本插件无独立 src，双源合并为单源）。
 
 ## 更新记录
+### v1.45.1
+
+- 修复：设置页「SONE主题 渲染出错」（ReferenceError: useState/useEffect is not defined）。v1.43.0 在 WechatSkinRow 内新增分享码状态与 Esc 关闭逻辑时误用了裸 `useState`/`useEffect`，而该组件作用域内未引入这两个 Hook（其余代码均为 `(0, _react.useState)` 形式），React 渲染即抛错、被错误边界接管。现改为与组件内其他 Hook 一致的 `(0, _react.useState)`/`(0, _react.useEffect)` 写法。
+- 验证：真实设置页（自签 cookie + headless Chrome）确认外观/消息/布局/辅助四组与 33 行设置项完整渲染、无渲染出错；43 套测试全绿。
+
 
 - 2026-11-12 v1.45.0 右侧面板默认宽度改为视口的 35%（宿主默认 45%）。仅在你从未拖动过右栏拖拽手柄时生效（本地记录 dsh-wechat-skin:rightbar-touched）；一旦手动拖过，永远尊重你拖出的宽度。窗口缩放时未拖动过则保持 35% 比例。新增 test/rightbar-width-test.mjs（8 组：比例计算、touched 跳过、小窗口下限、服务延迟重试、拖动标记、resize 跟随、监听清理、接线守卫），测试套件 43 项。
 - 2026-11-12 v1.44.0 会话星标：会话行悬停出现星形按钮，点击后该会话在所属分组内置顶显示（纯视觉层，星标存本地 dsh-wechat-skin:starred，不改宿主数据；刷新页面后列表恢复官方顺序，星标标记仍在）。激活色为琥珀金（Radix amber9），「恢复默认」会同时清除星标记录。新增 test/star-test.mjs（5 组：星标标记、按钮复用、点击处理、接线守卫），测试套件 42 项。

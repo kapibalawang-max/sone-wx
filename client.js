@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.45.0";
+const SKIN_VERSION = "1.45.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -3201,10 +3201,10 @@ setStatus({ kind: "ok", detail: t("imported") });
 };
 reader.readAsText(file);
 };
-const [shareOpen, setShareOpen] = useState(false);
-const [shareCode, setShareCode] = useState("");
-const [shareCopied, setShareCopied] = useState(false);
-const [shareImportText, setShareImportText] = useState("");
+const [shareOpen, setShareOpen] = (0, _react.useState)(false);
+const [shareCode, setShareCode] = (0, _react.useState)("");
+const [shareCopied, setShareCopied] = (0, _react.useState)(false);
+const [shareImportText, setShareImportText] = (0, _react.useState)("");
 const openShare = () => {
 	setShareCode(encodeSkinShare());
 	setShareCopied(false);
@@ -3245,7 +3245,7 @@ const runShareImport = () => {
 		setStatus({ kind: "ok", detail: t("imported") });
 	}).catch(() => setStatus({ kind: "err", detail: t("shareInvalid") }));
 };
-useEffect(() => {
+(0, _react.useEffect)(() => {
 	if (!shareOpen) return;
 	const onKey = (event) => { if (event.key === "Escape") setShareOpen(false); };
 	window.addEventListener("keydown", onKey);
