@@ -13,7 +13,7 @@ if (prep.status !== 0) {
 console.log('PREP  fixtures             ' + (prep.stdout || '').trim().split('\n').pop())
 const files = ['duplicate-fn-test', 'host-hash-test', 'host-routes-test', 'cleanup-test', 'palette-test',
   'sbg-test', 'panel-order-test', 'config-test', 'type-scale-test',
-  'style-prop-test', 'font-scope-test', 'injected-setters-test', 'glyph-turn-test', 'sidebar-state-test', 'group-count-test', 'brand-tagline-test', 'rightbar-auto-test', 'i18n-keys-test', 'settings-search-test', 'user-avatar-test', 'avatar-topic-test', 'skin-extras-test', 'table-test', 'table-stability-test', 'markdown-test', 'composer-fx-test', 'ai-avatar-test', 'autogrow-test', 'version-test', 'store-sync-test', 'new-session-test', 'panel-density-test', 'folder-icon-test', 'genui-table-test', 'contrast-test', 'contrast-sweep-test', 'affordance-test', 'css-snapshot', 'visual']
+  'style-prop-test', 'font-scope-test', 'injected-setters-test', 'glyph-turn-test', 'sidebar-state-test', 'group-count-test', 'brand-tagline-test', 'rightbar-auto-test', 'i18n-keys-test', 'settings-search-test', 'user-avatar-test', 'avatar-topic-test', 'skin-extras-test', 'table-test', 'table-stability-test', 'markdown-test', 'composer-fx-test', 'ai-avatar-test', 'autogrow-test', 'version-test', 'store-sync-test', 'new-session-test', 'panel-density-test', 'folder-icon-test', 'genui-table-test', 'contrast-test', 'contrast-sweep-test', 'affordance-test', 'share-code-test', 'css-snapshot', 'visual']
 let failed = 0
 for (const f of files) {
   const r = spawnSync(process.execPath, [join(here, f + '.mjs')], { encoding: 'utf8' })

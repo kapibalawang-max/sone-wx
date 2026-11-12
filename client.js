@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.42.0";
+const SKIN_VERSION = "1.43.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1534,6 +1534,13 @@ body .dsh-wc-color {
 	background: var(--dsw-alias-bg-module-platform);
 	cursor: pointer;
 }
+/* share-code modal */
+body .dsh-wc-modal-mask { position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
+body .dsh-wc-modal { width: min(520px, calc(100vw - 48px)); max-height: 80vh; overflow: auto; background: var(--dsw-alias-bg-base, #ffffff); border-radius: var(--wc-radius-card, 12px); padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 10px; }
+body .dsh-wc-modal-title { font-size: var(--wc-fs-md, 13px); font-weight: 600; color: var(--dsw-alias-label-primary, #1c2024); }
+body .dsh-wc-modal-desc { font-size: var(--wc-fs-sm, 12px); line-height: 1.55; color: var(--dsw-alias-label-secondary, #61666b); }
+body .dsh-wc-modal textarea { width: 100%; box-sizing: border-box; min-height: 88px; resize: vertical; border: 0.5px solid var(--dsw-alias-border-l2, #d9d9e0); border-radius: var(--wc-radius-btn, 8px); padding: 8px 10px; font: var(--wc-fs-sm, 12px)/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--dsw-alias-label-primary, #1c2024); background: var(--dsw-alias-bg-layer-2, #f7f7f8); }
+body .dsh-wc-modal-divider { height: 0.5px; background: var(--dsw-alias-border-l2, #d9d9e0); }
 		`;
 
 //#endregion
@@ -2912,6 +2919,48 @@ bind();
 return { setEnabled, dispose };
 }
 
+/** Share code: a compact, copyable encoding of the skin-only appearance
+ * settings. Excludes avatar images (large data URLs), the sidebar order
+ * (personal session ids) and legacy keys, so codes stay short and private. */
+const SHARE_CODE_PREFIX = "SWX1.";
+const SHARE_CODE_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_ENABLED_KEY, CUSTOM_PRESETS_KEY];
+function base64UrlEncode(text) {
+	const bytes = new TextEncoder().encode(text);
+	let bin = "";
+	for (const b of bytes) bin += String.fromCharCode(b);
+	return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function base64UrlDecode(text) {
+	let t = String(text).replace(/-/g, "+").replace(/_/g, "/");
+	while (t.length % 4) t += "=";
+	const bin = atob(t);
+	const bytes = new Uint8Array(bin.length);
+	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+	return new TextDecoder().decode(bytes);
+}
+function encodeSkinShare() {
+	const skin = {};
+	try {
+		for (const key of SHARE_CODE_KEYS) {
+			const value = window.localStorage.getItem(key);
+			if (value !== null) skin[key] = value;
+		}
+	} catch (e) {}
+	return SHARE_CODE_PREFIX + base64UrlEncode(JSON.stringify({ v: 1, s: skin }));
+}
+function decodeSkinShare(raw) {
+	const text = String(raw == null ? "" : raw).trim();
+	if (!text.startsWith(SHARE_CODE_PREFIX)) throw new Error("invalid share code");
+	let parsed = null;
+	try { parsed = JSON.parse(base64UrlDecode(text.slice(SHARE_CODE_PREFIX.length))); } catch (e) { throw new Error("invalid share code"); }
+	if (!parsed || parsed.v !== 1 || !parsed.s || typeof parsed.s !== "object" || Array.isArray(parsed.s)) throw new Error("invalid share code");
+	const skin = {};
+	for (const key of SHARE_CODE_KEYS) {
+		if (Object.prototype.hasOwnProperty.call(parsed.s, key) && typeof parsed.s[key] === "string") skin[key] = parsed.s[key];
+	}
+	return skin;
+}
+
 function WechatSkinRow({ ctx, t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
@@ -3035,6 +3084,56 @@ setStatus({ kind: "ok", detail: t("imported") });
 };
 reader.readAsText(file);
 };
+const [shareOpen, setShareOpen] = useState(false);
+const [shareCode, setShareCode] = useState("");
+const [shareCopied, setShareCopied] = useState(false);
+const [shareImportText, setShareImportText] = useState("");
+const openShare = () => {
+	setShareCode(encodeSkinShare());
+	setShareCopied(false);
+	setShareImportText("");
+	setShareOpen(true);
+};
+const copyShareCode = () => {
+	const legacyCopy = () => {
+		try {
+			const ta = document.createElement("textarea");
+			ta.value = shareCode;
+			document.body.appendChild(ta);
+			ta.select();
+			document.execCommand("copy");
+			ta.remove();
+			setShareCopied(true);
+		} catch (e) {}
+	};
+	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareCode).then(() => setShareCopied(true)).catch(legacyCopy);
+	else legacyCopy();
+};
+const runShareImport = () => {
+	if (!importConfig) return;
+	let skin = null;
+	try { skin = decodeSkinShare(shareImportText); } catch (e) {
+		setStatus({ kind: "err", detail: t("shareInvalid") });
+		return;
+	}
+	if (!skin || !Object.keys(skin).length) {
+		setStatus({ kind: "err", detail: t("shareInvalid") });
+		return;
+	}
+	importConfig({ app: "sone-wx", version: 1, skin: skin }).then(() => {
+		const importedPreset = readJson(PRESET_KEY, null);
+		setPresetId(typeof importedPreset === "string" && importedPreset ? importedPreset : null);
+		bumpPresets((n) => n + 1);
+		setShareOpen(false);
+		setStatus({ kind: "ok", detail: t("imported") });
+	}).catch(() => setStatus({ kind: "err", detail: t("shareInvalid") }));
+};
+useEffect(() => {
+	if (!shareOpen) return;
+	const onKey = (event) => { if (event.key === "Escape") setShareOpen(false); };
+	window.addEventListener("keydown", onKey);
+	return () => window.removeEventListener("keydown", onKey);
+}, [shareOpen]);
 const fontOptions = [1, 2, 3, 4, 5].map((level) => ({ value: level, label: t("fontL" + level) }));
 const densityOptions = [
 { value: "cozy", label: t("densityCozy") },
@@ -3319,7 +3418,36 @@ type: "button",
 className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
 onClick: () => importRef.current && importRef.current.click(),
 children: t("importConfig")
+}),
+(0, react_jsx_runtime.jsx)("button", {
+type: "button",
+className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
+onClick: openShare,
+children: t("shareTitle")
+}),
+shareOpen ? (0, react_jsx_runtime.jsx)("div", {
+className: "dsh-wc-modal-mask",
+onClick: () => setShareOpen(false),
+children: (0, react_jsx_runtime.jsxs)("div", {
+className: "dsh-wc-modal",
+onClick: (event) => event.stopPropagation(),
+children: [
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-title", children: t("shareTitle") }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-desc", children: t("shareDesc") }),
+(0, react_jsx_runtime.jsx)("textarea", { className: "dsh-wc-modal-code", readOnly: true, value: shareCode, onFocus: (event) => event.target.select() }),
+(0, react_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+(0, react_jsx_runtime.jsx)("button", { type: "button", className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm", onClick: copyShareCode, children: shareCopied ? t("shareCopied") : t("shareCopy") }),
+(0, react_jsx_runtime.jsx)("button", { type: "button", className: "dsh-wc-btn dsh-wc-btn-sm", onClick: () => setShareOpen(false), children: t("shareClose") })
+] }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-divider" }),
+(0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-desc", children: t("shareImportTitle") }),
+(0, react_jsx_runtime.jsx)("textarea", { className: "dsh-wc-modal-code", placeholder: SHARE_CODE_PREFIX, value: shareImportText, onChange: (event) => setShareImportText(event.target.value) }),
+(0, react_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
+(0, react_jsx_runtime.jsx)("button", { type: "button", className: "dsh-wc-btn dsh-wc-btn-primary dsh-wc-btn-sm", onClick: runShareImport, children: t("shareImportBtn") })
+] })
+]
 })
+}) : null
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -3990,6 +4118,14 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"importConfig": "导入配置",
 					"exported": "已导出 sone-wx-config.json",
 					"imported": "已导入并应用",
+"shareTitle": "分享当前设置",
+"shareDesc": "复制分享码发给同事；对方在设置页粘贴即可应用同一套外观。",
+"shareCopy": "复制分享码",
+"shareCopied": "已复制",
+"shareClose": "关闭",
+"shareImportTitle": "粘贴分享码",
+"shareImportBtn": "导入",
+"shareInvalid": "分享码无效",
 					"importBad": "文件格式不对"
 				},
 				en: {
@@ -4090,6 +4226,14 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"importConfig": "Import",
 					"exported": "Exported sone-wx-config.json",
 					"imported": "Imported and applied",
+"shareTitle": "Share current settings",
+"shareDesc": "Copy the share code and send it to a colleague; they paste it on the settings page to apply the same look.",
+"shareCopy": "Copy share code",
+"shareCopied": "Copied",
+"shareClose": "Close",
+"shareImportTitle": "Paste a share code",
+"shareImportBtn": "Import",
+"shareInvalid": "Invalid share code",
 					"importBad": "Unreadable file"
 				}
 			}), "sone-wx: skin dictionaries");
