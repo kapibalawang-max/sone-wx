@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.41.3";
+const SKIN_VERSION = "1.41.4";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -419,6 +419,10 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"][data-dsh-wc-contrast="high"] {
 
 /* ================= frame ================= */
 body.dsh-wechat-skin-on .PIRFFq_frame { margin-left: 0; }
+/* Right-panel drag handle: the shell overlay layer sits at z-index 20 and covers
+   the whole frame, which can swallow hits on the z-11 handle; raise the handle
+   above it and widen its hit band centred on the visible divider. */
+body.dsh-wechat-skin-on .PIRFFq_handle[data-side="rightbar"] { z-index: 21; width: 12px; margin-left: -6px; }
 /* ================= sidebar ================= */
 /* !important + html: on macOS DSH paints the sidebar with a bluish color-mix gradient
    (specificity 0,4,1); the skin's flat WeChat fill has to outrank it. */

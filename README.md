@@ -60,6 +60,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-12 v1.41.4 修复右侧栏拖拽手柄命中问题：宿主全局浮层层（z-index 20、inset:0）会盖住 z-index 11 的拖拽手柄，导致鼠标生效位置不对；皮肤把手柄提到 z-index 21，并把命中带从 8px 加宽到 12px（仍以可见分界线为中心）。
 - 2026-11-12 v1.41.3 全面体检（client.js + 宿主路由/测试两路审计 39 条）：修复主题切换监听器不退订、品牌导出/导入丢新会话标语（heroTagline）、4 处品牌加载裸 Promise、设置页自检数组缺 key、resetSkin 漏清旧头像键、探针选择器不匹配时仍渲染皮肤设置区、slots 注入无守卫、body 类锁存后重复探测、深色代码光标色 --wc-caret-ink 缺深色/纸张定义、删除死令牌 --wc-green-hover；测试侧删除测已删功能的 bg-test（读陈旧 /tmp 快照）、panel-order-test 改从 client.js 现行 region 取代码并补失败退出码；宿主 index.js 的 diag 写入并入状态锁、删除 fenceRefused 死分支；package.json 兼容声明补 0.2.2-rc.2、engines.node 提到 >=20.11（代码用 import.meta.dirname）；contrast-test 深色/纸张用例改从对应主题块解析令牌，宿主深色面钉真实宿主令牌值。darkSkin 不进 store、composerFadeBound 陈旧条目、表格 resize 防抖等低价值项经评估不修。
 - 2026-11-12 v1.41.2 按用户要求去掉右侧栏展开时左侧的 0.5px 分隔竖线（`border-left` 已从右栏面板规则中移除，仅保留展开态背景）。
 - 2026-11-12 v1.41.1 修正 v1.41.0 的「右侧面板默认展开」不生效：宿主在进入会话时就会立刻写入该会话的右侧栏保存布局（`dsh.sidebar-right.v1.<sessionId>`），「无保存布局才自动打开」的判断永远不成立。改为直接语义——开关打开时，每次切换会话若右侧栏处于收起状态就自动展开（toggleExpanded 在会话面板尚未挂载时会抛错，带 300ms × 6 次重试）；在同一会话内手动收起后不会被强行弹回。
