@@ -38,6 +38,9 @@ window.__ModuleLoader__.load({
 		/** Settings row locale namespace. */
 		const SETTINGS_NS = "sone-wx.skin";
 		/** localStorage keys. */
+		// Derived state (title hash -> generated avatar index), intentionally NOT in
+		// CONFIG_SKIN_KEYS: it is rebuilt from the session list and pruned on demand,
+		// so export/reset must not treat it as a user preference.
 		const AVATAR_MAP_KEY = "dsh-wechat-skin:avatar-map";
 		/** Source identity for the token override layer. */
 		const OVERRIDE_SOURCE = "dsh-wechat-skin:tokens";
@@ -85,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.41.2";
+const SKIN_VERSION = "1.41.3";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -208,6 +211,7 @@ const SKIN_VERSION = "1.41.2";
   --wc-sel-ink-dim: rgba(255, 255, 255, 0.92);
   --wc-th-bg: #e8e8ec;               /* slate4 - stays readable inside the slate3 bubble */
   --wc-code-bg: #e8e8ec;             /* slate4 */
+  --wc-caret-ink: #111214;           /* composer caret layer */
 
   /* ================= semantic hues =================
      One hue per meaning. Amber belongs to warnings only, which is why the chat
@@ -253,7 +257,6 @@ const SKIN_VERSION = "1.41.2";
    --wc-ink-1 override on body would never reach them. */
 body.dsh-wechat-skin-on {
   --wc-green: var(--wc-accent-bright);
-  --wc-green-hover: var(--wc-accent-press);
   --dsw-alias-label-primary: var(--wc-ink-1);
   --dsw-alias-label-secondary: var(--wc-ink-2);
   --dsw-alias-label-tertiary: --wc-ink-3;
@@ -298,6 +301,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
                                         panel reads as inset instead of vanishing
                                         into the host's layer2 (old delta 0.5) */
   --wc-btn-idle-bg: #272a2d;
+  --wc-caret-ink: #f5f5f6;           /* caret stays visible on dark canvas */
   --wc-count-bg: #2a2d31;            /* one step above the dark sidebar */
   --wc-count-ink: #c3c8ce;
   /* Despite the legacy name this token means "the hairline for the current
@@ -1229,6 +1233,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"
   --wc-code-bg: #100e0c;            /* recessed 5.9 L* below the card */
   --wc-th-bg: #242019;
   --wc-btn-idle-bg: #242019;
+  --wc-caret-ink: #efece6;           /* warm dark canvas caret */
   --wc-ink-1: #efece6;              /* 14.55 / 8.23 / 6.22 on the card */
   --wc-ink-2: #b9b3a8;
   --wc-ink-3: #a29b8f;
@@ -2091,7 +2096,8 @@ return label ? { el, row, label } : null;
 }).filter(Boolean);
 }
 
-/** Labels in the order the user currently sees. */
+/** Labels in the order the user currently sees. No internal caller; kept as the
+ *  probe surface for test/panel-order-test.mjs. */
 function currentPanelLabels() {
 const entries = panelEntries();
 if (sidebarOrder.length === 0) return entries.map((entry) => entry.label);
@@ -2525,9 +2531,6 @@ versionTag: { color: "var(--dsw-alias-label-tertiary)", fontVariantNumeric: "tab
 				flexWrap: "wrap"
 			},
 			footLeft: {
-				display: "flex",
-				alignItems: "center",
-				gap: "6px",
 				display: "flex",
 				alignItems: "center",
 				gap: "6px",
@@ -3279,9 +3282,9 @@ style: styles.footLeft,
 children: status.kind
 ? (0, react_jsx_runtime.jsx)("span", { style: { color: status.kind === "err" ? "var(--dsw-alias-state-error-primary)" : "var(--dsw-alias-state-success-primary)" }, children: status.detail })
 : [
-(0, react_jsx_runtime.jsx)("span", { style: missing.length ? styles.dotWarn : Object.assign({}, styles.dot, contextMissing.length ? { opacity: 0.5 } : null), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
-(0, react_jsx_runtime.jsx)("span", { children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) }),
-(0, react_jsx_runtime.jsx)("span", { style: styles.versionTag, title: "SONE theme", children: "v" + SKIN_VERSION })
+(0, react_jsx_runtime.jsx)("span", { key: "dot", style: missing.length ? styles.dotWarn : Object.assign({}, styles.dot, contextMissing.length ? { opacity: 0.5 } : null), title: contextMissing.length ? t("fitContextPending") + "：" + contextMissing.join(", ") : "" }),
+(0, react_jsx_runtime.jsx)("span", { key: "fit", children: missing.length ? t("fitMissing") + " (" + missing.length + ")" : (contextMissing.length ? t("fitContextPending") : t("fitOk")) }),
+(0, react_jsx_runtime.jsx)("span", { key: "ver", style: styles.versionTag, title: "SONE theme", children: "v" + SKIN_VERSION })
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -3357,14 +3360,17 @@ const themeSvc = (typeof ctx.get === "function" ? ctx.get("theme") : undefined) 
 const scheme = themeSvc && typeof themeSvc.getTheme === "function"
 ? (themeSvc.getTheme().active || {}).colorScheme
 : (document.body.hasAttribute("data-ds-dark-theme") ? "dark" : "light");
+if (!matchLatched) {
 // Structural CSS needs body.dsh-wechat-match; latch it once the hashed selectors
 // are seen so a slow first render cannot leave the skin half-off, while a DSH
 // upgrade that renames every class still disables the gated rules.
-if (!matchLatched && selectorsMatch()) matchLatched = true;
+if (selectorsMatch()) matchLatched = true;
 // 只在缺失集合变化或首次匹配时打印：这个方法挂在每次 DOM 变更上，逐次 log 会刷屏。
+// 锁存后选择器必然全部命中，日志恒为 OK，跳过探测省下每批 4 次 querySelector。
 const _swMissing = SELECTOR_PROBES.filter((sel) => { try { return !document.querySelector(sel); } catch (e) { return true; } });
 const _swLog = _swMissing.length ? "missing: " + _swMissing.join(", ") : "OK";
 if (_swLog !== lastSelectorLog) { lastSelectorLog = _swLog; console.info("[sone-wx] selectors", _swLog); }
+}
 document.body.classList.add(BODY_CLASS);
 if (matchLatched) document.body.classList.add(MATCH_CLASS);
 document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
@@ -3382,7 +3388,7 @@ document.body.dataset.dshWechatDark = scheme === "dark" ? "1" : "0";
 
 			// Keep the body class in sync when the resolved theme switches
 			// light <-> dark, and enhance the DOM (avatars/composer/session rows).
-			ctx.on("theme/change", syncBodyClass);
+			const offThemeChange = ctx.on("theme/change", syncBodyClass);
 			if (typeof MutationObserver !== "undefined" && document.body) {
 				// Only react to mutations that can change what the skin paints. The chat
 				// area mutates on every streamed token; scanning on that would burn a
@@ -3569,7 +3575,8 @@ scanHooks.push(composerScrollScan);
 							payload.brand = {
 								title: brand && typeof brand.title === "string" ? brand.title : "",
 								wordmarkImage: !!(brand && brand.wordmarkImage),
-								heroMark: !brand || brand.heroMark !== false
+								heroMark: !brand || brand.heroMark !== false,
+								heroTagline: brand && typeof brand.heroTagline === "string" ? brand.heroTagline : ""
 							};
 							const present = { mark: !!(brand && brand.mark), wordmark: !!(brand && brand.wordmark) };
 							return Promise.all(["mark", "wordmark"].filter((kind) => present[kind]).map((kind) =>
@@ -3730,14 +3737,18 @@ scanHooks.push(composerScrollScan);
 							jobs.push(fetch("/sone-wx/brand/" + kind, { method: "PUT", headers: { "content-type": mime }, body: new Blob([bytes], { type: mime }) }).catch(() => {}));
 						});
 						if (brand) {
+							const brandBody = {
+								title: typeof brand.title === "string" ? brand.title : "",
+								wordmarkImage: brand.wordmarkImage === true,
+								heroMark: brand.heroMark !== false
+							};
+							// Only send heroTagline when the export carried one, so importing
+							// older exports keeps the current tagline instead of clearing it.
+							if (typeof brand.heroTagline === "string") brandBody.heroTagline = brand.heroTagline.slice(0, 40);
 							jobs.push(fetch("/sone-wx/brand", {
 								method: "POST",
 								headers: { "content-type": "application/json" },
-								body: JSON.stringify({
-									title: typeof brand.title === "string" ? brand.title : "",
-									wordmarkImage: brand.wordmarkImage === true,
-									heroMark: brand.heroMark !== false
-								})
+								body: JSON.stringify(brandBody)
 							}).catch(() => {}));
 						}
 						return Promise.all(jobs).then(() => {
@@ -3823,6 +3834,7 @@ scanHooks.push(composerScrollScan);
 							window.localStorage.removeItem(SIDEBAR_BG_KEY);
 							window.localStorage.removeItem(SIDEBAR_ORDER_KEY);
 							window.localStorage.removeItem(AI_AVATAR_ENABLED_KEY);
+							window.localStorage.removeItem(AI_AVATAR_SHOW_KEY_LEGACY);
 							window.localStorage.removeItem(PRESET_KEY);
 window.localStorage.removeItem(LINE_HEIGHT_KEY);
 window.localStorage.removeItem(MOTION_KEY);
@@ -4072,6 +4084,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 
 
 			ctx.effect(() => () => {
+				if (typeof offThemeChange === "function") offThemeChange();
 				if (disposeTokens) disposeTokens();
 				removeStyleTag();
 				removeUiStyleTag();
@@ -4789,7 +4802,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
           return post({ title: '', wordmarkImage: false, heroMark: true, heroTagline: '' })
         }).then(function () {
           setStatus('ok', t('resetDone'))
-          load()
+          load().catch(function () {})
         }).catch(reportError)
       }
 
@@ -4971,9 +4984,9 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
           document.head.appendChild(style)
 
 
-          load()
+          load().catch(function () {})
 
-          var onBrandReload = function () { load() }
+          var onBrandReload = function () { load().catch(function () {}) }
           window.addEventListener('sone-wx:brand-reload', onBrandReload)
 
           var offLocale = null
@@ -5001,7 +5014,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
         }, 'sone-wx: brand')
       } else {
         bindLocale(ctx)
-        load()
+        load().catch(function () {})
       }
     }
 
@@ -5083,7 +5096,7 @@ children: [
 (0, react_jsx_runtime.jsx)("div", { children: "收到参数：" + Object.keys(props || {}).join(", ") })
 ]
 }),
-(0, react_jsx_runtime.jsx)(WechatSkinRow, props),
+missing.length === 0 ? (0, react_jsx_runtime.jsx)(WechatSkinRow, props) : null,
 (0, react_jsx_runtime.jsx)(BRAND.BrandStudioSection, {})
 ]
 })
@@ -5249,7 +5262,7 @@ try { uninstallDiag = installDiagHook() || (() => {}); } catch {}
 const skin = applySkin(ctx);
 BRAND.applyBrand(ctx);
 applyTableStabilizer(ctx);
-ctx.effect(() => {
+if (ctx.slots && typeof ctx.slots.inject === "function") ctx.effect(() => {
 const offSection = ctx.slots.inject("settings.section", () => ctx.slots.register({
 name: "settings.section",
 id: "sone-wx",

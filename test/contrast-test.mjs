@@ -39,6 +39,40 @@ const need = (name) => {
   return v;
 };
 const fails = [];
+// Slice a theme block out of the stylesheet so dark/paper tokens resolve the
+// same way the browser would: block declaration first, :root fallback after.
+const themeBlock = (selector) => {
+  const start = css.indexOf(selector + ' {');
+  if (start < 0) return '';
+  const open = css.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    else if (css[i] === '}') { depth--; if (depth === 0) return css.slice(open + 1, i); }
+  }
+  return '';
+};
+const resolveIn = (name, block, depth = 0) => {
+  if (depth > 8) return null;
+  const m = block.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+  if (!m) return null;
+  const raw = m[1].trim();
+  const hexOnly = raw.match(/^(#[0-9a-fA-F]{6})$/);
+  if (hexOnly) return hexOnly[1];
+  const ref = raw.match(/^var\(\s*--([\w-]+)\s*(?:,\s*(#[0-9a-fA-F]{6})\s*)?\)$/);
+  if (ref) return resolveIn(ref[1], block, depth + 1) || token(ref[1]) || ref[2] || null;
+  return null;
+};
+const themeToken = (name, block) => resolveIn(name, block) || token(name);
+const darkBlock = themeBlock('body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"]');
+const paperBlock = themeBlock('body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dark="1"])');
+const paperDarkBlock = themeBlock('body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"]');
+if (!darkBlock) fails.push('dark theme block not found in client.js');
+if (!paperBlock) fails.push('paper theme block not found in client.js');
+if (!paperDarkBlock) fails.push('paper dark theme block not found in client.js');
+// Dark chat surfaces come from the host theme, not this skin; pin the real host
+// token values (same table as contrast-sweep-test.mjs).
+const HOST_DARK = { bgBase: '#111113', module: '#353638' };
 const cases = [
   ['link ink on assistant bubble', need('wc-link'), '#ffffff', 4.5],
   ['link ink on module fill', need('wc-link'), '#f2f2f2', 4.5],
@@ -47,12 +81,12 @@ const cases = [
   ['table header label', need('wc-th-ink'), need('wc-th-bg'), 4.5],
   ['danger button label', '#ffffff', need('wc-danger'), 4.5],
   ['brand text on white', need('wc-brand-text'), '#ffffff', 4.5],
-  ['dark link on chat surface', '#7ee2a8', '#1d1d1f', 4.5],
-  ['dark link on module fill', '#7ee2a8', '#2a2a2c', 4.5],
+  ['dark link on chat surface', themeToken('wc-link', darkBlock), HOST_DARK.bgBase, 4.5],
+  ['dark link on module fill', themeToken('wc-link', darkBlock), HOST_DARK.module, 4.5],
   ['group count chip, light', need('wc-count-ink'), need('wc-count-bg'), 4.5],
-  ['group count chip, dark', '#c3c8ce', '#2a2d31', 4.5],
-  ['group count chip, paper', '#4c4c47', '#fbfaf8', 4.5],
-  ['group count chip, paper dark', '#b9b3a8', '#2a2620', 4.5],
+  ['group count chip, dark', themeToken('wc-count-ink', darkBlock), themeToken('wc-count-bg', darkBlock), 4.5],
+  ['group count chip, paper', themeToken('wc-count-ink', paperBlock), themeToken('wc-count-bg', paperBlock), 4.5],
+  ['group count chip, paper dark', themeToken('wc-count-ink', paperDarkBlock), themeToken('wc-count-bg', paperDarkBlock), 4.5],
 ];
 
 let checks = 0;
@@ -73,7 +107,8 @@ for (const [name, want] of [['wc-brand-ink', '#0a7d43'], ['wc-link', '#0a7d43'],
 checks++;
 if (!/\[data-chat-flow-kind="assistant-step"\] blockquote \{[^}]*color: inherit/.test(css)) fails.push('blockquote does not inherit the chat ink');
 checks++;
-if (!/--wc-link: #7ee2a8/.test(css)) fails.push('dark mode has no light link ink');
+const darkLink = themeToken('wc-link', darkBlock);
+if (!darkLink || lum(darkLink) < 0.35) fails.push('dark mode has no light link ink');
 
 // the old low-contrast literals must be gone from text roles
 checks++;

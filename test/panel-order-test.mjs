@@ -1,12 +1,19 @@
 import { writeFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+// Extract the live "sidebar entry order" region straight from client.js so this
+// test tracks the current implementation instead of a stale /tmp snapshot.
+const clientSrc = readFileSync(new URL('../client.js', import.meta.url), 'utf8');
+const regionStart = clientSrc.indexOf('//#region dsh-wechat-skin: sidebar entry order');
+const regionEnd = clientSrc.indexOf('//#endregion', regionStart);
+if (regionStart < 0 || regionEnd < 0) { console.log('FAIL: sidebar entry order region not found in client.js'); process.exit(1); }
+const regionCode = clientSrc.slice(regionStart, regionEnd);
 const code = `const SIDEBAR_ORDER_KEY='dsh-wechat-skin:sidebar-order';
 const PANEL_LIST_SELECTOR='.kB3qhq_panelList';
 const PANEL_ROW_SELECTOR='.kB3qhq_panelRow';
 const PANEL_DRAGGING_CLASS='dsh-wc-panel-dragging';
 const PANEL_DRAG_SOURCE_CLASS='dsh-wc-panel-drag-source';
-` + readFileSync('/tmp/panel-order-code.js','utf8');
+` + regionCode;
 const html = `<!doctype html><html><head><meta charset="utf-8"><style>
 body{margin:0;font:13px/18px -apple-system} .kB3qhq_panelList{display:flex;flex-direction:column;gap:2px;width:200px}
 .kB3qhq_panelRow{min-height:36px;display:block;width:100%} .kB3qhq_moreAnchor{display:flex;flex-direction:column}
@@ -101,4 +108,4 @@ const checks = [
 let pass = 0;
 for (const [name, ok] of checks) { console.log(ok ? 'PASS' : 'FAIL', name); if (ok) pass++; }
 console.log(pass + '/' + checks.length);
-if (pass !== checks.length) console.log(JSON.stringify(out, null, 2));
+if (pass !== checks.length) { console.log(JSON.stringify(out, null, 2)); process.exit(1); }

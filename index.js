@@ -250,7 +250,7 @@ function isLoopback(address) {
 function fenceRefused(ctx, req, res) {
   const refused = refusedOf(ctx, req)
   if (refused === undefined) return false
-  sendJson(res, refused, { ok: false, error: refused === 401 ? 'unauthorized' : 'forbidden' })
+  sendJson(res, refused, { ok: false, error: 'forbidden' })
   return true
 }
 
@@ -366,20 +366,23 @@ export function apply(ctx) {
         return void readJsonBody(req, 64 * 1024).then(({ payload, over }) => {
           if (over) return sendJson(res, 413, { ok: false, error: 'too_large' })
           if (payload === null) return sendJson(res, 400, { ok: false, error: 'bad_json' })
-          let wrote = false
-          try {
-            mkdirSync(brandDir(ctx), { recursive: true })
-            const incoming = Array.isArray(payload.entries) ? payload.entries : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
-            let previous = []
-            try { previous = JSON.parse(readFileSync(diagPath(), 'utf8')).entries ?? [] } catch { previous = [] }
-            const entries = (Array.isArray(previous) ? previous : []).concat(incoming).filter((entry) => entry && typeof entry.msg === 'string').slice(-30)
-            const target = diagPath()
-            const temporary = tempPath(target)
-            writeFileSync(temporary, JSON.stringify({ entries }, null, 2))
-            renameSync(temporary, target)
-            wrote = true
-          } catch {}
-          return sendJson(res, 200, { ok: wrote })
+          const incoming = Array.isArray(payload.entries) ? payload.entries : [{ t: Date.now(), msg: String(payload.msg ?? '') }]
+          // Serialise the read-modify-write with other state writers (brand POST/DELETE).
+          return withStateLock(() => {
+            let wrote = false
+            try {
+              mkdirSync(brandDir(ctx), { recursive: true })
+              let previous = []
+              try { previous = JSON.parse(readFileSync(diagPath(), 'utf8')).entries ?? [] } catch { previous = [] }
+              const entries = (Array.isArray(previous) ? previous : []).concat(incoming).filter((entry) => entry && typeof entry.msg === 'string').slice(-30)
+              const target = diagPath()
+              const temporary = tempPath(target)
+              writeFileSync(temporary, JSON.stringify({ entries }, null, 2))
+              renameSync(temporary, target)
+              wrote = true
+            } catch {}
+            return sendJson(res, 200, { ok: wrote })
+          })
         }).catch((error) => {
           if (!res.headersSent) sendJson(res, 500, { ok: false, error: 'io' })
         })
