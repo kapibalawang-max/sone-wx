@@ -35,9 +35,17 @@ function makeStyleStore() {
   };
 }
 const bodyStyle = makeStyleStore();
+const bodyAttrs = {};
 const sandbox = {
   String,
-  document: { body: { style: bodyStyle } },
+  document: {
+    body: {
+      style: bodyStyle,
+      getAttribute: (k) => (k in bodyAttrs ? bodyAttrs[k] : null),
+      setAttribute: (k, v) => { bodyAttrs[k] = String(v) },
+      removeAttribute: (k) => { delete bodyAttrs[k] },
+    },
+  },
 };
 nodevm.createContext(sandbox);
 nodevm.runInContext(src.slice(at, end), sandbox);
@@ -49,6 +57,7 @@ const KEY = '--dsh-wc-hero-tagline';
   const changed = applyHeroTagline(null, '今天想造点什么');
   check(changed === 1, `set: changed=${changed}`);
   check(bodyStyle.props[KEY] === JSON.stringify('今天想造点什么'), 'set: variable missing/wrong');
+  check(bodyAttrs['data-dsh-wc-tagline-set'] === '1', 'set: body switch flag missing');
 }
 // idempotent: same tagline again changes nothing
 {
@@ -69,6 +78,7 @@ const KEY = '--dsh-wc-hero-tagline';
   const changed = applyHeroTagline(null, '');
   check(changed === 1, `clear: changed=${changed}`);
   check(bodyStyle.props[KEY] === undefined, 'clear: variable still present');
+  check(bodyAttrs['data-dsh-wc-tagline-set'] === undefined, 'clear: switch flag still present');
 }
 // empty with no variable: no-op
 {
@@ -81,6 +91,7 @@ const KEY = '--dsh-wc-hero-tagline';
   applyHeroTagline(null, '自定义');
   applyHeroTagline(null, '   ');
   check(bodyStyle.props[KEY] === undefined, 'whitespace: variable still present');
+  check(bodyAttrs['data-dsh-wc-tagline-set'] === undefined, 'whitespace: switch flag still present');
 }
 // tagline is trimmed and JSON-quoted (quotes/newlines stay safe inside var())
 {
@@ -99,7 +110,10 @@ check(src.includes("post({ heroTagline: tagline[0].trim() })"), 'saveTagline pos
 check(src.includes("post({ title: '', wordmarkImage: false, heroMark: true, heroTagline: '' })"), 'resetBrand heroTagline missing');
 check(src.includes("tagline: '新会话标语'") && src.includes("tagline: 'New-session tagline'"), 'TEXT tagline keys missing');
 check(src.includes('maxLength: MAX_TAGLINE'), 'tagline input maxLength missing');
-check(src.includes('[class*="_stack"]:has(> [class*="_headline"])::after'), 'tagline CSS ::after rule missing');
+check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after'), 'tagline CSS ::after rule missing');
+check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {'), 'tagline CSS hide rule missing');
+check(src.includes("body.setAttribute('data-dsh-wc-tagline-set', '1')"), 'applyHeroTagline does not set the body switch');
+check(src.includes("document.body.removeAttribute('data-dsh-wc-tagline-set')"), 'applyHeroTagline does not clear the body switch');
 check(src.includes('var(--dsh-wc-hero-tagline, none)'), 'tagline CSS var fallback missing');
 check(!src.includes('dshWcHeroDefault'), 'old headline-rewrite mechanism still present');
 check(!src.includes("el.className = 'dsh-wc-hero-tagline'"), 'old element-insertion mechanism still present');

@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.40.1";
+const SKIN_VERSION = "1.40.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1332,17 +1332,19 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: #f
 @media (prefers-reduced-motion: reduce) {
   body.dsh-wechat-skin-on .dsh-wc-caret { animation: none; transition: none; }
 }
-/* 新会话页自定义标语：值在 body 变量 --dsh-wc-hero-tagline（JSON 字符串），
-   hero stack 的 ::after 渲染为标题下方小字；变量未设时 content:none 不占位 */
-body.dsh-wechat-skin-on [class*="_stack"]:has(> [class*="_headline"])::after {
+/* 新会话页自定义标语：直接替换 hero 标题文字。值在 body 变量
+   --dsh-wc-hero-tagline（JSON 字符串），开关是 body 的 data-dsh-wc-tagline-set。
+   官方标题 span（无类名）font-size 归零后由其 ::after 以原标题字号渲染标语；
+   未设置时开关不存在，官方标题原样显示 */
+body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {
+  font-size: 0 !important;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after {
   content: var(--dsh-wc-hero-tagline, none);
-  display: block;
-  margin: 8px auto 0;
-  max-width: min(640px, 82%);
-  font-size: var(--wc-fs-sm);
-  line-height: 1.55;
-  color: var(--wc-ink-2);
-  text-align: center;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 500;
+  color: var(--wc-ink-1, #1c2024);
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -4220,20 +4222,26 @@ window.localStorage.removeItem(COMPOSER_FX_KEY);
 
     /**
      * 在新会话页 hero 区渲染自定义标语：标语值写在 body 的 CSS 变量
-     * --dsh-wc-hero-tagline 上，由 WECHAT_CSS 在 hero stack 的 ::after
-     * 渲染成标题下方小字。body 不是 React 管辖节点，变量一次写入全局
-     * 生效，hero 区重挂载后自动带上，无需任何 DOM 插入/文本改写/
-     * MutationObserver 跟随——那些做法都会和 React 的重渲染打架
-     * （表现即标题与标语叠写、元素反复消失）。
+     * --dsh-wc-hero-tagline 上，并由 body 的 data-dsh-wc-tagline-set 开关
+     * 启用替换规则——WECHAT_CSS 把官方标题 span（无类名）font-size 归零，
+     * 再用它的 ::after 以原标题字号渲染标语，视觉上直接替换官方标语文字。
+     * body 不是 React 管辖节点，变量与开关一次写入全局生效，hero 区重挂载
+     * 后自动带上，无需任何 DOM 插入/文本改写/MutationObserver 跟随——
+     * 那些做法都会和 React 的重渲染打架（表现即标题与标语叠写、元素反复
+     * 消失）。清空标语时移除变量与开关，官方标题原样恢复。
      */
     function applyHeroTagline(root, tagline) {
       if (typeof document === 'undefined' || !document.body || !document.body.style) return 0
       var wanted = String(tagline || '').trim()
       var current = document.body.style.getPropertyValue('--dsh-wc-hero-tagline') || ''
+      var flagged = document.body.getAttribute('data-dsh-wc-tagline-set') || ''
       var next = wanted === '' ? '' : JSON.stringify(wanted)
-      if (current === next) return 0
+      var nextFlag = wanted === '' ? '' : '1'
+      if (current === next && flagged === nextFlag) return 0
       if (next === '') document.body.style.removeProperty('--dsh-wc-hero-tagline')
       else document.body.style.setProperty('--dsh-wc-hero-tagline', next)
+      if (nextFlag === '') document.body.removeAttribute('data-dsh-wc-tagline-set')
+      else document.body.setAttribute('data-dsh-wc-tagline-set', '1')
       return 1
     }
 

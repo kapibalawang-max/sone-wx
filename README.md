@@ -60,6 +60,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 下拉项在深色下单独给底色，避免原生菜单白底。
   - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
+- 2026-11-12 v1.40.2 新会话标语改为直接替换 hero 标题文字（此前 v1.40.1 是标题下方另起一行，与预期不符）：官方标题 span 以 CSS font-size:0 隐藏，标语经其 ::after 以原标题字号（26px/500/--wc-ink-1）在原位置渲染；取值与开关仍在 body（--dsh-wc-hero-tagline + data-dsh-wc-tagline-set），React 重渲染零干预，清空恢复官方默认。真实页面探针验证设值/打字重渲染/清空三态，brand-tagline-test 更新为替换语义。
 - 2026-11-12 v1.40.1 修复新会话页「标题和标语重叠」：v1.40.0 把标语写进宿主标题 span 的 `textContent`，React 重渲染会按虚拟 DOM 恢复标题文本，两条文案在 hero 区叠写。改为把标语存到 hero stack 的 `data-dsh-wc-hero-tagline` 属性，由 WECHAT_CSS 的 `[data-dsh-wc-hero-tagline]::after` 渲染成标题下方独立小字（`--wc-fs-sm`、`--wc-ink-2`、居中、`max-width: min(640px, 82%)`、可换行），不再插入或改写任何 React 管辖节点；宿主标题保持官方原文，清空即移除属性。brand-tagline-test 重写为属性语义（12 项），CSS 快照更新。
 
 - 2026-11-12 v1.40.0 新会话标语可自定义：品牌卡新增「新会话标语」输入行（40 字上限，Enter/失焦保存、Esc 还原，留空回到官方默认「探索未至之境」）。宿主 HeroShell 的标语没有 slot，只有 DOM 文本，改法是定位 `_8tPydW_titleGroup` 里第一个无类名 span 写 `textContent`，官方原文先存 `dataset.dsh-wc-hero-default`，清空时原样还原；「预览版」徽标（带类名的第二个 span）不受影响。React 重挂载由 body 级 MutationObserver（rAF 合并）跟进，停用皮肤即还原。数据走 `/sone-wx/brand` 的 `heroTagline` 字段（index.js 读时截断 40 字、写时 trim+截断）。新增 `test/brand-tagline-test.mjs`（8 项行为 + 接线守卫），套件总数 39。随 DSH 0.2.2-rc.2 顺带重映射两个漂移类名：`._markdown_rve47_5→._markdown_13jw0_5`、`._toast_hr9yd_6→._toast_af3m1_6`（host-hash-test 恢复 96/96）。
