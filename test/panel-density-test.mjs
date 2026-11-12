@@ -2,7 +2,10 @@
 // gone. Guard the tightened density (32px rows, 1px gaps) and that the rail
 // variant is not touched.
 import fs from 'node:fs';
-const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = fs.readFileSync(root + '/client.js', 'utf8');
 const css = (() => {
   const i = src.indexOf('const WECHAT_CSS = `');
   const j = src.indexOf('`;', i);

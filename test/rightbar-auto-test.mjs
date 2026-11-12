@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import nodevm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+const rootDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const src = fs.readFileSync(path.join(here, '..', 'client.js'), 'utf8');
@@ -175,7 +176,8 @@ for (const key of ['rightbarAutoTitle', 'rightbarAutoHint', 'rightbarAutoOn', 'r
 }
 check(src.includes('delete document.body.dataset.dshWcRightbarAuto'), 'wiring: cleanup must clear the body flag');
 check(!region.includes('SIDEBAR_RIGHT_PERSISTENCE'), 'wiring: must not gate on the per-session saved layout (it is written on entry)');
-check(src.includes('const SKIN_VERSION = "1.41.4";'), 'version: SKIN_VERSION should be 1.41.1');
+const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+check(src.includes('const SKIN_VERSION = "' + pkg.version + '";'), 'version: SKIN_VERSION should match package.json (' + pkg.version + ')');
 
 if (fails.length) {
   console.error('FAIL (' + fails.length + '):\n' + fails.map((f) => '  - ' + f).join('\n'));

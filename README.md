@@ -16,50 +16,7 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 
 ## 更新记录
 
-- 2026-11-11 v1.35.0 全面审查后的六项修复 + 一套新的对比度体检。①新增 `test/contrast-sweep-test.mjs`：用真实皮肤 CSS 渲染「侧栏 + 会话 + 工具行 + 子智能体 + 右栏 + 命令面板 + 输入框 + 设置控件」的完整复刻页，在浅色/深色/纸张浅/纸张深四种组合下逐一度量 81 处文本与其合成背景的对比度（共 324 处），低于 4.5:1（大字号 3:1）即失败；宿主令牌取 `@deepseek-ai/dsh-client-ui-theme` 的 neutral-bluish 实际色值，所以度量与真实应用一致。②`--wc-brand-ink` 既当文字色又当按钮填充，深色下不能翻转；拆出 `--wc-brand-text`（浅 #0a7d43 / 深 #7ee2a8），会话列表图钉、未读时间、运行角标弧、模型选择器文字改用它——此前深色下这些是 #0a7d43 压 #151517，只有 3.5:1。③启用一直声明未使用的 `--wc-ink-3`（浅 #666b71 / 深 #adb2b8）承接时间戳、耗时、列表标题、右栏占位、命令面板等安静文本，替代宿主 `label-tertiary`（#81858c 在白底只有 3.71:1）。④选中行时间戳 `--wc-sel-ink-dim` 从 72% 透明改实色 #0a2e1a（2.99→4.58:1），深色改 90% 白（4.41→4.93:1），层级交给字重。⑤发送按钮白图标压 #07c160 只有 2.38:1（连非文本 3:1 都不到），填充改 `--wc-brand-press` #0a7d43（5.21:1），悬停 #06673a。⑥卸载泄漏三处：`composerScrollScan` 的 scroll 监听改为具名 + Map 跟踪并在 cleanup 里 `unbindComposerFade()`；cleanup 只摘 `applyPanelOrder` 一个钩子、漏掉 `composerScrollScan`，停用再启用会重复执行，改为两个都摘；待执行的 `requestAnimationFrame` 未取消，卸载后仍会跑一遍扫描，补 `cancelAnimationFrame`。另删掉两个只声明未使用的令牌 `--wc-brand`、`--wc-line`。`cleanup-test` 扩到 9 项，套件总数 30。
-
-- 2026-11-11 v1.34.6 修深色模式下回复内容里「有一行看不清」：①引用块文字用了发送气泡的墨色 `--wc-bubble-ink`（#101010），深色底下等于黑字压黑底 → 改为 `color: inherit`，跟随会话区正文色；②链接色 `--wc-link` 固定 #0a7d43，深色下对比只有 2.9:1 → 深色块改 #7ee2a8（对 #1d1d1f 约 11:1），悬停另起 `--wc-link-hover`（浅 #06673a / 深 #a6f0c2），不再复用按钮的 `--wc-brand-press`。contrast-test 增 4 项（深色链接两组、引用块继承正文色、深色链接令牌存在）。
-
-- 2026-11-11 v1.34.5 修「新会话按钮在深色模式下仍有底色」：macOS 侧栏把该按钮涂成 `#ffffff8c`（浅色）与 `#ffffff26`（深色），选择器是 `[data-platform=darwin] [data-ds-dark-theme] :where(.kB3qhq_root:not([role=dialog])) .kB3qhq_newSession`，权重 0,3,0，压过皮肤的 0,2,1，所以此前的 `background: transparent` 没生效。改为对 `border` / `background` / `box-shadow` 加 `!important`，悬停底色同样加固；浅色模式下那层半透明白也一并去掉。`test/new-session-test.mjs` 补入 macOS 真规则（两根属性分处 html 与 body，写成同一元素则永远不匹配），断言深浅两种模式下都是全透明。
-
-- 2026-11-11 v1.34.4 修「空输入框出现两个光标」：闪烁关键帧的优先级高于内联 opacity，所以此前 `hideCaret()` 设 opacity 0 根本不生效，本插件的光标会一直眨；再加上输入框重渲染时会把编辑器挪到新父节点、旧的光标层留在原处，就会出现两条。改为隐藏时 `display:none`（并移除原生光标透明标记）、每次建层前清掉残留的 `.dsh-wc-caret`、空内容时用行盒位置兜底画一条，同时原生光标在编辑器及其子树内统一 `caret-color: transparent !important`。`test/composer-fx-test.mjs` 扩到 22 项（唯一层、可见性、空内容兜底、原生抑制、dispose 无残留）。
-
-- 2026-11-11 v1.34.3 项目标题前的文件夹图标换新：宿主那枚方角实心文件夹在 13px 标题旁显得重，改成 16px 圆角描边文件夹（1.2px 描边、`#81858c` 三级墨色），用 `mask` 画在 `.JoiKIa_folder` 外壳上并隐藏原 svg——悬停换成 chevron、当前项目染成品牌绿这两条宿主行为照旧（走 currentColor）。
-
-- 2026-11-11 v1.34.2 项目列表标题行收紧：宿主把 `.JoiKIa_projectRow` 钉在 34px，而「项目名 + 路径」两行需要 42px，文字溢出、行也显松。改为 32px 行（13/18 标题 + 12/14 路径、`projectText` gap 0），与插件行、会话行同一节奏。
-
-- 2026-11-11 v1.34.1 插件区行距收紧：插件行 36→32px（上下内边距 7→5px），行间 gap 2→1px，列表下留白 8→6px；「新会话」跟着降到 32px 保持同一节奏。折叠栏的 36×36 方块不动（选择器限定 `.kB3qhq_root:not(.kB3qhq_collapsed)`）。顺带删掉两条已被覆盖的旧「新会话」规则（白底 + 深色 overlay 底）。
-
-- 2026-11-11 v1.34.0 侧边栏「新会话」改成插件标题行的样子：去掉按钮的 0.5px 描边与白底，高度 38→36，图标与 13px/500 标题左对齐、间距 8px，只有悬停才给 `--dsw-alias-interactive-bg-hover` 底色。折叠成图标栏时保持 36×36 居中不动（用 `:has(.kB3qhq_newSessionLabel)` 把左对齐限定在有标题的展开态）。新增 `test/new-session-test.mjs`（11 项：高度、去边框、静止透明、左对齐、13px/500、间距、折叠态仍居中）。
-
-- 2026-11-11 v1.33.3 修「输入框效果」开关点不动：store 的 `sync()` 是位置参数，上一版漏传了最后的 `composerFx`，于是每次点击后 `d.composerFx = undefined`，控件立刻弹回「关」，看起来像按钮点不动。补上参数并新增 `test/store-sync-test.mjs`——比对该调用传入的参数个数与 `sync` 签名，少传一个就红。
-
-- 2026-11-11 v1.33.2 让毛玻璃可见可核对：浅色下白层降到 26/44/58%，品牌绿提到 14%→4%，卡片呈淡薄荷色，与纯白卡片一眼可分（深色绿 16%）；设置卡底部自检行右侧打印当前加载的版本号（`SKIN_VERSION`，与 package.json 由 test/version-test.mjs 对齐），以后「开关没反应」先看这个数字是不是新版本。
-
-- 2026-11-11 v1.33.1 修毛玻璃无效：上一版把玻璃画在 `[data-composer-card]::before` 上并设 `z-index:-1`，在真实 dock 里被会话区的层叠上下文吞掉，卡片交出自己的底色后只剩一片白，开关看起来毫无作用。改为卡片自己承担玻璃——`background` 直接铺多段半透明白 + 5% 品牌绿，`backdrop-filter: blur(20px) saturate(1.35)` 挂在卡片上，顶边亮线与 0.5px 内描边仍走 `box-shadow`；深色块用 #2a2a2c 62/78% + 10% 绿。测试改为断言卡片自身的 `backdrop-filter` 与渐变（关闭时为 none）。
-
-- 2026-11-11 v1.33.0 输入框效果（设置 → 辅助 → 输入框效果，默认开）：①毛玻璃卡片——卡片交出底色，`[data-composer-card]::before` 铺一层 `--wc-surface`（深色用 `--wc-surface-dark`）的多段半透明渐变 + 4% 品牌绿薄雾，18px 的 `backdrop-filter: blur(20px) saturate(1.35)`，顶边亮线与 0.5px 内描边由卡片自身 `box-shadow` 交代；②光标滑动——按掉原生 caret（`caret-color: transparent`），自绘 1.8px 竖条挂在编辑面父元素（补 `data-dsh-wc-caret-host` 做定位上下文），位移走 80ms ease-out、1.06s 步进闪烁，量不到折叠 Range 时退回原生光标；③发送形变——回车发送时记下卡片矩形，观察器抓到新用户气泡后用 WAAPI 从卡片位置缩小落位（340ms，`cubic-bezier(.2,.8,.2,1)`），1.8 秒内没有新气泡就不动。三样都受「减少动效」与 `prefers-reduced-motion` 约束；新增 `test/composer-fx-test.mjs`（16 项：body 标记、光标层位置/宽度/闪烁/原生按掉、发送动画、dispose 回收、玻璃卡片透明与模糊）。
-
-- 2026-11-11 v1.32.2 修表格悬停抖动：宿主对宽表用 `padding-bottom: var(--dsh-scrollbar-width)` 预留滚动条高度、悬停才切 `overflow-x: scroll`，而皮肤让滚动条常驻，预留仍在，悬停一下少 10px、内容上跳。改为容器 `padding-bottom: 0 !important` 并补 `:hover { overflow-x: auto; padding-bottom: 0 !important }`；新增 `test/table-stability-test.mjs`（4 项，hover 前后高度与 padding 不变）。
-
-- 2026-11-11 v1.32.1 表头换配色：淡绿 12% 改深绿实心（新增 `--wc-th-bg #3f7f5f` / `--wc-th-ink #ffffff`，深色 `#2f5c48`），白字 600、12px，去掉表头下边框改由色带分隔；白字对比 4.76:1。`test/markdown-test.mjs` 补白字与深绿色带断言（15 项）。
-
-- 2026-11-11 v1.32.0 会话区 AI 回复排版重做（标题、列表、链接、代码、引用、表格）：
-  - 垂直节奏统一为 `--wc-md-gap: 12px`，首元素贴顶、列表/引用/代码块内部不再双重边距；`h1/h2` 后间距收到 6px。
-  - 标题改为三级靠字重与留白分层：h1 = 正文字号 ×1.08、h2 ×1.22 并带 0.5px 下分隔线、h3/h4 = 正文 600；首个子元素不带分隔线。
-  - 列表悬挂缩进 1.35em、标记色降到三级文字、嵌套缩到 3px；任务列表去掉默认圆点，复选框用皮肤绿 `accent-color`。
-  - 链接恢复「微信式」：静止只上色不划下划线，悬停才出下划线，聚焦 2px 半透明绿描边。
-  - 行内 code 加绿色 7% 底 + 0.5px 边；`pre` 改为 12px 14px 面板、圆角 10、`tab-size: 2`、独立横向滚动。
-  - 引用块：0.5px 竖线 + 模块底 72% 淡洗、内边距 8px 12px、取消斜体；深色单独一套 rgba(255,255,255,.05)。
-  - 表格：外框从容器移到 `table`（容器只负责滚动，右上不再留白框）；表头 12% 绿底 + `position: sticky`、600 字重、12px 小字；行悬停绿 10%，斑马用 3.2% 墨色叠加；首列 500；单元格 padding 9px 12px、`tabular-nums`。
-  - 新增 `test/markdown-test.mjs`（13 项：h1>h2>正文、h2 发丝线、链接静止无下划线、行内码底与描边、代码面板底色与圆角、引用竖线与淡洗、表头 sticky），`table-test` 补 sticky 与 10px 圆角断言并注册进 `run-all`；CSS 快照与三屏视觉基线同步更新。
-
-- 2026-11-11 v1.31.0 输入框模型选择器换样式：
-  - 从「透明文字 + 宿主小箭头」改成微信式绿色药丸：`color-mix(--wc-green 12%)` 底色、`--wc-brand-ink` 绿字、12px/500、28px 高、圆角 999，自绘 10px chevron（深浅两套描边色）。
-  - 悬停底色加深到 20% 并把字提到 `--wc-brand-press`；`:focus-visible` 加 2px 半透明绿描边；禁用态 50%。
-  - 下拉项在深色下单独给底色，避免原生菜单白底。
-  - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
-
+- 2026-11-12 v1.42.0 四路复审（功能链路 / 样式主题 / 设置页 UI / 代码增量）修复：①样式——删除 24 条被宿主 ThemePresenter 内联令牌恒定压制的 `--dsw-alias-*` / `--dsw-specific-bubble` 死声明（纸张深色的暖色意图改由 JS 侧 TOKEN_OVERRIDES 单源表达），`--wc-caret-ink` 深色覆盖改走令牌，`--wc-md-gap` 声明提升到 assistant-step 作用域（blockquote/pre/tableScroll 的外层引用不再退化为 0），删除 4 条冗余规则，`.dsh-wc-reset`/`.dsh-wc-group` 裸值令牌化；②设置页预览保真——预览消费 字号档/列表密度/头像图案/预设，色值与 WECHAT_CSS 色阶对齐（侧栏 #e8e8ec、画布 #fcfcfd、深色气泡 #2e3135、纸张气泡 #ded3ba 等），点阵与剪影头像样式进预览，深浅色跟随 theme/change 实时刷新；③交互——品牌「恢复默认品牌」改为二次确认（再点一次生效，4 秒自动撤销），设置页搜索覆盖品牌卡，确认计时器在卸载时清理；④文案——resetHint 如实说明清除范围（含上传头像与自定义预设），rightbarAutoHint 与实际行为一致，预览对话语义修正（AI 气泡说 AI 的话），品牌 resetHint 补「标语」，fontTitle 英文对齐，删除从未渲染的品牌 intro 与死键 sidebarBgReset；⑤工程——5 个测试文件去除本机绝对路径（改 import.meta.url 相对定位），README 更新记录恢复时间序。
 - 2026-11-12 v1.41.4 修复右侧栏拖拽手柄命中问题：宿主全局浮层层（z-index 20、inset:0）会盖住 z-index 11 的拖拽手柄，导致鼠标生效位置不对；皮肤把手柄提到 z-index 21，并把命中带从 8px 加宽到 12px（仍以可见分界线为中心）。
 - 2026-11-12 v1.41.3 全面体检（client.js + 宿主路由/测试两路审计 39 条）：修复主题切换监听器不退订、品牌导出/导入丢新会话标语（heroTagline）、4 处品牌加载裸 Promise、设置页自检数组缺 key、resetSkin 漏清旧头像键、探针选择器不匹配时仍渲染皮肤设置区、slots 注入无守卫、body 类锁存后重复探测、深色代码光标色 --wc-caret-ink 缺深色/纸张定义、删除死令牌 --wc-green-hover；测试侧删除测已删功能的 bg-test（读陈旧 /tmp 快照）、panel-order-test 改从 client.js 现行 region 取代码并补失败退出码；宿主 index.js 的 diag 写入并入状态锁、删除 fenceRefused 死分支；package.json 兼容声明补 0.2.2-rc.2、engines.node 提到 >=20.11（代码用 import.meta.dirname）；contrast-test 深色/纸张用例改从对应主题块解析令牌，宿主深色面钉真实宿主令牌值。darkSkin 不进 store、composerFadeBound 陈旧条目、表格 resize 防抖等低价值项经评估不修。
 - 2026-11-12 v1.41.2 按用户要求去掉右侧栏展开时左侧的 0.5px 分隔竖线（`border-left` 已从右栏面板规则中移除，仅保留展开态背景）。
@@ -121,6 +78,50 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
   - 新增 `test/host-routes-test.mjs`：27 项真路由集成测试（围栏/魔数/413/原子写/并发锁/diag 上限/错误不泄露路径），此前宿主侧零覆盖。
   - 断言收口：`contrast-test` 改为从 CSS 真实令牌取色（此前是测试内硬编码 hex 互算，改坏了也绿）；`skin-extras` 字体断言改成精确栈；`ai-avatar`/`autogrow` 两套此前只打印不断言、且不在 run-all 名单，现补断言并纳入。
   - playwright 收进 `devDependencies` 并统一走 `test/browser.mjs`（先本地、再桌面 profile），不再散落在 7 个文件里硬编码别人的 node_modules 路径。
+
+- 2026-11-11 v1.35.0 全面审查后的六项修复 + 一套新的对比度体检。①新增 `test/contrast-sweep-test.mjs`：用真实皮肤 CSS 渲染「侧栏 + 会话 + 工具行 + 子智能体 + 右栏 + 命令面板 + 输入框 + 设置控件」的完整复刻页，在浅色/深色/纸张浅/纸张深四种组合下逐一度量 81 处文本与其合成背景的对比度（共 324 处），低于 4.5:1（大字号 3:1）即失败；宿主令牌取 `@deepseek-ai/dsh-client-ui-theme` 的 neutral-bluish 实际色值，所以度量与真实应用一致。②`--wc-brand-ink` 既当文字色又当按钮填充，深色下不能翻转；拆出 `--wc-brand-text`（浅 #0a7d43 / 深 #7ee2a8），会话列表图钉、未读时间、运行角标弧、模型选择器文字改用它——此前深色下这些是 #0a7d43 压 #151517，只有 3.5:1。③启用一直声明未使用的 `--wc-ink-3`（浅 #666b71 / 深 #adb2b8）承接时间戳、耗时、列表标题、右栏占位、命令面板等安静文本，替代宿主 `label-tertiary`（#81858c 在白底只有 3.71:1）。④选中行时间戳 `--wc-sel-ink-dim` 从 72% 透明改实色 #0a2e1a（2.99→4.58:1），深色改 90% 白（4.41→4.93:1），层级交给字重。⑤发送按钮白图标压 #07c160 只有 2.38:1（连非文本 3:1 都不到），填充改 `--wc-brand-press` #0a7d43（5.21:1），悬停 #06673a。⑥卸载泄漏三处：`composerScrollScan` 的 scroll 监听改为具名 + Map 跟踪并在 cleanup 里 `unbindComposerFade()`；cleanup 只摘 `applyPanelOrder` 一个钩子、漏掉 `composerScrollScan`，停用再启用会重复执行，改为两个都摘；待执行的 `requestAnimationFrame` 未取消，卸载后仍会跑一遍扫描，补 `cancelAnimationFrame`。另删掉两个只声明未使用的令牌 `--wc-brand`、`--wc-line`。`cleanup-test` 扩到 9 项，套件总数 30。
+
+- 2026-11-11 v1.34.6 修深色模式下回复内容里「有一行看不清」：①引用块文字用了发送气泡的墨色 `--wc-bubble-ink`（#101010），深色底下等于黑字压黑底 → 改为 `color: inherit`，跟随会话区正文色；②链接色 `--wc-link` 固定 #0a7d43，深色下对比只有 2.9:1 → 深色块改 #7ee2a8（对 #1d1d1f 约 11:1），悬停另起 `--wc-link-hover`（浅 #06673a / 深 #a6f0c2），不再复用按钮的 `--wc-brand-press`。contrast-test 增 4 项（深色链接两组、引用块继承正文色、深色链接令牌存在）。
+
+- 2026-11-11 v1.34.5 修「新会话按钮在深色模式下仍有底色」：macOS 侧栏把该按钮涂成 `#ffffff8c`（浅色）与 `#ffffff26`（深色），选择器是 `[data-platform=darwin] [data-ds-dark-theme] :where(.kB3qhq_root:not([role=dialog])) .kB3qhq_newSession`，权重 0,3,0，压过皮肤的 0,2,1，所以此前的 `background: transparent` 没生效。改为对 `border` / `background` / `box-shadow` 加 `!important`，悬停底色同样加固；浅色模式下那层半透明白也一并去掉。`test/new-session-test.mjs` 补入 macOS 真规则（两根属性分处 html 与 body，写成同一元素则永远不匹配），断言深浅两种模式下都是全透明。
+
+- 2026-11-11 v1.34.4 修「空输入框出现两个光标」：闪烁关键帧的优先级高于内联 opacity，所以此前 `hideCaret()` 设 opacity 0 根本不生效，本插件的光标会一直眨；再加上输入框重渲染时会把编辑器挪到新父节点、旧的光标层留在原处，就会出现两条。改为隐藏时 `display:none`（并移除原生光标透明标记）、每次建层前清掉残留的 `.dsh-wc-caret`、空内容时用行盒位置兜底画一条，同时原生光标在编辑器及其子树内统一 `caret-color: transparent !important`。`test/composer-fx-test.mjs` 扩到 22 项（唯一层、可见性、空内容兜底、原生抑制、dispose 无残留）。
+
+- 2026-11-11 v1.34.3 项目标题前的文件夹图标换新：宿主那枚方角实心文件夹在 13px 标题旁显得重，改成 16px 圆角描边文件夹（1.2px 描边、`#81858c` 三级墨色），用 `mask` 画在 `.JoiKIa_folder` 外壳上并隐藏原 svg——悬停换成 chevron、当前项目染成品牌绿这两条宿主行为照旧（走 currentColor）。
+
+- 2026-11-11 v1.34.2 项目列表标题行收紧：宿主把 `.JoiKIa_projectRow` 钉在 34px，而「项目名 + 路径」两行需要 42px，文字溢出、行也显松。改为 32px 行（13/18 标题 + 12/14 路径、`projectText` gap 0），与插件行、会话行同一节奏。
+
+- 2026-11-11 v1.34.1 插件区行距收紧：插件行 36→32px（上下内边距 7→5px），行间 gap 2→1px，列表下留白 8→6px；「新会话」跟着降到 32px 保持同一节奏。折叠栏的 36×36 方块不动（选择器限定 `.kB3qhq_root:not(.kB3qhq_collapsed)`）。顺带删掉两条已被覆盖的旧「新会话」规则（白底 + 深色 overlay 底）。
+
+- 2026-11-11 v1.34.0 侧边栏「新会话」改成插件标题行的样子：去掉按钮的 0.5px 描边与白底，高度 38→36，图标与 13px/500 标题左对齐、间距 8px，只有悬停才给 `--dsw-alias-interactive-bg-hover` 底色。折叠成图标栏时保持 36×36 居中不动（用 `:has(.kB3qhq_newSessionLabel)` 把左对齐限定在有标题的展开态）。新增 `test/new-session-test.mjs`（11 项：高度、去边框、静止透明、左对齐、13px/500、间距、折叠态仍居中）。
+
+- 2026-11-11 v1.33.3 修「输入框效果」开关点不动：store 的 `sync()` 是位置参数，上一版漏传了最后的 `composerFx`，于是每次点击后 `d.composerFx = undefined`，控件立刻弹回「关」，看起来像按钮点不动。补上参数并新增 `test/store-sync-test.mjs`——比对该调用传入的参数个数与 `sync` 签名，少传一个就红。
+
+- 2026-11-11 v1.33.2 让毛玻璃可见可核对：浅色下白层降到 26/44/58%，品牌绿提到 14%→4%，卡片呈淡薄荷色，与纯白卡片一眼可分（深色绿 16%）；设置卡底部自检行右侧打印当前加载的版本号（`SKIN_VERSION`，与 package.json 由 test/version-test.mjs 对齐），以后「开关没反应」先看这个数字是不是新版本。
+
+- 2026-11-11 v1.33.1 修毛玻璃无效：上一版把玻璃画在 `[data-composer-card]::before` 上并设 `z-index:-1`，在真实 dock 里被会话区的层叠上下文吞掉，卡片交出自己的底色后只剩一片白，开关看起来毫无作用。改为卡片自己承担玻璃——`background` 直接铺多段半透明白 + 5% 品牌绿，`backdrop-filter: blur(20px) saturate(1.35)` 挂在卡片上，顶边亮线与 0.5px 内描边仍走 `box-shadow`；深色块用 #2a2a2c 62/78% + 10% 绿。测试改为断言卡片自身的 `backdrop-filter` 与渐变（关闭时为 none）。
+
+- 2026-11-11 v1.33.0 输入框效果（设置 → 辅助 → 输入框效果，默认开）：①毛玻璃卡片——卡片交出底色，`[data-composer-card]::before` 铺一层 `--wc-surface`（深色用 `--wc-surface-dark`）的多段半透明渐变 + 4% 品牌绿薄雾，18px 的 `backdrop-filter: blur(20px) saturate(1.35)`，顶边亮线与 0.5px 内描边由卡片自身 `box-shadow` 交代；②光标滑动——按掉原生 caret（`caret-color: transparent`），自绘 1.8px 竖条挂在编辑面父元素（补 `data-dsh-wc-caret-host` 做定位上下文），位移走 80ms ease-out、1.06s 步进闪烁，量不到折叠 Range 时退回原生光标；③发送形变——回车发送时记下卡片矩形，观察器抓到新用户气泡后用 WAAPI 从卡片位置缩小落位（340ms，`cubic-bezier(.2,.8,.2,1)`），1.8 秒内没有新气泡就不动。三样都受「减少动效」与 `prefers-reduced-motion` 约束；新增 `test/composer-fx-test.mjs`（16 项：body 标记、光标层位置/宽度/闪烁/原生按掉、发送动画、dispose 回收、玻璃卡片透明与模糊）。
+
+- 2026-11-11 v1.32.2 修表格悬停抖动：宿主对宽表用 `padding-bottom: var(--dsh-scrollbar-width)` 预留滚动条高度、悬停才切 `overflow-x: scroll`，而皮肤让滚动条常驻，预留仍在，悬停一下少 10px、内容上跳。改为容器 `padding-bottom: 0 !important` 并补 `:hover { overflow-x: auto; padding-bottom: 0 !important }`；新增 `test/table-stability-test.mjs`（4 项，hover 前后高度与 padding 不变）。
+
+- 2026-11-11 v1.32.1 表头换配色：淡绿 12% 改深绿实心（新增 `--wc-th-bg #3f7f5f` / `--wc-th-ink #ffffff`，深色 `#2f5c48`），白字 600、12px，去掉表头下边框改由色带分隔；白字对比 4.76:1。`test/markdown-test.mjs` 补白字与深绿色带断言（15 项）。
+
+- 2026-11-11 v1.32.0 会话区 AI 回复排版重做（标题、列表、链接、代码、引用、表格）：
+  - 垂直节奏统一为 `--wc-md-gap: 12px`，首元素贴顶、列表/引用/代码块内部不再双重边距；`h1/h2` 后间距收到 6px。
+  - 标题改为三级靠字重与留白分层：h1 = 正文字号 ×1.08、h2 ×1.22 并带 0.5px 下分隔线、h3/h4 = 正文 600；首个子元素不带分隔线。
+  - 列表悬挂缩进 1.35em、标记色降到三级文字、嵌套缩到 3px；任务列表去掉默认圆点，复选框用皮肤绿 `accent-color`。
+  - 链接恢复「微信式」：静止只上色不划下划线，悬停才出下划线，聚焦 2px 半透明绿描边。
+  - 行内 code 加绿色 7% 底 + 0.5px 边；`pre` 改为 12px 14px 面板、圆角 10、`tab-size: 2`、独立横向滚动。
+  - 引用块：0.5px 竖线 + 模块底 72% 淡洗、内边距 8px 12px、取消斜体；深色单独一套 rgba(255,255,255,.05)。
+  - 表格：外框从容器移到 `table`（容器只负责滚动，右上不再留白框）；表头 12% 绿底 + `position: sticky`、600 字重、12px 小字；行悬停绿 10%，斑马用 3.2% 墨色叠加；首列 500；单元格 padding 9px 12px、`tabular-nums`。
+  - 新增 `test/markdown-test.mjs`（13 项：h1>h2>正文、h2 发丝线、链接静止无下划线、行内码底与描边、代码面板底色与圆角、引用竖线与淡洗、表头 sticky），`table-test` 补 sticky 与 10px 圆角断言并注册进 `run-all`；CSS 快照与三屏视觉基线同步更新。
+
+- 2026-11-11 v1.31.0 输入框模型选择器换样式：
+  - 从「透明文字 + 宿主小箭头」改成微信式绿色药丸：`color-mix(--wc-green 12%)` 底色、`--wc-brand-ink` 绿字、12px/500、28px 高、圆角 999，自绘 10px chevron（深浅两套描边色）。
+  - 悬停底色加深到 20% 并把字提到 `--wc-brand-press`；`:focus-visible` 加 2px 半透明绿描边；禁用态 50%。
+  - 下拉项在深色下单独给底色，避免原生菜单白底。
+  - 高度沿用 `--wc-control-h`，与「+」按钮 28px 对齐。
 
 - 2026-11-10 v1.30.0 全插件体检：
   - 删掉 10 个只声明未使用的令牌（`--wc-green-deep`、`--wc-brand-hover`、`--wc-ink-3`、`--wc-fs-xl/lg`、`--wc-font-base/sm/xs`、`--wc-gap-flow/tight`），`--wc-fs-xl/lg` 已由 `--wc-body-*` 取代。

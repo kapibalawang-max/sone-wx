@@ -4,7 +4,10 @@
 import fs from 'node:fs';
 import { chromium } from './browser.mjs'
 
-const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = fs.readFileSync(root + '/client.js', 'utf8');
 const start = src.indexOf('function installComposerEffects()');
 if (start < 0) throw new Error('installer not found');
 let depth = 0, end = -1;

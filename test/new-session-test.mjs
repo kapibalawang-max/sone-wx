@@ -3,7 +3,10 @@
 // its centred 36px square, so the left alignment must not leak into it.
 import fs from 'node:fs';
 import { chromium } from './browser.mjs'
-const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = fs.readFileSync(root + '/client.js', 'utf8');
 const i = src.indexOf('const WECHAT_CSS = `'); const j = src.indexOf('`;', i);
 const css = src.slice(i + 'const WECHAT_CSS = `'.length, j).replace(/\\`/g, '`').replace(/\\\$/g, '$');
 

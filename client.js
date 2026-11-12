@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.41.4";
+const SKIN_VERSION = "1.42.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -276,17 +276,10 @@ body.dsh-wechat-skin-on {
 
 /* ================= palette ================= */
 body.dsh-wechat-skin-on:not([data-dsh-wechat-dark="1"]) {
-  --dsw-alias-state-business-primary: var(--wc-accent-solid) ;
-  --dsw-alias-state-business-tertiary: var(--wc-accent-soft) ;
-  --dsw-alias-state-success-primary: var(--wc-accent-solid) ;
-  --dsw-alias-button-info-fill: var(--wc-accent-solid) ;
-  --dsw-alias-button-info-hover: var(--wc-accent-press) ;
-  --dsw-alias-brand-primary: var(--wc-accent-solid) ;
-  --dsw-alias-brand-text: #ffffff ;
-  --dsw-specific-bubble: var(--wc-bubble) ;
+  /* --dsw-alias-bg-base is the only token here the host does NOT inline via
+     ThemePresenter; everything else in this block was always overridden and
+     is now supplied solely by TOKEN_OVERRIDES (JS side). */
   --dsw-alias-bg-base: var(--wc-bg) ;
-  --dsw-alias-bg-module-platform: var(--wc-surface) ;
-  --dsw-alias-bg-overlay: #ffffff ;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   /* dark accent: the bright step is legible here (6.67:1 on the card), so brand
@@ -311,17 +304,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
   --wc-link: #7ee2a8 ;
   --wc-link-hover: #a6f0c2 ;
   --wc-brand-text: #7ee2a8 ;
-  --dsw-alias-state-business-primary: var(--wc-green) ;
-  --dsw-alias-state-business-tertiary: var(--wc-accent-soft) ;
-  --dsw-alias-state-success-primary: var(--wc-green) ;
-  --dsw-alias-button-info-fill: var(--wc-accent-solid) ;
-  --dsw-alias-button-info-hover: var(--wc-accent-press) ;
-  --dsw-alias-brand-primary: var(--wc-green) ;
-  --dsw-alias-brand-text: #ffffff ;
-  --dsw-specific-bubble: var(--wc-bubble) ;
   --dsw-alias-bg-base: #111113 ;
-  --dsw-alias-bg-module-platform: var(--wc-surface-dark) ;
-  --dsw-alias-bg-overlay: var(--wc-overlay-dark) ;
   --wc-scroll-thumb: rgba(255, 255, 255, 0.22);
   --wc-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
 }
@@ -354,8 +337,6 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --wc-bubble-link: #6b4f1d;
   --wc-bubble-code-ink: #3a3325;
   --dsw-alias-bg-base: #fdfdfc;
-  --dsw-alias-bg-module-platform: #f9f9f8;
-  --dsw-specific-bubble: #ded3ba;
 }
 
 
@@ -587,9 +568,6 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow:has(.JoiKIa_slot > [data-state="done"
   color: var(--wc-brand-text);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected:has(.JoiKIa_slot > [data-state="done"]) .JoiKIa_title { color: var(--wc-sel-ink); }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot > [data-state="done"] + span {
-  background: #ffffff; box-shadow: 0 0 0 0 transparent;
-}
 /* timestamps: one step up from the host's 10px so they stay readable at a glance */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_time {
   font-size: var(--wc-fs-sm); font-variant-numeric: tabular-nums; color: --wc-ink-3;
@@ -725,6 +703,7 @@ body.dsh-wechat-skin-on .ijfCxa_thinkBody { font-size: var(--wc-body-sm); }
 
 /* ================= composer ================= */
 body.dsh-wechat-skin-on .JZLxKW_card {
+  /* intentionally pure white in light mode (WeChat composer card), not --wc-surface */
   background: #ffffff;
   border: 0.5px solid var(--wc-border-light);
   border-radius: var(--wc-radius-card);
@@ -807,10 +786,7 @@ body.dsh-wechat-skin-on .JZLxKW_primary {
   transition: background-color 250ms ease-out, color 250ms ease-out, transform 250ms ease-out;
 }
 body.dsh-wechat-skin-on .JZLxKW_primary > svg { display: block; width: 16px; height: 16px; }
-body.dsh-wechat-skin-on .JZLxKW_primary::after,
-body.dsh-wechat-skin-on:lang(zh) .JZLxKW_primary::after,
-body.dsh-wechat-skin-on:lang(en) .JZLxKW_primary::after,
-body.dsh-wechat-skin-on:lang(ja) .JZLxKW_primary::after { content: none; }
+body.dsh-wechat-skin-on .JZLxKW_primary::after { content: none; }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_primary {
   background: rgba(255, 255, 255, 0.12); color: rgba(242, 242, 243, 0.5);
 }
@@ -1010,7 +986,7 @@ body.dsh-wechat-skin-on .V1MMBW_card .V1MMBW_tableWrap { border: 0; border-radiu
 /* ================= assistant content: type, rhythm, data tables ================= */
 /* Everything here is scoped to assistant-step markdown so GenUI cards, tool output
    and the composer keep their own chrome. */
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 { --wc-md-gap: 12px; }
+body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] { --wc-md-gap: 12px; }
 
 /* Blocks: one vertical rhythm, no double margins at the edges. */
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] ._markdown_13jw0_5 > :is(p, ul, ol, pre, blockquote, table, .tableScroll) { margin-top: var(--wc-md-gap); margin-bottom: 0; }
@@ -1102,9 +1078,6 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScr
      and the table jumps up. */
   padding-bottom: 0 !important;
 }
-body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"]:hover {
-  overflow-x: auto; padding-bottom: 0 !important;
-}
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] table {
   border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
   border-collapse: separate; border-spacing: 0;
@@ -1128,9 +1101,6 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScr
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] td:first-child { font-weight: 500; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :first-child { margin-top: 0; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] :is(th, td) > :last-child { margin-bottom: 0; }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] thead th {
-  background: var(--wc-th-bg); color: var(--wc-th-ink); border-bottom: 0 !important;
-}
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] [data-chat-flow-kind="assistant-step"] [class*="tableScroll"] tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.035); }
 
 /* Details / summary blocks render as small disclosure cards. */
@@ -1253,8 +1223,6 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"
   --wc-bubble-link: #d9c48f;
   --wc-bubble-code-ink: #efe8d8;
   --dsw-alias-bg-base: #141210;
-  --dsw-alias-bg-module-platform: #1e1b17;
-  --dsw-specific-bubble: #3d3829;
 }
 
 
@@ -1338,7 +1306,7 @@ body.dsh-wechat-skin-on .dsh-wc-caret {
   transition: left 80ms ease-out, top 80ms ease-out, height 60ms linear;
   animation: dsh-wc-caret-blink 1.06s steps(1, end) infinite;
 }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: #f2f2f3; }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: var(--wc-caret-ink, #f2f2f3); }
 @keyframes dsh-wc-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   body.dsh-wechat-skin-on .dsh-wc-caret { animation: none; transition: none; }
@@ -1420,7 +1388,7 @@ box-shadow: 0 0 0 2px color-mix(in srgb, var(--wc-green, #07c160) 22%, transpare
 body .dsh-wc-reset {
 flex: none; width: 20px; height: 20px; padding: 0; margin-left: 2px;
 border: none; border-radius: 999px; background: transparent; cursor: pointer;
-color: var(--wc-ink-3); font-size: 12px; line-height: 20px;
+color: var(--wc-ink-3); font-size: var(--wc-fs-sm, 12px); line-height: 20px;
 opacity: .55; transition: opacity 250ms ease-out, background-color 250ms ease-out;
 }
 body .dsh-wc-row:hover .dsh-wc-reset, body .dsh-wc-reset:focus-visible { opacity: 1; }
@@ -1429,13 +1397,13 @@ body .dsh-wc-empty { padding: 18px 16px; text-align: center; color: var(--wc-ink
 /* one settings section = one card */
 body .dsh-wc-group {
 border: 0.5px solid var(--dsw-alias-border-l2, #e6e6e6);
-border-radius: 12px;
+border-radius: var(--wc-radius-card, 12px);
 background: var(--dsw-alias-bg-module-platform, #ffffff);
 overflow: hidden;
 }
 body .dsh-wc-group-title {
 padding: 14px 16px 2px;
-color: var(--wc-ink-3);
+color: var(--wc-ink-2, var(--wc-ink-3));
 font-size: var(--wc-fs-sm);
 font-weight: 600;
 line-height: 18px;
@@ -2648,7 +2616,31 @@ children: "\u21ba"
 		}
 
 /** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
-function SkinPreview({ t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible, fontFamily, contrast, avatarShape }) {
+/** Tiny avatar glyph mirroring the session-list avatar art styles. */
+function PreviewAvatarGlyph({ variant, label, radius, size }) {
+  const px = size || 22;
+  if (variant === "identicon") {
+    let hash = 0; const text = String(label || "");
+    for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    const cells = [];
+    for (let col = 0; col < 3; col++) for (let row = 0; row < 3; row++) {
+      if ((hash >> (col * 3 + row)) & 1) cells.push([col, row]);
+    }
+    return (0, react_jsx_runtime.jsx)("span", { style: { width: px, height: px, borderRadius: radius, flex: "none", background: "#f2f2f3", display: "block", overflow: "hidden" },
+      children: (0, react_jsx_runtime.jsx)("svg", { width: px, height: px, viewBox: "0 0 3 3", children: cells.map((cell) => (0, react_jsx_runtime.jsx)("rect", { x: cell[0], y: cell[1], width: 1, height: 1, fill: "hsl(152,28%,42%)" }, cell[0] + "-" + cell[1])) }) });
+  }
+  if (variant === "silhouette") {
+    return (0, react_jsx_runtime.jsx)("span", { style: { width: px, height: px, borderRadius: radius, flex: "none", background: "#eef1f4", display: "block", overflow: "hidden" },
+      children: (0, react_jsx_runtime.jsx)("svg", { width: px, height: px, viewBox: "0 0 24 24", children: (0, react_jsx_runtime.jsxs)("g", { fill: "#8a93a3", children: [
+        (0, react_jsx_runtime.jsx)("circle", { cx: 12, cy: 9, r: 4.2 }),
+        (0, react_jsx_runtime.jsx)("path", { d: "M 4 21 C 4 15.5 7.6 13 12 13 C 16.4 13 20 15.5 20 21 Z" })
+      ] }) }) });
+  }
+  return null; /* "initial": the caller renders the letter chip */
+}
+
+/** A miniature of the chat + sidebar, so changes are visible before leaving settings. */
+function SkinPreview({ t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible, fontFamily, contrast, avatarShape, avatarStyle, preset }) {
 const scale = FONT_SCALES[fontLevel] !== undefined ? FONT_SCALES[fontLevel] : 1;
 const textScale = FONT_SCALES[textFontLevel] !== undefined ? FONT_SCALES[textFontLevel] : FONT_SCALES[3];
 const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif'
@@ -2657,22 +2649,30 @@ const previewFont = fontFamily === "wechat" ? '"PingFang SC", "Hiragino Sans GB"
   : fontFamily === "round" ? '"Yuanti SC", YouYuan, "Hiragino Maru Gothic ProN", "PingFang SC", sans-serif'
   : undefined;
 const previewAvatarRadius = avatarShape === "circle" ? "50%" : avatarShape === "square" ? "2px" : "5px";
+const avatarVariant = avatarStyle === "identicon" ? "identicon" : avatarStyle === "silhouette" ? "silhouette" : "initial";
 const highContrast = contrast === "high";
-const gap = 10;
+const isPaper = preset === "paper";
+const gap = density === "compact" ? 6 : 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
-const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
-const canvasColor = darkSkin ? "#111113" : "#fafafa";
-const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#f0f0f3";  // v1.38 model: the reply carries a surface, not white
-const outBubble = "#95ec69";
+/* keep these in step with the WECHAT_CSS palette (v1.37 colour ladder) */
+const sidebarColor = sidebarBg || (isPaper ? (darkSkin ? "#1e1b17" : "#e9e8e6") : (darkSkin ? "#18191b" : "#e8e8ec"));
+const canvasColor = isPaper ? (darkSkin ? "#141210" : "#fdfdfc") : (darkSkin ? "#111113" : "#fcfcfd");
+const inBubble = isPaper ? (darkSkin ? "#2a2620" : "#f1ede2") : (darkSkin ? "#2e3135" : "#f0f0f3");
+const outBubble = isPaper ? "#ded3ba" : "#95ec69";
+const outInk = isPaper ? "#3a3325" : "#101010";
 const lh = lineHeight === "compact" ? 1.5 : lineHeight === "relaxed" ? 1.85 : 1.6;
 const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontFamily: previewFont, fontSize: Math.round(12 * textScale) + "px", lineHeight: lh };
+const avatarChip = { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" };
+const renderAvatar = (label) => avatarVariant === "initial"
+  ? (0, react_jsx_runtime.jsx)("span", { style: avatarChip, children: label })
+  : (0, react_jsx_runtime.jsx)(PreviewAvatarGlyph, { variant: avatarVariant, label: label, radius: previewAvatarRadius });
 return (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", borderRadius: "10px", overflow: "hidden", border: "0.5px solid var(--dsw-alias-border-l2)" },
 children: [
 (0, react_jsx_runtime.jsx)("div", {
 style: { width: "76px", flex: "none", background: sidebarColor, padding: "8px 6px", display: "flex", flexDirection: "column", gap: "6px" },
 children: [0, 1, 2, 3].map((index) => (0, react_jsx_runtime.jsx)("div", {
-style: { height: "14px", borderRadius: "4px", background: index === 0 ? "rgba(7,193,96,0.22)" : darkSkin ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }
+style: { height: `${Math.round(14 * scale)}px`, borderRadius: "4px", background: index === 0 ? "rgba(7,193,96,0.22)" : darkSkin ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }
 }, "s" + index))
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -2681,10 +2681,7 @@ children: [
 (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-start" },
 children: [
-aiAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
-style: { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
-children: "AI"
-}),
+aiAvatarVisible === false ? null : renderAvatar("AI"),
 (0, react_jsx_runtime.jsxs)("div", {
 style: Object.assign({}, bubbleBase, { background: inBubble, color: highContrast ? (darkSkin ? "#f2f2f3" : "#111111") : (darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a"), border: highContrast ? (darkSkin ? "0.5px solid rgba(255,255,255,0.34)" : "0.5px solid rgba(0,0,0,0.28)") : "none" }),
 children: t("previewIn")
@@ -2694,12 +2691,9 @@ children: t("previewIn")
 (0, react_jsx_runtime.jsxs)("div", {
 style: { display: "flex", alignItems: "flex-start", gap: "8px", alignSelf: "flex-end" },
 children: [
-userAvatarVisible === false ? null : (0, react_jsx_runtime.jsx)("span", {
-style: { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: darkSkin ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)", color: darkSkin ? "rgba(255,255,255,0.55)" : "#999", fontSize: "12px" },
-children: t("me")
-}),
+userAvatarVisible === false ? null : renderAvatar(t("me")),
 (0, react_jsx_runtime.jsxs)("div", {
-style: Object.assign({}, bubbleBase, { background: outBubble, color: "#101010" }),
+style: Object.assign({}, bubbleBase, { background: outBubble, color: outInk }),
 children: t("previewOut")
 })
 ]
@@ -2918,7 +2912,7 @@ bind();
 return { setEnabled, dispose };
 }
 
-function WechatSkinRow({ t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ ctx, t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
 const density = useStore((s) => s.density);
@@ -2926,7 +2920,14 @@ const userAvatarVisible = useStore((s) => s.userAvatar);
 const aiAvatarStore = useStore((s) => s.aiAvatar);
 const chatWidth = useStore((s) => s.chatWidth);
 const sidebarBg = useStore((s) => s.sidebarBg);
-const darkSkin = typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1";
+const darkPair = (0, _react.useState)(typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1");
+const darkSkin = darkPair[0];
+(0, _react.useEffect)(() => {
+  if (!ctx || typeof ctx.on !== "function") return;
+  const syncDark = () => setTimeout(() => darkPair[1](typeof document !== "undefined" && document.body && document.body.dataset.dshWechatDark === "1"), 0);
+  const offDark = ctx.on("theme/change", syncDark);
+  return typeof offDark === "function" ? offDark : undefined;
+}, [ctx]);
 const userRef = (0, _react.useRef)(null);
 const aiRef = (0, _react.useRef)(null);
 const importRef = (0, _react.useRef)(null);
@@ -2934,7 +2935,9 @@ const presetPair = (0, _react.useState)(() => { const id = readJson(PRESET_KEY, 
 const statusPair = (0, _react.useState)({ kind: "", detail: "" });
 const presetId = presetPair[0];
 const [armed, setArmed] = (0, _react.useState)(null);
-const armConfirm = (key) => { setArmed(key); window.setTimeout(() => setArmed((current) => (current === key ? null : current)), 4000); };
+const armTimerRef = (0, _react.useRef)(null);
+(0, _react.useEffect)(() => () => { if (armTimerRef.current) window.clearTimeout(armTimerRef.current); }, []);
+const armConfirm = (key) => { setArmed(key); if (armTimerRef.current) window.clearTimeout(armTimerRef.current); armTimerRef.current = window.setTimeout(() => setArmed((current) => (current === key ? null : current)), 4000); };
 const setPresetId = presetPair[1];
 const status = statusPair[0];
 const setStatus = statusPair[1];
@@ -2972,6 +2975,13 @@ Array.prototype.slice.call(root.querySelectorAll(".dsh-wc-group")).forEach((card
 const hitRow = Array.prototype.slice.call(card.querySelectorAll(".dsh-wc-row")).some((rowEl) => rowEl.style.display !== "none");
 card.style.display = hitRow ? "" : "none";
 });
+// 品牌卡整体参与搜索（命中与否按整卡文本判断）
+const brandCard = document.querySelector(".dsh-wc-brand-card");
+if (brandCard) {
+const brandHit = !q || String(brandCard.textContent || "").toLowerCase().indexOf(q) !== -1;
+brandCard.style.display = brandHit ? "" : "none";
+if (brandHit) visibleCount += 1;
+}
 setNoHit(Boolean(q) && visibleCount === 0);
 }, [searchQuery, customPresets.length]);
 const missing = SELECTOR_PROBES.filter((selector) => {
@@ -3147,7 +3157,7 @@ children: armed === "preset:" + presetId ? t("confirmAgain") : t("presetDelete")
 }),
 (0, react_jsx_runtime.jsx)("div", {
 style: styles.previewBlock,
-children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore, fontFamily, contrast, avatarShape })
+children: (0, react_jsx_runtime.jsx)(SkinPreview, { t, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, darkSkin, lineHeight, aiAvatarVisible: aiAvatarStore, fontFamily, contrast, avatarShape, avatarStyle, preset: presetId })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAppearance"), children: [
@@ -3903,7 +3913,6 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"widthMedium": "适中",
 					"widthNative": "官方",
 					"sidebarBgTitle": "侧边栏背景色",
-					"sidebarBgReset": "微信色",
 "lineHeightTitle": "行高",
 "lineHeightHint": "正文段落的行间距",
 "lineHeightCompact": "紧凑",
@@ -3921,7 +3930,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 "composerFxTitle": "输入框效果",
 "composerFxHint": "毛玻璃卡片、光标滑动、发送时气泡从输入框落下",
 "rightbarAutoTitle": "右侧面板默认展开",
-"rightbarAutoHint": "进入会话时自动打开右侧面板；手动收起过的会话不再自动打开",
+"rightbarAutoHint": "切换会话时若右侧面板处于收起状态则自动打开；同一会话内手动收起后不会被强行弹回",
 "rightbarAutoOn": "开启",
 "rightbarAutoOff": "关闭",
 "motionReduced": "减少",
@@ -3964,7 +3973,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"fontL4": "较大",
 					"fontL5": "大",
 					"reset": "恢复默认",
-					"resetHint": "清除全部外观设置，不可撤销",
+					"resetHint": "清除全部皮肤设置（含上传的头像与自定义预设），不可撤销",
 					"confirmAgain": "再点一次确认",
 					"presetTitle": "主题预设",
 					"presetHint": "一次套用一组搭配",
@@ -3972,8 +3981,8 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"preset_compact": "紧凑",
 					"preset_paper": "纸张",
 					"me": "我",
-					"previewIn": "今天有空吗？帮我看看这份方案",
-					"previewOut": "可以，发过来吧",
+					"previewIn": "可以，发过来吧",
+					"previewOut": "今天有空吗？帮我看看这份方案",
 					"fitOk": "适配正常",
 					"fitMissing": "选择器缺失",
 					"fitContextPending": "上下文探针未渲染",
@@ -4004,7 +4013,6 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"widthMedium": "Medium",
 					"widthNative": "Native",
 					"sidebarBgTitle": "Sidebar background",
-					"sidebarBgReset": "WeChat colour",
 "lineHeightTitle": "Line height",
 "lineHeightHint": "Spacing between lines in body text",
 "lineHeightCompact": "Tight",
@@ -4022,7 +4030,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 "composerFxTitle": "Composer effects",
 "composerFxHint": "Glass card, sliding caret, send-flight into the bubble",
 "rightbarAutoTitle": "Open right panel by default",
-"rightbarAutoHint": "Opens the right panel when entering a session; sessions you collapsed manually stay closed",
+"rightbarAutoHint": "Opens the right panel when switching sessions if it is collapsed; collapsing it manually in a session keeps it closed there",
 "rightbarAutoOn": "On",
 "rightbarAutoOff": "Off",
 "motionReduced": "Reduced",
@@ -4055,7 +4063,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 "searchClear": "Clear",
 "noMatch": "No matching setting",
 "rowReset": "Reset this row",
-					"fontTitle": "Font size (5 levels)",
+					"fontTitle": "Interface font size",
 					"fontHint": "Sidebar, settings and process rows",
 					"textFontTitle": "Text size",
 					"textFontHint": "Message text, code blocks and tables in the chat",
@@ -4065,7 +4073,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"fontL4": "L",
 					"fontL5": "XL",
 					"reset": "Reset",
-					"resetHint": "Clears every appearance setting, no undo",
+					"resetHint": "Clears all skin settings (including uploaded avatars and custom presets), no undo",
 					"confirmAgain": "Click again to confirm",
 					"presetTitle": "Presets",
 					"presetHint": "Applies a matching set at once",
@@ -4073,8 +4081,8 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 					"preset_compact": "Compact",
 					"preset_paper": "Paper",
 					"me": "Me",
-					"previewIn": "Busy today? Can you look at this plan?",
-					"previewOut": "Sure, send it over",
+					"previewIn": "Sure, send it over",
+					"previewOut": "Busy today? Can you look at this plan?",
 					"fitOk": "Selectors OK",
 					"fitMissing": "Selectors missing",
 "fitContextPending": "Context probes not rendered",
@@ -4146,7 +4154,6 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
       zh: {
         entry: 'SONE主题',
         pageTitle: '品牌修改',
-        intro: '替换左侧栏与新会话页的品牌标志，并修改品牌标题。图片支持 PNG、SVG、WebP，不超过 2 MB。',
         mark: '品牌标志',
         markDesc: '显示在左侧栏顶部、收起状态的侧栏条，以及新会话页的大标志。',
         title: '品牌标题',
@@ -4170,7 +4177,8 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
         retry: '重新读取',
         notSet: '未设置',
         resetBrand: '恢复默认品牌',
-        resetHint: '清空标题与图片，回到内置 SONE 标志',
+        confirmAgain: '再点一次确认',
+        resetHint: '清空标题、图片与标语，回到内置 SONE 标志',
         resetDone: '已恢复默认品牌',
         typeError: '只接受 PNG、SVG 或 WebP 图片。',
         sizeError: '图片超过 2 MB。',
@@ -4182,7 +4190,6 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
       en: {
         entry: 'SONE Theme',
         pageTitle: 'Brand editor',
-        intro: 'Replace the brand mark in the sidebar and on the new-session page, and edit the brand title. PNG, SVG or WebP, up to 2 MB.',
         mark: 'Brand mark',
         markDesc: 'Shown at the top of the sidebar, in the collapsed rail, and as the large mark on the new-session page.',
         title: 'Brand title',
@@ -4206,7 +4213,8 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
         retry: 'Retry',
         notSet: 'Not set',
         resetBrand: 'Reset brand',
-        resetHint: 'Clears the title and images back to the built-in SONE mark',
+        confirmAgain: 'Click again to confirm',
+        resetHint: 'Clears the title, images and tagline back to the built-in SONE mark',
         resetDone: 'Brand reset to default',
         typeError: 'Only PNG, SVG or WebP images are accepted.',
         sizeError: 'The image is larger than 2 MB.',
@@ -4745,6 +4753,20 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 
     function BrandStudioSection() {
       var snap = useBrandState()
+      var armedBrandPair = useState(null)
+      var armedBrand = armedBrandPair[0]
+      var setArmedBrand = armedBrandPair[1]
+      var armBrandTimer = (0, _react.useRef)(null)
+      useEffect(function () {
+        return function () { if (armBrandTimer.current) window.clearTimeout(armBrandTimer.current) }
+      }, [])
+      function armBrand() {
+        setArmedBrand('brand')
+        if (armBrandTimer.current) window.clearTimeout(armBrandTimer.current)
+        armBrandTimer.current = window.setTimeout(function () {
+          setArmedBrand(function (current) { return current === 'brand' ? null : current })
+        }, 4000)
+      }
       var title = useState(snap.title)
       var tagline = useState(snap.heroTagline)
       var status = useState({ kind: '', detail: '' })
@@ -4958,8 +4980,10 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
             type: 'button',
             className: 'dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm',
             disabled: !snap.loaded,
-            onClick: resetBrand
-          }, t('resetBrand')))))
+            onClick: function () {
+              if (armedBrand === 'brand') { setArmedBrand(null); resetBrand() } else armBrand()
+            }
+          }, armedBrand === 'brand' ? t('confirmAgain') : t('resetBrand')))))
 
       children.push(h('div', { style: S.status, key: 'status' },
         status[0].kind === 'err'
@@ -4968,7 +4992,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
             ? h('span', { style: S.ok }, status[0].detail)
             : null))
 
-      return h('div', { style: S.root, 'aria-label': t('pageTitle') }, children)
+      return h('div', { style: S.root, className: 'dsh-wc-brand-card', 'aria-label': t('pageTitle') }, children)
     }
 
     //#endregion
