@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.38.0";
+const SKIN_VERSION = "1.38.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -2442,7 +2442,7 @@ const gap = 10;
 const widthPct = chatWidth === "wide" ? "92%" : chatWidth === "medium" ? "76%" : "60%";
 const sidebarColor = sidebarBg || (darkSkin ? "#1a1a1b" : "#eeeef0");
 const canvasColor = darkSkin ? "#111113" : "#fafafa";
-const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#ffffff";
+const inBubble = darkSkin ? "rgba(255,255,255,0.09)" : "#f0f0f3";  // v1.38 model: the reply carries a surface, not white
 const outBubble = "#95ec69";
 const lh = lineHeight === "compact" ? 1.5 : lineHeight === "relaxed" ? 1.85 : 1.6;
 const bubbleBase = { position: "relative", maxWidth: widthPct, padding: "6px 10px", borderRadius: "8px", fontFamily: previewFont, fontSize: Math.round(12 * textScale) + "px", lineHeight: lh };
@@ -2466,7 +2466,7 @@ style: { width: "22px", height: "22px", borderRadius: previewAvatarRadius, flex:
 children: "AI"
 }),
 (0, react_jsx_runtime.jsxs)("div", {
-style: Object.assign({}, bubbleBase, { background: inBubble, color: highContrast ? (darkSkin ? "#f2f2f3" : "#111111") : (darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a"), border: highContrast ? (darkSkin ? "0.5px solid rgba(255,255,255,0.34)" : "0.5px solid rgba(0,0,0,0.28)") : (darkSkin ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(0,0,0,0.05)") }),
+style: Object.assign({}, bubbleBase, { background: inBubble, color: highContrast ? (darkSkin ? "#f2f2f3" : "#111111") : (darkSkin ? "rgba(255,255,255,0.86)" : "#1a1a1a"), border: highContrast ? (darkSkin ? "0.5px solid rgba(255,255,255,0.34)" : "0.5px solid rgba(0,0,0,0.28)") : "none" }),
 children: t("previewIn")
 })
 ]
