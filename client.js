@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.43.0";
+const SKIN_VERSION = "1.44.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1333,6 +1333,13 @@ body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > sp
 body.dsh-wechat-skin-on [class*="_headline"] [class*="_previewBadge"] {
   display: none !important;
 }
+/* 会话星标：分组内视觉置顶 + 行侧星形按钮（sone-wx 本地能力，不改宿主数据） */
+body.dsh-wechat-skin-on .Kjh-qa_groupSection { display: flex; flex-direction: column; }
+body.dsh-wechat-skin-on .Kjh-qa_groupSection > span:has(> .JoiKIa_sessionRow[data-dsh-wc-star="1"]) { order: -1; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow { position: relative; }
+body.dsh-wechat-skin-on .dsh-wc-star-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary, #81858c); opacity: 0; transition: opacity 250ms ease-out; cursor: pointer; z-index: 3; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:hover .dsh-wc-star-btn, body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn { opacity: 1; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn { color: #ffc53d; }
 `;
 
 				/** Settings-row button styles: injected even when the skin is off, so the row keeps hover/active/disabled feedback. */
@@ -2391,6 +2398,62 @@ function initGroupCounts(ctx) {
 				attempt();
 			};
 			return { tick, dispose: stop };
+		}
+		//#endregion
+
+		//#region dsh-wechat-skin: session stars
+		const STAR_KEY = "dsh-wechat-skin:starred";
+		function readStars() { return readJson(STAR_KEY, []); }
+		function writeStars(list) { writeJson(STAR_KEY, list); }
+		function isStarred(key) { return readStars().indexOf(key) >= 0; }
+		function toggleStars(key) {
+			const list = readStars();
+			const at = list.indexOf(key);
+			if (at >= 0) list.splice(at, 1);
+			else list.push(key);
+			writeStars(list);
+			return at < 0;
+		}
+		function ensureStarButton(row, key) {
+			let btn = row.querySelector(".dsh-wc-star-btn");
+			if (!btn) {
+				const title = row.querySelector(".JoiKIa_title");
+				if (!title) return;
+				btn = document.createElement("button");
+				btn.type = "button";
+				btn.className = "dsh-wc-star-btn";
+				btn.setAttribute("aria-label", "Toggle star");
+				btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2.6l2.9 6.1 6.5.8-4.8 4.6 1.2 6.5-5.8-3.2-5.8 3.2 1.2-6.5-4.8-4.6 6.5-.8z"/></svg>';
+				title.insertAdjacentElement("afterend", btn);
+			}
+			if (btn.getAttribute("data-star-key") !== key) btn.setAttribute("data-star-key", key);
+		}
+		function stampStars() {
+			let rows = [];
+			try { rows = Array.prototype.slice.call(document.querySelectorAll(".JoiKIa_sessionRow")); } catch (e) { return; }
+			const stars = readStars();
+			for (const row of rows) {
+				const key = row.getAttribute("data-row-key") || "";
+				if (!key) continue;
+				if (stars.indexOf(key) >= 0) row.setAttribute("data-dsh-wc-star", "1");
+				else row.removeAttribute("data-dsh-wc-star");
+				ensureStarButton(row, key);
+			}
+		}
+		function onStarClick(event) {
+			const btn = event.target && event.target.closest ? event.target.closest(".dsh-wc-star-btn") : null;
+			if (!btn) return;
+			const key = btn.getAttribute("data-star-key") || "";
+			if (!key) return;
+			event.preventDefault();
+			event.stopPropagation();
+			toggleStars(key);
+			stampStars();
+		}
+		function initSessionStars() {
+			document.addEventListener("click", onStarClick, true);
+			stampStars();
+			return { stamp: stampStars, dispose() { document.removeEventListener("click", onStarClick, true); } };
 		}
 		//#endregion
 
@@ -3619,6 +3682,10 @@ scanHooks.push(composerScrollScan);
 			let rightbarAutoCtl = null;
 			try { rightbarAutoCtl = initRightbarAuto(ctx); } catch (e) { rightbarAutoCtl = null; }
 			if (rightbarAutoCtl) scanHooks.push(rightbarAutoCtl.tick);
+			// Session stars: visual-only starring + in-group pinning.
+			let starsCtl = null;
+			try { starsCtl = initSessionStars(); } catch (e) { starsCtl = null; }
+			if (starsCtl) scanHooks.push(starsCtl.stamp);
 			const injected = (actions) => {
 				bound = actions;
 				sync();
@@ -3985,6 +4052,7 @@ window.localStorage.removeItem(CONTRAST_KEY);
 window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 window.localStorage.removeItem(COMPOSER_FX_KEY);
 window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
+window.localStorage.removeItem(STAR_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
 						userAvatarDataUrl = null;
@@ -4262,6 +4330,7 @@ window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
 				}
 				if (groupCounts) groupCounts.dispose();
 				if (rightbarAutoCtl) rightbarAutoCtl.dispose();
+				if (starsCtl) starsCtl.dispose();
 				unbindComposerFade();
 				if (scheduled) { cancelAnimationFrame(scheduled); scheduled = null; }
 				for (const entry of panelEntries()) entry.el.style.removeProperty("order");
