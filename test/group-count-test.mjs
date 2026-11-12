@@ -105,8 +105,8 @@ sandbox.localStorage.removeItem('dsh.workspace.view.v5');
 
 // --- stamping ----------------------------------------------------------------
 function makeRow(key) {
-  const text = { dataset: {} };
-  return { key, text, getAttribute: (n) => (n === 'data-row-key' ? key : null), querySelector: (sel) => (sel === '.JoiKIa_projectText' ? text : null) };
+  const title = { dataset: {} };
+  return { key, title, getAttribute: (n) => (n === 'data-row-key' ? key : null), querySelector: (sel) => (sel === '.JoiKIa_projectText .JoiKIa_title' ? title : null) };
 }
 const rows = [makeRow('workspace:ws1'), makeRow('workspace:ws2'), makeRow('workspace:')];
 const fakeDocument = {
@@ -116,11 +116,11 @@ const stampSandbox = { document: fakeDocument, Map, Set, Object, String };
 nodevm.createContext(stampSandbox);
 nodevm.runInContext(fnSrc('stampGroupCounts'), stampSandbox);
 stampSandbox.stampGroupCounts(new Map([['ws1', 7], ['ws2', 0], ['', 3]]));
-check(rows[0].text.dataset.dshWcCount === '7', `ws1 stamped 7, got ${rows[0].text.dataset.dshWcCount}`);
-check(rows[1].text.dataset.dshWcCount === undefined, 'empty group loses its badge');
-check(rows[2].text.dataset.dshWcCount === '3', `ungrouped stamped 3, got ${rows[2].text.dataset.dshWcCount}`);
+check(rows[0].title.dataset.dshWcCount === '7', `ws1 stamped 7 on the title span, got ${rows[0].title.dataset.dshWcCount}`);
+check(rows[1].title.dataset.dshWcCount === undefined, 'empty group loses its badge');
+check(rows[2].title.dataset.dshWcCount === '3', `ungrouped stamped 3, got ${rows[2].title.dataset.dshWcCount}`);
 stampSandbox.stampGroupCounts(new Map([['ws1', 0]]));
-check(rows[0].text.dataset.dshWcCount === undefined, 'count dropping to 0 removes the badge');
+check(rows[0].title.dataset.dshWcCount === undefined, 'count dropping to 0 removes the badge');
 
 // --- wiring and CSS guards ---------------------------------------------------
 check(src.includes('initGroupCounts(ctx)'), 'applySkin wires initGroupCounts(ctx)');
@@ -128,8 +128,10 @@ check(/scanHooks\.push\(groupCounts\.stamp\)/.test(src), 'group count stamp join
 check(/groupCounts\.dispose\(\)/.test(src), 'cleanup disposes the group count subscriptions');
 check(/ctx\.get\("workspaces"\)/.test(src) && /ctx\.get\("sessions"\)/.test(src), 'reads the host workspaces/sessions services');
 check(src.includes("content: attr(data-dsh-wc-count)"), 'CSS renders the badge from the data attribute');
-check(/\.JoiKIa_projectText\[data-dsh-wc-count\]::after/.test(src), 'badge selector targets group labels only');
+check(/\.JoiKIa_projectRow \.JoiKIa_title\[data-dsh-wc-count\]::after/.test(src), 'badge attaches to the title span, not the column-flex container (.JoiKIa_projectText is display:flex/column, a badge there drops to its own line)');
+check(!/\.JoiKIa_projectText\[data-dsh-wc-count\]/.test(src), 'no leftover badge rule on the group container');
+check(/row\.querySelector\("\.JoiKIa_projectText \.JoiKIa_title"\)/.test(src), 'stamping reaches the title span through the container');
 check(src.includes("JoiKIa_projectRow[data-row-key^=\"workspace:\"]"), 'stamping targets group header rows only');
 
 if (fails.length) { console.error('group-count-test FAILED\n  ' + fails.join('\n  ')); process.exit(1); }
-console.log('group-count-test OK（' + 12 + ' 项）');
+console.log('group-count-test OK（' + 15 + ' 项）');

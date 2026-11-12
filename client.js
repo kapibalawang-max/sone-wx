@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.39.0";
+const SKIN_VERSION = "1.39.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -423,9 +423,10 @@ body.dsh-wechat-skin-on .JoiKIa_projectRow {
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_projectText { gap: 0; }
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title { font-size: var(--wc-fs-md); line-height: 18px; font-weight: 500; }
 body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_meta { font-size: var(--wc-fs-sm); line-height: 14px; }
-/* Group session count: the stamping code sets data-dsh-wc-count on the label
-   span; React never sees it, and ::after renders the number after the title. */
-body.dsh-wechat-skin-on .JoiKIa_projectText[data-dsh-wc-count]::after {
+/* Group session count: the stamping code sets data-dsh-wc-count on the title
+   span. It must live on the title itself — .JoiKIa_projectText is a column
+   flex, so a badge on the container drops onto a second line under the name. */
+body.dsh-wechat-skin-on .JoiKIa_projectRow .JoiKIa_title[data-dsh-wc-count]::after {
   content: attr(data-dsh-wc-count);
   margin-left: 6px;
   font-size: var(--wc-fs-sm);
@@ -2264,11 +2265,11 @@ function stampGroupCounts(counts) {
 	const rows = document.querySelectorAll('.JoiKIa_projectRow[data-row-key^="workspace:"]');
 	for (const row of rows) {
 		const key = (row.getAttribute("data-row-key") || "").slice("workspace:".length);
-		const text = row.querySelector(".JoiKIa_projectText");
-		if (!text) continue;
+		const title = row.querySelector(".JoiKIa_projectText .JoiKIa_title");
+		if (!title) continue;
 		const count = counts.get(key) || 0;
-		if (count > 0) text.dataset.dshWcCount = String(count);
-		else if (text.dataset.dshWcCount !== undefined) delete text.dataset.dshWcCount;
+		if (count > 0) title.dataset.dshWcCount = String(count);
+		else if (title.dataset.dshWcCount !== undefined) delete title.dataset.dshWcCount;
 	}
 }
 
@@ -2299,7 +2300,7 @@ function initGroupCounts(ctx) {
 			disposed = true;
 			try { if (off1) off1(); } catch (e) {}
 			try { if (off2) off2(); } catch (e) {}
-			for (const text of document.querySelectorAll(".JoiKIa_projectText[data-dsh-wc-count]")) delete text.dataset.dshWcCount;
+			for (const title of document.querySelectorAll(".JoiKIa_title[data-dsh-wc-count]")) delete title.dataset.dshWcCount;
 		}
 	};
 }
