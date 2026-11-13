@@ -1,0 +1,22 @@
+{
+  "id": "sone-wx",
+  "name": "SONE主题",
+  "tagline": "微信风格皮肤：绿色气泡、两级字号、深浅与纸张主题，另带浮岛布局与品牌自定义",
+  "accent": "#0a7d43",
+  "bodyAttr": "dsh-wechat-skin-on",
+  "package": "sone-wx",
+  "wiring": {
+    "id": "sone-wx"
+  },
+  "settings": {
+    "section": "sone-wx",
+    "order": 50
+  },
+  "storage": {
+    "namespace": "dsh-wechat-skin:",
+    "brand": "~/.dsh/sone-wx/brand"
+  },
+  "requires": {
+    "dsh": ">=0.2.2-rc.1 <0.3.0-0"
+  }
+}

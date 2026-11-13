@@ -68,3 +68,22 @@ test('导出、导入与重置路径', () => {
 test('结构层设置分区排在本分区之后', () => {
   assert.ok(src.includes("id: 'sone-wx-islands', order: 51, label: '浮岛布局'"), 'own section, own order');
 });
+
+test('骨架自检：锚点缺失即停用，且不抛错', () => {
+  assert.ok(src.includes("const REQUIRED_ANCHORS = ['.PIRFFq_frame', '.PIRFFq_centerCol']"), 'anchors declared');
+  assert.ok(src.includes("REQUIRED_ANCHORS.filter("), 'anchors probed');
+  const gateAt = src.indexOf('function startCompatibilityGate');
+  const gate = src.slice(gateAt, src.indexOf('\n    function ', gateAt + 10));
+  assert.match(gate, /const fail = \(missing\) =>/, 'gate has a fail path');
+  assert.match(gate, /setCompat\(\{ status: 'missing'/, 'reports the missing anchors');
+  assert.match(gate, /if \(readStored\(\)\) showCompatibilityToast\(\)/, 'toasts only when the user asked for the skin');
+  assert.ok(!/const fail = [\s\S]{0,600}?activate\(\)/.test(gate), 'a failed gate never activates the shell');
+  assert.match(gate, /COMPAT_TIMEOUT_MS/, 'gives up on a timeout instead of waiting forever');
+});
+
+test('方言选择：版本表与 DOM 结构不符时以 DOM 为准', () => {
+  assert.ok(src.includes("const SHELL_DIALECTS = ["), 'dialect table exists');
+  assert.match(src, /function dialectForVersion\(/, 'version→dialect mapping');
+  assert.match(src, /function detectShellDialect\(/, 'DOM dialect probe');
+  assert.match(src, /shell structure differs from the reported version/, 'warns when they disagree');
+});

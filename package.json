@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.47.0",
+  "version": "1.47.1",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
@@ -8,6 +8,7 @@
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
+    "./skin.json": "./skin.json",
     "./icon": "./icon.svg",
     "./locale/en.json": "./locale/en.json",
     "./locale/zh.json": "./locale/zh.json",
@@ -17,10 +18,12 @@
     "index.js",
     "client.js",
     "cordis.patch.yml",
+    "skin.json",
     "icon.svg",
     "locale",
     "docs",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE",
     "NOTICE"
   ],
@@ -78,6 +81,7 @@
     "test:visual": "node test/visual.mjs",
     "test:update-baseline": "node test/visual.mjs --update",
     "build": "node build.mjs",
-    "check:build": "node build.mjs --check"
+    "check:build": "node build.mjs --check",
+    "test:offline": "node test/run-offline.mjs"
   }
 }

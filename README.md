@@ -151,11 +151,25 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 - `src/css/dialects/*.css`、`src/css/islands-variants/*.css` — 按宿主结构方言注入的差异样式。
 - `src/js/islands.js` — 浮岛结构层逻辑（移植自 dsh-islands-ui，MIT）。
 - `src/client.template.js` — 皮肤与品牌逻辑，样式处留占位符。
-- `build.mjs` — 把上面全部拼成 `client.js`：`node build.mjs` 重新生成，`node build.mjs --check` 校验产物是否过期（`test/islands-layer-test.mjs` 会跑它）。
+- `build.mjs` — 把上面全部拼成 `client.js`：`node build.mjs` 重新生成，`node build.mjs --check` 校验产物是否过期（`test/build-check.mjs`、`test/islands-layer-test.mjs` 与 CI 都会跑它）。
+- `skin.json` — 皮肤元数据（id / 名称 / 起点强调色 / body 属性 / 设置分区 / 存储命名空间），供皮肤中心类工具识别。
+- `CHANGELOG.md` — 最近若干版本的变更；逐版完整记录仍在本书「更新记录」。
+- `test/run-offline.mjs` — CI 入口：27 个不依赖 Chrome 与本机 DSH 的套件（构建校验、路由、令牌、接线守卫等）。
+- `.github/workflows/ci.yml` — push / PR 时在 Node 20 与 22 上跑 `build --check`、语法检查与离线套件；需要真 Chrome 与 app.asar 的浏览器套件仍是发版前的本地门禁。
 
 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；改样式改 `src/css/` 再 `node build.mjs`，不要改产物。
 
 ## 更新记录
+### v1.47.1
+
+工程基建补齐，浮岛层在真实宿主里跑通之后的收口。
+
+- **`skin.json`**：新增皮肤元数据并放开 `exports` / `files`——皮肤中心类工具靠它识别 id、名称、起点强调色、body 属性与存储命名空间。
+- **`CHANGELOG.md`**：最近若干版本的变更独立成文，逐版完整记录仍留在本书。
+- **CI**：`.github/workflows/ci.yml` 在 push / PR 上跑 Node 20 与 22，检查 `node build.mjs --check`、三个文件的语法，再跑 `test/run-offline.mjs`。新增 `test/build-check.mjs` 与 27 个不依赖 Chrome / app.asar 的离线套件——需要真浏览器与本机 DSH 的套件继续留在发版前的本地门禁。
+- **骨架自检与方言选择进测试**：新增两组断言钉住「锚点缺失即停用、超时放弃、失败绝不激活」与「DOM 结构与版本表不符时以 DOM 为准」。
+- **结构层日志前缀**改为 `[sone-wx islands]`，与皮肤其余日志一致。
+
 ### v1.47.0
 
 浮岛布局与工程基建：把 dsh-islands-ui（MIT，DawnCHL）的结构与交互移植进来，配色改走本皮肤的令牌。

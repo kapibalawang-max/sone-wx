@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.0";
+const SKIN_VERSION = "1.47.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -9731,7 +9731,7 @@ function createSoneIslandsLayer(require, host) {
         settled = true;
         stop();
         setCompat({ status: 'missing', missing, forced: false, version: shellVersion, dialect: shellDialect });
-        console.warn('[islands-ui] interface anchors missing; the skin stayed off:', {
+        console.warn('[sone-wx islands] interface anchors missing; the skin stayed off:', {
           version: shellVersion,
           dialect: shellDialect,
           missing,
@@ -9757,7 +9757,7 @@ function createSoneIslandsLayer(require, host) {
         // swap the variant before the skin turns on.
         const structure = detectShellDialect();
         if (structure !== null && structure !== 'unknown' && structure !== shellDialect) {
-          console.warn('[islands-ui] shell structure differs from the reported version; selecting the matching stylesheet', {
+          console.warn('[sone-wx islands] shell structure differs from the reported version; selecting the matching stylesheet', {
             version: shellVersion,
             expected: shellDialect,
             actual: structure,
@@ -9815,7 +9815,7 @@ function createSoneIslandsLayer(require, host) {
       try {
         skinRegistrar();
       } catch (error) {
-        console.warn('[islands-ui] failed to mount the skin', error);
+        console.warn('[sone-wx islands] failed to mount the skin', error);
         document.body?.removeAttribute(ATTRIBUTE);
       }
     }
@@ -10205,7 +10205,7 @@ function createSoneIslandsLayer(require, host) {
                     }),
                   });
                 } catch (error) {
-                  console.warn('[islands-ui] model picker shortcut unavailable', error);
+                  console.warn('[sone-wx islands] model picker shortcut unavailable', error);
                   return undefined;
                 }
               },
