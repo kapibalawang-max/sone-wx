@@ -1,0 +1,107 @@
+/* ==========================================================================
+   Islands UI · 15 top bar
+   A window-chrome strip above the three islands. It clears the macOS traffic
+   lights, hosts the workspace collapse control, and leaves the content area
+   completely free for the islands.
+   ========================================================================== */
+
+/* Registered even when the skin is off; the base rule keeps it out of the way. */
+.isl-topbar {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-topbar {
+  position: fixed;
+  inset: var(--isl-chrome-top) 0 auto;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  height: var(--isl-topbar-height);
+  /* macOS centers the traffic lights in its 48px window-chrome band; the
+     controls follow that center (10 + 14 = 24), not the 40px bar's own. */
+  padding: 10px 10px 0 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+  /* The bar itself must never swallow clicks meant for controls that are
+     docked over it; only the toggle and the drag handle opt back in. */
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+  user-select: none;
+}
+
+/* Left lead (traffic-light strip) and the centre of the bar are draggable;
+   both stop short of the docked controls so clicks keep working. */
+/* The 88px lead exists only for the macOS traffic lights. */
+body[data-dsh-wc-islands] .isl-topbarLead {
+  display: none;
+}
+
+html[data-platform='darwin'] body[data-dsh-wc-islands] .isl-topbar {
+  padding-left: 88px;
+}
+
+html[data-platform='darwin'] body[data-dsh-wc-islands] .isl-topbarLead {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  width: 88px;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarDrag {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  margin-right: 250px;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle {
+  box-sizing: border-box;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* Narrow desktop: the top bar remains the window chrome (drag strip + right
+   panel toggle), but the rail's home button owns the workspace drawer. The
+   chrome must paint above the drawer mask (70) and the drawer (71). */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-topbar {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-topbarToggle {
+    display: none;
+  }
+
+  body[data-dsh-wc-islands] .isl-topbarDrag {
+    margin-right: 40px;
+  }
+}

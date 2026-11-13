@@ -87,6 +87,8 @@ window.__ModuleLoader__.load({
 		const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style";
 /** Composer extras: glass card, sliding caret, send-flight morph. */
 const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
+/** Islands 结构层开关（浮岛布局 / 顶栏 / 左侧图标栏 / 置顶聚合 / 模型弹层 / 更新入口）。 */
+const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
@@ -111,7 +113,7 @@ const SKIN_VERSION = "1.46.1";
 		/** Sidebar colour swatches: WeChat grey, warm paper, mist green, cool grey, graphite. */
 		const SIDEBAR_SWATCHES = ["#eeeef0", "#f7f3ec", "#e8f2e9", "#dfe3e8", "#1c1c1e"];
 		/** Skin-side localStorage keys included in an exported config. */
-		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, CUSTOM_PRESETS_KEY];
+		const CONFIG_SKIN_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, SIDEBAR_ORDER_KEY, USER_AVATAR_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_KEY, AI_AVATAR_ENABLED_KEY, AI_AVATAR_SHOW_KEY_LEGACY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, ISLANDS_KEY, CUSTOM_PRESETS_KEY];
 		/** WeChat palette accents. */
 		const WECHAT_GREEN = "#07c160";
 		const WECHAT_GREEN_HOVER = "#06ad56";
@@ -1585,6 +1587,9 @@ body .dsh-wc-modal-error { font-size: var(--wc-fs-sm, 12px); line-height: 1.5; c
 body .dsh-wc-modal-divider { height: 0.5px; background: var(--dsw-alias-border-l2, #d9d9e0); }
 		`;
 
+/** Sidebar-structure dialect stylesheets: only the one matching the running shell is appended. */
+const SKIN_DIALECT_CSS = {};
+
 //#endregion
 
 		//#region dsh-wechat-skin: persistence + DOM helpers
@@ -2604,11 +2609,11 @@ function initGroupCounts(ctx) {
 		//#endregion
 
 		/** Toggle row slot store: enabled flag + font level. */
-		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx, initialRightbarAuto) {
+		function createStore(initialEnabled, initialFontLevel, initialTextFontLevel, initialDensity, initialUserAvatar, initialChatWidth, initialSidebarBg, initialAiAvatar, initialLineHeight, initialReduceMotion, initialFontFamily, initialContrast, initialAvatarShape, initialAvatarStyle, initialComposerFx, initialRightbarAuto, initialIslands) {
 		  return (0, _runtime_client.defineStore)({
-		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, composerFx: initialComposerFx, rightbarAuto: initialRightbarAuto, revision: -1 }),
+		    init: () => ({ enabled: initialEnabled, fontLevel: initialFontLevel, textFontLevel: initialTextFontLevel, density: initialDensity, userAvatar: initialUserAvatar, chatWidth: initialChatWidth, sidebarBg: initialSidebarBg, aiAvatar: initialAiAvatar, lineHeight: initialLineHeight, reduceMotion: initialReduceMotion, fontFamily: initialFontFamily, contrast: initialContrast, avatarShape: initialAvatarShape, avatarStyle: initialAvatarStyle, composerFx: initialComposerFx, rightbarAuto: initialRightbarAuto, islands: initialIslands, revision: -1 }),
 		    actions: {
-		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle, composerFx, rightbarAuto) => {
+		      sync: (d, enabled, fontLevel, textFontLevel, density, userAvatar, chatWidth, sidebarBg, aiAvatar, revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarStyle, composerFx, rightbarAuto, islands) => {
 		        if (revision <= d.revision) return;
 		        d.enabled = enabled;
 		        d.fontLevel = fontLevel;
@@ -2627,6 +2632,7 @@ function initGroupCounts(ctx) {
 
 		        d.composerFx = composerFx;
 		        d.rightbarAuto = rightbarAuto;
+		        d.islands = islands;
 		        d.revision = revision;
 					}
 				}
@@ -3183,7 +3189,7 @@ function decodeSkinShare(raw) {
 	return skin;
 }
 
-function WechatSkinRow({ ctx, t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
+function WechatSkinRow({ ctx, t, setFontLevel, setTextFontLevel, setDensity, setUserAvatarVisible, setChatWidth, setSidebarBg, setAiAvatarVisible, setLineHeight, setReduceMotion, setFontFamily, setContrast, setAvatarShape, setAvatarStyle, setComposerFx, setRightbarAuto, setIslands, applyPreset, savePreset, deletePreset, listPresets, exportConfig, importConfig, uploadUserAvatar, uploadAiAvatar, resetSkin, useStore }) {
 const fontLevel = useStore((s) => s.fontLevel);
 const textFontLevel = useStore((s) => s.textFontLevel);
 const density = useStore((s) => s.density);
@@ -3220,6 +3226,7 @@ const avatarShape = useStore((s) => s.avatarShape) || "rounded";
 const avatarStyle = useStore((s) => s.avatarStyle) || "silhouette";
 const composerFx = useStore((s) => s.composerFx) === true;
 const rightbarAuto = useStore((s) => s.rightbarAuto) === true;
+const islands = useStore((s) => s.islands) !== false;
 const presetTickPair = (0, _react.useState)(0);
 const bumpPresets = presetTickPair[1];
 const customPresets = typeof listPresets === "function" ? listPresets() : [];
@@ -3429,6 +3436,10 @@ const composerFxOptions = [
 { value: false, label: t("fxOff") },
 { value: true, label: t("fxOn") }
 ];
+const islandsOptions = [
+{ value: true, label: t("islandsOn") },
+{ value: false, label: t("islandsOff") }
+];
 const rightbarAutoOptions = [
 { value: false, label: t("rightbarAutoOff") },
 { value: true, label: t("rightbarAutoOn") }
@@ -3633,6 +3644,12 @@ title: t("rightbarAutoTitle"),
 hint: t("rightbarAutoHint"),
 onReset: () => { if (setRightbarAuto) setRightbarAuto(false); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: rightbarAuto, options: rightbarAutoOptions, onChange: (value) => { if (setRightbarAuto) setRightbarAuto(value); } })
+}),
+(0, react_jsx_runtime.jsx)(SkinRow, {
+title: t("islandsTitle"),
+hint: t("islandsHint"),
+onReset: () => { if (setIslands) setIslands(true); }, resetLabel: t("rowReset"),
+children: (0, react_jsx_runtime.jsx)(Segmented, { value: islands, options: islandsOptions, onChange: (value) => { if (setIslands) setIslands(value); } })
 }),
 ] }),
 (0, react_jsx_runtime.jsxs)(Group, { title: t("groupAssist"), children: [
@@ -3855,6 +3872,7 @@ applyTextFontLevel(textFontLevel);
 			composerEffects.setEnabled(composerFxOn);
 			let rightbarAuto = readJson(RIGHTBAR_AUTO_KEY, false) === true;
 			applyRightbarAuto(rightbarAuto);
+			let islandsOn = readJson(ISLANDS_KEY, true) !== false;
 			let chatWidth = readJson(CHAT_WIDTH_KEY, "wide");
 			if (chatWidth !== "wide" && chatWidth !== "medium" && chatWidth !== "native") chatWidth = "wide";
 			applyChatWidth(chatWidth);
@@ -3875,11 +3893,11 @@ applyTextFontLevel(textFontLevel);
 			applyAvatarShape(avatarShape);
 			let avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 			applyAvatarStyle(avatarArt);
-			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto);
+			const store = createStore(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto, islandsOn);
 			let bound = null;
 			let revision = 0;
 			const sync = () => {
-				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto);
+				bound?.sync(enabled, fontLevel, textFontLevel, density, userAvatarVisible, chatWidth, sidebarBg, aiAvatarVisible, ++revision, lineHeight, reduceMotion, fontFamily, contrast, avatarShape, avatarArt, composerFxOn, rightbarAuto, islandsOn);
 			};
 			initPanelDrag();
 			scanHooks.push(applyPanelOrder);
@@ -4019,6 +4037,8 @@ scanHooks.push(composerScrollScan);
 						if (importedComposerFx !== undefined && typeof importedComposerFx !== "boolean") return Promise.reject(new Error("invalid config"));
 						const importedRightbarAuto = importedValue(RIGHTBAR_AUTO_KEY);
 						if (importedRightbarAuto !== undefined && typeof importedRightbarAuto !== "boolean") return Promise.reject(new Error("invalid config"));
+						const importedIslands = importedValue(ISLANDS_KEY);
+						if (importedIslands !== undefined && typeof importedIslands !== "boolean") return Promise.reject(new Error("invalid config"));
 						if (importedMotion !== undefined && typeof importedMotion !== "boolean") return Promise.reject(new Error("invalid config"));
 						const importedFontLevel = importedValue(FONT_LEVEL_KEY);
 						if (importedFontLevel !== undefined && !(Number(importedFontLevel) >= 1 && Number(importedFontLevel) <= 5)) return Promise.reject(new Error("invalid config"));
@@ -4108,6 +4128,7 @@ scanHooks.push(composerScrollScan);
 						avatarArt = readJson(AVATAR_STYLE_KEY, "silhouette") === "initial" ? "initial" : "silhouette";
 						applyAvatarStyle(avatarArt);
 						composerFxOn = readJson(COMPOSER_FX_KEY, true) !== false;
+						islandsOn = readJson(ISLANDS_KEY, true) !== false;
 						composerEffects.setEnabled(composerFxOn);
 						rightbarAuto = readJson(RIGHTBAR_AUTO_KEY, false) === true;
 						applyRightbarAuto(rightbarAuto);
@@ -4127,7 +4148,7 @@ scanHooks.push(composerScrollScan);
 							[LINE_HEIGHT_KEY, lineHeight], [MOTION_KEY, reduceMotion],
 							[FONT_FAMILY_KEY, fontFamily], [CONTRAST_KEY, contrast],
 							[AVATAR_SHAPE_KEY, avatarShape], [AVATAR_STYLE_KEY, avatarArt],
-							[COMPOSER_FX_KEY, composerFxOn], [RIGHTBAR_AUTO_KEY, rightbarAuto]
+							[COMPOSER_FX_KEY, composerFxOn], [RIGHTBAR_AUTO_KEY, rightbarAuto], [ISLANDS_KEY, islandsOn]
 						];
 						canonical.forEach(([key, value]) => {
 							if (Object.prototype.hasOwnProperty.call(skin, key)) writeJson(key, value);
@@ -4222,6 +4243,11 @@ scanHooks.push(composerScrollScan);
 					  applyRightbarAuto(rightbarAuto);
 					  sync();
 					},
+					setIslands: (on) => {
+					  islandsOn = !!on;
+					  writeJson(ISLANDS_KEY, islandsOn);
+					  sync();
+					},
 					setAvatarStyle: (value) => {
 					avatarArt = value === "initial" ? "initial" : "silhouette";
 					writeJson(AVATAR_STYLE_KEY, avatarArt);
@@ -4265,6 +4291,7 @@ window.localStorage.removeItem(CONTRAST_KEY);
 window.localStorage.removeItem(AVATAR_SHAPE_KEY);
 window.localStorage.removeItem(COMPOSER_FX_KEY);
 window.localStorage.removeItem(RIGHTBAR_AUTO_KEY);
+window.localStorage.removeItem(ISLANDS_KEY);
 window.localStorage.removeItem(STAR_KEY);
 						} catch (e) {}
 						document.documentElement.style.removeProperty("--dsh-user-avatar");
@@ -4291,6 +4318,7 @@ window.localStorage.removeItem(STAR_KEY);
 						avatarArt = "silhouette"; applyAvatarStyle(avatarArt);
 						composerFxOn = true; composerEffects.setEnabled(true);
 						rightbarAuto = false; applyRightbarAuto(rightbarAuto);
+						islandsOn = true; writeJson(ISLANDS_KEY, true);
 						// Deleting the key is not enough: the in-memory order keeps driving the DOM
 						// until the next reload, and saved presets would survive a "restore defaults".
 						sidebarOrder = []; applyPanelOrder();
@@ -4343,6 +4371,10 @@ window.localStorage.removeItem(STAR_KEY);
 "fxOff": "关闭",
 "composerFxTitle": "输入框效果",
 "composerFxHint": "毛玻璃卡片、光标滑动、发送时气泡从输入框落下",
+"islandsTitle": "浮岛布局",
+"islandsHint": "圆角面板浮在统一画布上：自绘顶栏、常驻左侧图标栏、置顶聚合与两级模型弹层。关闭即回到平铺布局。",
+"islandsOn": "开启",
+"islandsOff": "关闭",
 "rightbarAutoTitle": "右侧面板默认展开",
 "rightbarAutoHint": "切换会话时若右侧面板处于收起状态则自动打开；同一会话内手动收起后不会被强行弹回",
 "rightbarAutoOn": "开启",
@@ -4452,6 +4484,10 @@ window.localStorage.removeItem(STAR_KEY);
 "fxOff": "Off",
 "composerFxTitle": "Composer effects",
 "composerFxHint": "Glass card, sliding caret, send-flight into the bubble",
+"islandsTitle": "Island layout",
+"islandsHint": "Rounded panels float on one canvas: custom top bar, persistent icon rail, pinned section and a two-level model picker. Turn it off to return to the flat shell.",
+"islandsOn": "On",
+"islandsOff": "Off",
 "rightbarAutoTitle": "Open right panel by default",
 "rightbarAutoHint": "Opens the right panel when switching sessions if it is collapsed; collapsing it manually in a session keeps it closed there",
 "rightbarAutoOn": "On",
@@ -4567,6 +4603,5606 @@ window.localStorage.removeItem(STAR_KEY);
 			return { store, injected };
 		}
 		//#endregion
+
+	//#region sone-wx: islands structural layer
+	/**
+	 * 结构层（浮岛布局 / 顶栏 / 左侧图标栏 / 置顶聚合 / 模型弹层 / 更新入口 / 强调色）。
+	 * 结构与交互移植自 dsh-islands-ui（MIT, DawnCHL）；配色与纹理走 sone-wx 皮肤令牌。
+	 */
+	const ISLANDS_CSS = `/* ==========================================================================
+   Islands 结构层 · 令牌桥接
+   结构（几何 / 层级 / 组件）移植自 dsh-islands-ui（MIT, DawnCHL），
+   颜色不另起一套：全部取自 sone-wx 皮肤令牌，于是深浅主题与强调色共用一条链路。
+   作用域挂在 body[data-dsh-wc-islands] 上，与 body.dsh-wechat-skin-on 叠加生效。
+   ========================================================================== */
+
+body[data-dsh-wc-islands] {
+	/* 画布：所有岛屿漂浮其上的统一底色。 */
+	--isl-canvas: var(--wc-bg, #fcfcfd);
+	--isl-canvas-veil: color-mix(in srgb, var(--wc-sidebar, #e8e8ec) 72%, transparent);
+	/* 岛屿表面。 */
+	--isl-surface: var(--dsw-alias-bg-base, #ffffff);
+	--isl-surface-muted: var(--wc-bubble-bg, #f0f0f3);
+	--isl-surface-sunken: var(--wc-code-bg, #e8e8ec);
+	/* 发丝描边：比皮肤再安静一档，避免岛屿边框抢画面。 */
+	--isl-border-soft: color-mix(in srgb, var(--wc-border-light, #d9d9e0) 62%, transparent);
+	--isl-border: var(--wc-border-light, #d9d9e0);
+	--isl-border-strong: color-mix(in srgb, var(--wc-ink-2, #4a4e56) 26%, transparent);
+	--isl-hover: var(--dsw-alias-interactive-bg-hover, rgba(17, 24, 39, 0.055));
+	--isl-active: var(--dsw-alias-interactive-bg-active, rgba(17, 24, 39, 0.09));
+	/* 强调色跟随皮肤主色，选中反馈与气泡保持同一家族。 */
+	--isl-accent: var(--wc-accent-solid, #0a7d43);
+	/* 几何：与微信皮肤 12/8/6 的圆角阶梯错开一档，岛屿用更圆的容器。 */
+	--isl-radius-xl: var(--wc-radius-card, 12px);
+	--isl-radius-lg: var(--wc-radius-card, 12px);
+	--isl-radius-md: var(--wc-radius-md, 10px);
+	--isl-radius-sm: var(--wc-radius-sm, 6px);
+	--isl-gap: 5px;
+	--isl-topbar-height: 40px;
+	--isl-chrome-top: 0px;
+	--isl-rail-collapsed-width: 56px;
+	--isl-rail-width: 48px;
+	/* 无投影：微信皮肤靠色阶分层，不靠阴影。 */
+	--isl-shadow-island: none;
+	--isl-shadow-float:
+		0 0 0 0.5px var(--wc-border-light, #d9d9e0),
+		0 8px 24px -12px rgba(17, 24, 39, 0.18);
+}
+
+/* ==========================================================================
+   Islands UI · 10 shell
+   The frame becomes a canvas; the three columns become detachable islands.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .PIRFFq_frame {
+  /* The ocean is a solid surface, never the desktop showing through vibrancy. */
+  background: var(--isl-canvas);
+  padding: calc(var(--isl-chrome-top) + var(--isl-topbar-height) + var(--isl-gap)) var(--isl-gap) var(--isl-gap);
+  /* Column gap only: the empty bottom track must not steal an extra row gap,
+     so the islands stay symmetric top and bottom. */
+  gap: 0 var(--isl-gap);
+}
+
+/* A real bottom panel (terminal, banner) still gets breathing room. */
+body[data-dsh-wc-islands] .PIRFFq_bottomRow:has([data-slot='shell.bottom'] > *) {
+  margin-top: var(--isl-gap);
+}
+
+/* The closed right column is a zero-width track, but the grid still reserves a
+   gap beside it; pull the centre island over that gap so the canvas margin on
+   the right equals the margin on the left. */
+body[data-dsh-wc-islands] .PIRFFq_frame[data-rightbar-collapsed] .PIRFFq_centerCol {
+  margin-right: calc(-1 * var(--isl-gap));
+}
+
+/* Center column: the conversation island. */
+body[data-dsh-wc-islands] .PIRFFq_centerCol {
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  box-shadow: var(--isl-shadow-island);
+  overflow: hidden;
+}
+
+/* Shipped desktop rules paint the sidebar with a gradient and give the center
+   column a left hairline; both are removed so the canvas reads as one plane. */
+[data-platform='darwin'] body[data-dsh-wc-islands] .PIRFFq_frame {
+  background: var(--isl-canvas);
+}
+
+[data-platform='darwin'] body[data-dsh-wc-islands] .PIRFFq_frame:not([data-sidebar-drawer]) .PIRFFq_sidebarCol {
+  background: transparent;
+  border-right: 0;
+  backdrop-filter: none;
+}
+
+body[data-dsh-wc-islands] .PIRFFq_sidebarCol {
+  background: transparent;
+  border-right: 0;
+}
+
+[data-platform='darwin'] body[data-dsh-wc-islands] .PIRFFq_centerCol,
+body[data-dsh-wc-islands] .PIRFFq_centerCol {
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-left: 1px solid var(--isl-border-soft);
+}
+
+body[data-dsh-wc-islands] .PIRFFq_mainPanel {
+  background: transparent;
+}
+
+/* Right workbench: only while a pane is open does the column render an island. */
+body[data-dsh-wc-islands] .PIRFFq_rightbarCol {
+  background: transparent;
+}
+
+body[data-dsh-wc-islands] .Dv5QdW_panel[data-sidebar-right-open]:not([data-sidebar-right-panel='fullscreen']) {
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  box-shadow: var(--isl-shadow-island);
+  overflow: clip;
+}
+
+/* Drawer mask on narrow windows: Islands keeps the veil light and blurred. */
+body[data-dsh-wc-islands] .PIRFFq_drawerMask {
+  background: var(--dsw-alias-bg-mask-1);
+  backdrop-filter: var(--dsw-mask-blur);
+}
+
+/* The shell overlay layer is where the rail and window top bar live. In
+   drawer mode it must paint above the drawer mask (70) and the drawer (71),
+   otherwise the persistent rail disappears under the open workspace drawer. */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .PIRFFq_overlayLayer {
+    z-index: 72;
+  }
+}
+
+/* The resize handle is invisible chrome; keep it grabbable but quiet. */
+body[data-dsh-wc-islands] .PIRFFq_handle {
+  width: 10px;
+  margin-left: -5px;
+}
+
+/* The shell computes the right handle's inline \`left\` from the frame's
+   border-box width, but its absolute containing block is the padded grid area
+   and the panel itself sits inside the right padding. That shifts the handle
+   two gaps to the right — wholly inside the right island. Cancel the frame's
+   horizontal padding so the strip straddles the right island's left edge
+   (covering the whole canvas gap plus 5px of the panel) like the left one. */
+body[data-dsh-wc-islands] .PIRFFq_handle[data-side='rightbar'] {
+  margin-left: calc(-5px - 2 * var(--isl-gap));
+}
+
+/* Windows title bar keeps its native height; the frame padding already gives
+   the rounded content corner room, so only the radius is unified. */
+[data-windows-titlebar] body[data-dsh-wc-islands] .PIRFFq_centerCol {
+  border-radius: var(--isl-radius-lg);
+}
+
+[data-windows-titlebar] body[data-dsh-wc-islands] .PIRFFq_frame {
+  background: var(--isl-canvas);
+}
+
+/* Collapsed sidebar on macOS drops the center column's left hairline; the
+   island keeps its outline regardless. */
+[data-platform='darwin'] body[data-dsh-wc-islands] [data-sidebar-collapsed] .PIRFFq_centerCol {
+  border-left: 1px solid var(--isl-border-soft);
+}
+
+/* ==========================================================================
+   Workbench panels (better-sidebar bottom dock + native right sidebar)
+   Both must read as independent islands, not as sheets pasted onto the
+   conversation island.
+   ========================================================================== */
+
+/* The bottom workbench reserves its height on the conversation column, not on
+   the inner panel, so the island itself shrinks and a canvas gap opens between
+   the two islands. */
+body[data-dsh-wc-islands] #root [data-dsh-center-col] {
+  margin-bottom: 0;
+}
+
+body[data-dsh-wc-islands] .PIRFFq_centerCol {
+  margin-bottom: var(--dsh-sidebar-height, 0px);
+  transition: margin-bottom var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands]:has([data-dsh-bottom-panel]:not([class*='Hidden'])) .PIRFFq_centerCol {
+  /* one gap above the panel and one below it */
+  margin-bottom: calc(var(--dsh-sidebar-height, 0px) + var(--isl-gap));
+}
+
+body[data-dsh-wc-islands] [data-dsh-bottom-panel] {
+  box-sizing: border-box;
+  /* Align the panel with the conversation island edges and let the frame
+     padding provide the bottom gap, so every island shares one gap width. */
+  margin: 0;
+  bottom: var(--isl-gap);
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  box-shadow: none;
+  /* The rounded island clips its content, but NOT the height-drag strip: the
+     strip must reach into the canvas gap above the panel to be reachable
+     there. Clip the body instead (below), so the strip can overhang. */
+  overflow: visible;
+}
+
+/* Keep the island's rounded content edge with the panel's own clipping gone:
+   the body carries the radius, while the absolute resize strip and the close
+   control stay outside this clip. */
+body[data-dsh-wc-islands] [data-dsh-bottom-panel] > [class*='panelBody'] {
+  overflow: clip;
+  border-radius: calc(var(--isl-radius-lg) - 1px);
+}
+
+/* The host centers its strip on the panel's top border (\`top: -4px;
+   height: 8px\`), which was right before the skin opened a canvas gap between
+   the conversation island and the panel. Anchor the 10px strip to that gap
+   instead: 5px above the border box top (the whole gap) and 5px inside the
+   panel, matching the side handles' straddle. \`top\` is relative to the panel's
+   padding box, hence the extra 1px border compensation. */
+body[data-dsh-wc-islands] [data-dsh-bottom-panel] > [class*='bottomResize'] {
+  top: calc(-1px - var(--isl-gap));
+  height: 10px;
+}
+
+/* The native right sidebar keeps its own width preference, which can exceed
+   the track the frame grants; clamp it to the track so it never hangs over
+   the conversation island. */
+body[data-dsh-wc-islands] .Dv5QdW_panel[data-sidebar-right-open]:not([data-sidebar-right-panel='fullscreen']) {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-wc-islands] .PIRFFq_centerCol {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Independent workspace collapse
+   The DSH collapse swaps the whole sidebar render tree for its rail-only
+   variant. Instead the expanded rail stays mounted and only the workspace
+   column hides, so the left column never re-renders or re-flows.
+   ========================================================================== */
+
+/* The right column must keep its own track while the workspace is collapsed.
+   Pin it to 0 only while the right pane is closed; when it opens, use the
+   pane's PREFERRED width (published by the client). Reading the current
+   column width here deadlocks: it is 0 while closed, so opening the pane
+   could never grow the track, and the panel's \`width: 100%\` clamp would keep
+   it at two border pixels. The fallback keeps the pane visible even before
+   the width source has been located. */
+body[data-dsh-wc-islands][data-dsh-wc-islands-workspace]
+  .PIRFFq_frame:not(
+    :has(.Dv5QdW_panel[data-sidebar-right-open]:not([data-sidebar-right-panel='fullscreen']))
+  ) {
+  grid-template-columns:
+    var(--isl-rail-collapsed-width) minmax(0, 1fr) 0 !important;
+}
+
+body[data-dsh-wc-islands][data-dsh-wc-islands-workspace]
+  .PIRFFq_frame:has(
+    .Dv5QdW_panel[data-sidebar-right-open]:not([data-sidebar-right-panel='fullscreen'])
+  ) {
+  grid-template-columns:
+    var(--isl-rail-collapsed-width) minmax(0, 1fr)
+    var(--isl-rightbar-w, max(300px, 45vw)) !important;
+}
+
+body[data-dsh-wc-islands] .PIRFFq_frame[data-islands-animating] {
+  transition: grid-template-columns var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+/* ==========================================================================
+   Islands UI · 15 top bar
+   A window-chrome strip above the three islands. It clears the macOS traffic
+   lights, hosts the workspace collapse control, and leaves the content area
+   completely free for the islands.
+   ========================================================================== */
+
+/* Registered even when the skin is off; the base rule keeps it out of the way. */
+.isl-topbar {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-topbar {
+  position: fixed;
+  inset: var(--isl-chrome-top) 0 auto;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  height: var(--isl-topbar-height);
+  /* macOS centers the traffic lights in its 48px window-chrome band; the
+     controls follow that center (10 + 14 = 24), not the 40px bar's own. */
+  padding: 10px 10px 0 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+  /* The bar itself must never swallow clicks meant for controls that are
+     docked over it; only the toggle and the drag handle opt back in. */
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+  user-select: none;
+}
+
+/* Left lead (traffic-light strip) and the centre of the bar are draggable;
+   both stop short of the docked controls so clicks keep working. */
+/* The 88px lead exists only for the macOS traffic lights. */
+body[data-dsh-wc-islands] .isl-topbarLead {
+  display: none;
+}
+
+html[data-platform='darwin'] body[data-dsh-wc-islands] .isl-topbar {
+  padding-left: 88px;
+}
+
+html[data-platform='darwin'] body[data-dsh-wc-islands] .isl-topbarLead {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  width: 88px;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarDrag {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  margin-right: 250px;
+  pointer-events: auto;
+  -webkit-app-region: drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle {
+  box-sizing: border-box;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-topbarToggle:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* Narrow desktop: the top bar remains the window chrome (drag strip + right
+   panel toggle), but the rail's home button owns the workspace drawer. The
+   chrome must paint above the drawer mask (70) and the drawer (71). */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-topbar {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-topbarToggle {
+    display: none;
+  }
+
+  body[data-dsh-wc-islands] .isl-topbarDrag {
+    margin-right: 40px;
+  }
+}
+
+/* ==========================================================================
+   Islands UI · 16 left rail
+   Every registered panel launcher lives directly in the rail. Drag an icon to
+   reorder it; right-click the rail to show or hide launchers.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .isl-rail {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-rail {
+  position: fixed;
+  top: calc(var(--isl-chrome-top) + var(--isl-topbar-height) + 10px);
+  left: var(--isl-gap);
+  z-index: 25;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: var(--isl-rail-width);
+  max-height: calc(100vh - var(--isl-chrome-top) - var(--isl-topbar-height) - 112px);
+  padding: 2px 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  pointer-events: auto;
+  user-select: none;
+}
+
+body[data-dsh-wc-islands] .isl-rail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body[data-dsh-wc-islands] .isl-railBtn {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  touch-action: none;
+  transition:
+    background-color 0.12s var(--ds-ease-in-out),
+    color 0.12s var(--ds-ease-in-out),
+    opacity 0.12s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-railBtn:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* The house is a pure navigation trigger (conversation / workspace drawer),
+   not a destination in the panel model. It has no persistent selected state;
+   hover keeps the standard rail feedback and a click paints a translucent
+   ripple clipped to the rounded tile. */
+body[data-dsh-wc-islands] .isl-railBtn[data-rail-id='workspace'] {
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-dsh-wc-islands] .isl-railRipple {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: isl-rail-ripple 560ms cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes isl-rail-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-wc-islands] .isl-railRipple {
+    animation-duration: 1ms;
+  }
+}
+
+body[data-dsh-wc-islands] .isl-railBtn.is-active {
+  background: var(--isl-active);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-railBtn:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+body[data-dsh-wc-islands] .isl-rail.is-dragging,
+body[data-dsh-wc-islands] .isl-rail.is-dragging .isl-railBtn {
+  cursor: grabbing;
+}
+
+body[data-dsh-wc-islands] .isl-railBtn.is-dragging {
+  background: var(--isl-active);
+  opacity: 0.45;
+}
+
+/* Floating copy of the dragged icon; follows the pointer at 90% opacity. */
+body[data-dsh-wc-islands] .isl-railGhost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-md);
+  background: var(--isl-surface);
+  box-shadow: var(--isl-shadow-float);
+  color: var(--dsw-alias-label-primary);
+  opacity: 0.9;
+  pointer-events: none;
+  will-change: transform;
+}
+
+body[data-dsh-wc-islands] .isl-railAdd {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+body[data-dsh-wc-islands] .isl-railDivider {
+  flex: none;
+  width: 24px;
+  height: 1px;
+  margin: 2px 0;
+  background: var(--isl-border-soft);
+}
+
+/* ---- Rail management menu --------------------------------------------- */
+body[data-dsh-wc-islands] .isl-railMenu {
+  position: fixed;
+  z-index: 35;
+  box-sizing: border-box;
+  width: 248px;
+  max-height: min(60vh, 440px);
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-md);
+  background: var(--isl-surface);
+  box-shadow: var(--isl-shadow-float);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+  user-select: none;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuTitle {
+  padding: 4px 8px 6px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow:hover,
+body[data-dsh-wc-islands] .isl-railMenuRow.is-current {
+  background: var(--isl-hover);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow.is-hidden .isl-railMenuIcon,
+body[data-dsh-wc-islands] .isl-railMenuRow.is-hidden .isl-railMenuText {
+  opacity: 0.5;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuLabel {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuSub {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuCheck {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: 6px;
+  color: transparent;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuCheck.is-on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--isl-accent) 14%, transparent);
+  color: var(--isl-accent);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuHint {
+  margin-top: 4px;
+  padding: 6px 8px 2px;
+  border-top: 1px solid var(--isl-border-soft);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuEmpty {
+  padding: 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+/* Settings gear pinned above the account avatar. */
+body[data-dsh-wc-islands] .isl-railSettings {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-railSettings {
+  position: fixed;
+  left: calc(var(--isl-gap) + (var(--isl-rail-width) - 36px) / 2);
+  bottom: 56px;
+  z-index: 26;
+  display: grid;
+  place-items: center;
+}
+
+/* Narrow desktop: the rail is the persistent navigation; the workspace is a
+   drawer opened from its home button. Both the rail and its menus must sit
+   above the drawer (71) and the drawer mask (70). */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-rail {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-railSettings {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-railMenu {
+    z-index: 1100;
+  }
+}
+
+/* ==========================================================================
+   Islands UI · 17 desktop update
+   One circular update entry above the settings gear. The skin owns the whole
+   surface: the shipped indicator lives in the 36px settings row and overflows
+   beside the account avatar, and it does not expose a phase attribute.
+
+   The three busy patterns follow the open-source Dot Matrix loaders
+   (dotmatrix.zzzzshawn.cloud): dotm-3x3-7, dotm-3x3-16 and dotm-3x3-6.
+   ========================================================================== */
+
+/* The native indicator (and its tiny toggle badge) would duplicate the rail
+   button. Keep them out of the skin; a plain browser has neither anyway.
+   0.2.2-rc.1 and rc.2 both use the G-tjAW hash. The update entry itself is a
+   shell.overlay control, so it is independent of the flat/scroll sidebar
+   variant and lives in the base sheet for every supported release. */
+body[data-dsh-wc-islands] .G-tjAW_indicator,
+body[data-dsh-wc-islands] .G-tjAW_badge {
+  display: none !important;
+}
+
+body[data-dsh-wc-islands] {
+  --isl-update-bg: #4176e6;
+  --isl-update-bg-hover: #3264d4;
+  --isl-update-danger: #d93a40;
+}
+
+body[data-dsh-wc-islands][data-ds-dark-theme] {
+  --isl-update-danger: #ff6369;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton {
+  position: fixed;
+  left: calc(var(--isl-gap) + (var(--isl-rail-width) - 36px) / 2);
+  bottom: calc(56px + 36px + 8px);
+  z-index: 26;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: var(--isl-update-bg);
+  color: #fff;
+  cursor: default;
+  box-shadow:
+    0 2px 6px -1px color-mix(in srgb, var(--isl-update-bg) 38%, transparent),
+    0 8px 18px -10px color-mix(in srgb, var(--isl-update-bg) 62%, transparent);
+  transition:
+    background-color 0.15s var(--ds-ease-in-out),
+    box-shadow 0.15s var(--ds-ease-in-out),
+    transform 0.15s var(--ds-ease-in-out),
+    border-color 0.15s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable {
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable:hover {
+  background: var(--isl-update-bg-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 8px -1px color-mix(in srgb, var(--isl-update-bg) 44%, transparent),
+    0 10px 22px -10px color-mix(in srgb, var(--isl-update-bg) 72%, transparent);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable:active {
+  transform: translateY(0) scale(0.96);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--isl-update-bg) 40%, transparent);
+  outline-offset: 2px;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-pending {
+  opacity: 0.82;
+}
+
+/* Busy phases keep the circle but let the matrix carry the state. */
+body[data-dsh-wc-islands] .isl-updateButton[aria-busy='true'] {
+  cursor: default;
+}
+
+/* Error: a translucent danger surface, danger stroke, status dot and a retry
+   glyph. The dot keeps the state readable without relying on color alone. */
+body[data-dsh-wc-islands] .isl-updateButton.is-error {
+  border-color: color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+  background: color-mix(in srgb, var(--isl-update-danger) 14%, transparent);
+  color: var(--isl-update-danger);
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-error.is-clickable:hover {
+  border-color: color-mix(in srgb, var(--isl-update-danger) 72%, transparent);
+  background: color-mix(in srgb, var(--isl-update-danger) 22%, transparent);
+  box-shadow: 0 2px 8px -4px color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-error:focus-visible {
+  outline-color: color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+}
+
+/* Busy phases drop the circle entirely: the mosaic itself is the control,
+   tinted with the user's accent so it belongs to the skin rather than to the
+   shipped brand pill. */
+body[data-dsh-wc-islands] .isl-updateButton.is-downloading,
+body[data-dsh-wc-islands] .isl-updateButton.is-verifying,
+body[data-dsh-wc-islands] .isl-updateButton.is-installing {
+  border-color: transparent;
+  background: transparent;
+  color: var(--isl-accent);
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] .isl-updateErrorDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--isl-update-danger);
+  box-shadow: 0 0 0 2px var(--isl-surface);
+}
+
+/* ---- 3x3 dot matrix ------------------------------------------------------ */
+
+body[data-dsh-wc-islands] .isl-dmx {
+  display: grid;
+  grid-template-columns: repeat(3, 5px);
+  grid-template-rows: repeat(3, 5px);
+  gap: 2.5px;
+  width: 20px;
+  height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.14;
+  will-change: opacity;
+}
+
+/* Column Flux (dotm-3x3-7): columns pulse left to right, all rows together.
+   The three 400ms phases overlap, so at least one column stays lit while the
+   busy button has no filled background behind it. */
+body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot {
+  animation: isl-dmx-column 1200ms cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  animation-delay: calc(var(--dmx-col) * 400ms);
+}
+
+/* Core Echo (dotm-3x3-6): Manhattan rings ripple out from the centre. */
+body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot {
+  animation: isl-dmx-ripple 1230ms ease-in-out infinite;
+  animation-delay: calc(var(--dmx-ring) * 165ms);
+}
+
+/* Smiley Spin (dotm-3x3-16): the pixel glyph rotates in four 180ms phases.
+   Each cell is lit for one or two phases; the first wraps across the cycle. */
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot {
+  animation-duration: 720ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.12;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='1'] {
+  animation-name: isl-dmx-spin-1;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='2'] {
+  animation-name: isl-dmx-spin-2;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='wrap'] {
+  animation-name: isl-dmx-spin-wrap;
+}
+
+@keyframes isl-dmx-column {
+  0% {
+    opacity: 0.14;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  40% {
+    opacity: 0.14;
+  }
+
+  100% {
+    opacity: 0.14;
+  }
+}
+
+@keyframes isl-dmx-ripple {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+
+  34% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.22;
+  }
+}
+
+@keyframes isl-dmx-spin-1 {
+  0%,
+  20% {
+    opacity: 0.88;
+  }
+
+  25%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+@keyframes isl-dmx-spin-2 {
+  0%,
+  45% {
+    opacity: 0.88;
+  }
+
+  50%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+@keyframes isl-dmx-spin-wrap {
+  0%,
+  20% {
+    opacity: 0.88;
+  }
+
+  25%,
+  70% {
+    opacity: 0.12;
+  }
+
+  75%,
+  100% {
+    opacity: 0.88;
+  }
+}
+
+/* Narrow desktop: the rail floats above the workspace drawer. */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-updateButton {
+    z-index: 72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-wc-islands] .isl-updateButton {
+    transition: none;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-dot {
+    animation: none !important;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot {
+    opacity: 0.3;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot[data-col='1'] {
+    opacity: 0.55;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot[data-col='2'] {
+    opacity: 0.88;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot {
+    opacity: 0.3;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot[data-ring='1'] {
+    opacity: 0.55;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot[data-ring='0'] {
+    opacity: 1;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot {
+    opacity: 0.12;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-on='1'] {
+    opacity: 0.88;
+  }
+}
+
+/* ---- Settings showcase --------------------------------------------------- */
+
+body[data-dsh-wc-islands] .isl-updateShowcase {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  background: var(--dsw-alias-settings-card-fill);
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseHead {
+  margin-bottom: 14px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseDesc {
+  margin-top: 3px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 14px 8px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseStage {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  background: var(--isl-surface);
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcase .isl-updateButton.is-preview {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: auto;
+  transform: none;
+  cursor: default;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseLabel {
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcasePhase {
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+/* ==========================================================================
+   Islands UI · 20 sidebar
+   The expanded sidebar is one full-height island: a persistent icon rail on
+   the left and the workspace browser on the same surface. The island spans the
+   exact same top and bottom edges as the conversation island. Collapsed mode
+   keeps the shipped rail untouched.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .kB3qhq_root {
+  background: transparent;
+}
+
+/* ---- Expanded: chrome rail + workspace island --------------------------- */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) {
+  display: grid;
+  grid-template-columns: var(--isl-rail-width) minmax(0, 1fr);
+  grid-template-rows: var(--isl-gap) auto minmax(0, 1fr) auto;
+  column-gap: var(--isl-gap);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+/* The workspace browser is the sidebar's only island. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed)::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 0 calc(var(--isl-rail-width) + var(--isl-gap));
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  box-shadow: var(--isl-shadow-island);
+  pointer-events: none;
+}
+
+/* The top band is a small breathing gap inside the sidebar column. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_topStrip {
+  grid-area: 1 / 1 / 2 / -1;
+  height: 100%;
+  margin: 0;
+  padding: 0 4px 0 0;
+  justify-content: flex-end;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_logoRow {
+  grid-area: 2 / 1;
+  height: 36px;
+  margin: 0 0 6px;
+  padding: 0;
+  justify-content: center;
+  overflow: visible;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_brand {
+  justify-content: center;
+  overflow: visible;
+}
+
+/* The brand wordmark and build stamp belong to window chrome, not the rail. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_brandName,
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_localBuildBrand {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_brandMark {
+  width: 28px;
+  height: 28px;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_newSession {
+  grid-area: 2 / 2;
+  height: 36px;
+  margin: 0 6px 6px;
+  padding: 0 8px;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: var(--isl-radius-md);
+  background: transparent;
+  box-shadow: none;
+  color: var(--dsw-alias-label-primary);
+  font-weight: 400;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_newSessionContent {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_newSession:hover {
+  background: var(--isl-hover);
+}
+
+/* The global panel list becomes the rail's primary navigation. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelList {
+  grid-area: 3 / 1;
+  align-self: start;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelRow {
+  width: 36px;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-md);
+  background-clip: border-box;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelRow.kB3qhq_panelActive {
+  background: var(--dsw-specific-sidebar-nav-item-active-accent);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* The label leaves the visual rail but stays in the accessibility tree. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ---- Workspace browser: same surface, full height ----------------------- */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_regionArea {
+  grid-area: 3 / 2 / 5 / 3;
+  margin: 0;
+  padding: 0 4px 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_regionArea {
+  --dsh-session-list-edge-inset: 4px;
+}
+
+body[data-dsh-wc-islands] .Kjh-qa_sectionHeader {
+  padding-inline: 8px;
+  margin-right: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+body[data-dsh-wc-islands] .Kjh-qa_sectionLabel {
+  font-weight: 500;
+}
+
+body[data-dsh-wc-islands] .Kjh-qa_list {
+  padding-bottom: 8px;
+}
+
+body[data-dsh-wc-islands] .Kjh-qa_fade {
+  background: linear-gradient(to bottom, transparent, var(--isl-surface));
+}
+
+body[data-dsh-wc-islands] .JoiKIa_sessionRow,
+body[data-dsh-wc-islands] .JoiKIa_projectRow {
+  border-radius: var(--isl-radius-sm);
+  padding-inline: 8px;
+}
+
+/* ---- Rail foot: settings gear ------------------------------------------ */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea {
+  grid-area: 4 / 1;
+  align-items: center;
+  margin-top: 6px;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_settingsArea,
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footerActions {
+  width: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) ._77Pn0W_triggerRow {
+  width: 36px;
+  margin: 4px 0 2px;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) ._77Pn0W_trigger {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+  border-inline: 0;
+  border-radius: var(--isl-radius-md);
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) ._77Pn0W_triggerLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) ._77Pn0W_trigger:hover,
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) ._77Pn0W_trigger[aria-expanded='true'] {
+  background: var(--isl-hover);
+}
+
+/* Footer actions contributed next to Settings (account launcher, etc.). */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footerActions button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--isl-radius-md);
+}
+
+/* ---- Collapsed rail ------------------------------------------------------ */
+/* Collapsing hides the workspace browser only; the rail keeps its own island. */
+body[data-dsh-wc-islands] .kB3qhq_root.kB3qhq_collapsed {
+  /* The rail is chrome, not an island: it sits directly on the ocean. */
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 8px 10px 6px;
+  overflow: hidden;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root.kB3qhq_collapsed .kB3qhq_topStrip {
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  justify-content: center;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_collapsed .kB3qhq_newSession {
+  border-radius: var(--isl-radius-md);
+}
+
+/* The window top bar / rail own the collapse controls; the in-island toggle
+   would duplicate them at every width. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_toggle {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  /* On macOS the shipped frame gives a collapsed sidebar zero width, hiding
+     the rail too. Restore one rail-wide track (right panel still closed). */
+  [data-platform='darwin'] body[data-dsh-wc-islands] .PIRFFq_frame[data-sidebar-collapsed][data-rightbar-collapsed] {
+    grid-template-columns: var(--isl-rail-collapsed-width) minmax(0, 1fr) 0 !important;
+  }
+
+  /* The rail itself is the expand control; do not reserve header space for the
+     floating seat and do not show a second expand button over the island. */
+  [data-platform='darwin'] body[data-dsh-wc-islands] .PIRFFq_frame[data-sidebar-collapsed] {
+    --dsh-frame-leading-clearance: 0px;
+  }
+}
+
+/* The window chrome and the rail own the sidebar controls; the floating seat
+   is redundant (and at narrow widths would sit under the traffic lights). */
+body[data-dsh-wc-islands] .PIRFFq_leadingSeat {
+  display: none;
+}
+
+/* ---- Search / section chrome inside the island --------------------------- */
+body[data-dsh-wc-islands] .Kjh-qa_searchExpanded {
+  border-color: var(--isl-border-soft);
+  background: var(--isl-surface-muted);
+  border-radius: var(--isl-radius-sm);
+}
+
+body[data-dsh-wc-islands] .Kjh-qa_searchExpanded .Kjh-qa_searchButton:hover {
+  background: transparent;
+}
+
+/* ---- Narrow drawer ------------------------------------------------------- */
+/* Below the top bar's breakpoint the workspace becomes an overlay drawer. It
+   starts at the frame's content top (below the top bar and its 5px gap) and
+   leaves the window's 5px canvas margin on the left; the workspace card inside
+   keeps the right/bottom 5px so the drawer still reads as an island. */
+body[data-dsh-wc-islands] .PIRFFq_frame[data-sidebar-drawer] .PIRFFq_sidebarCol {
+  top: calc(var(--isl-chrome-top) + var(--isl-topbar-height) + var(--isl-gap));
+  bottom: 0;
+  left: var(--isl-gap);
+  background: var(--isl-canvas);
+  border-right: 0;
+  box-shadow: var(--isl-shadow-float);
+}
+
+body[data-dsh-wc-islands] .PIRFFq_frame[data-sidebar-drawer] .kB3qhq_root::after {
+  inset: 0 var(--isl-gap) var(--isl-gap) calc(var(--isl-rail-width) + var(--isl-gap));
+}
+
+/* The sidebar's grid track is zero in drawer mode, but its column gap remains;
+   shift the conversation island right by the persistent rail so the closed
+   drawer leaves the rail visible and the island keeps its 5px gap. */
+body[data-dsh-wc-islands] .PIRFFq_frame[data-sidebar-drawer] .PIRFFq_centerCol {
+  margin-left: var(--isl-rail-width);
+}
+
+/* ---- Account launcher (settings.launcher) --------------------------------
+   In this build the sidebar foot is the account menu rather than the bare
+   settings gear, so the same rail geometry applies to its trigger. */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_root {
+  flex: none;
+  width: 36px;
+  margin-inline: 0;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_anchor {
+  width: 36px;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_trigger,
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_trigger[data-signed-out='false']:not([data-collapsed='true']),
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_trigger[data-signed-out='true']:not([data-collapsed='true']) {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  border-inline: 0;
+  border-radius: var(--isl-radius-md);
+  background-clip: border-box;
+}
+
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_footArea .hjANda_label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ---- Independent workspace collapse ------------------------------------- */
+/* Hide the workspace island only; the rail keeps its expanded-layout DOM and
+   position, so nothing in the left column is re-rendered by the toggle. */
+body[data-dsh-wc-islands][data-dsh-wc-islands-workspace] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_newSession,
+body[data-dsh-wc-islands][data-dsh-wc-islands-workspace] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_regionArea,
+body[data-dsh-wc-islands][data-dsh-wc-islands-workspace] .kB3qhq_root:not(.kB3qhq_collapsed)::after {
+  display: none !important;
+}
+
+/* ---- Custom rail replaces the shipped brand + panel icon column ---------- */
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_logoRow,
+body[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) .kB3qhq_panelList {
+  display: none !important;
+}
+
+/* ---- Aggregate pinned sessions ------------------------------------------ */
+.isl-pinnedHost {
+  display: block;
+  flex: none;
+}
+
+.isl-pinned {
+  display: none;
+  padding: 2px 4px 0;
+}
+
+body[data-dsh-wc-islands] .isl-pinned {
+  display: block;
+}
+
+/* Pinned rows stay in place in their workspace groups and are also collected
+   in the aggregate block above. The original row keeps a subtle tint. */
+body[data-dsh-wc-islands] .JoiKIa_pinIndicator {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+body[data-dsh-wc-islands] .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator) {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 6%, transparent);
+}
+
+body[data-dsh-wc-islands] .JoiKIa_sessionRow:has(.JoiKIa_pinIndicator):hover {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 10%, transparent);
+}
+
+.isl-pinnedHead {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Collapsible header mirrors the quiet workspace section header: colour only. */
+.isl-pinnedHead:hover {
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+}
+
+.isl-pinnedChevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  transform: rotate(-90deg);
+  transition: transform 0.12s var(--ds-ease-in-out);
+}
+
+.isl-pinned[data-open] .isl-pinnedChevron {
+  transform: rotate(0deg);
+}
+
+.isl-pinnedTitle {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.isl-pinnedCount {
+  margin-left: auto;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.isl-pinnedList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 1px 0 3px;
+}
+
+.isl-pinnedRow {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px 0 34px;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.isl-pinnedRow:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.isl-pinnedName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Hover marquee: clip the ellipsis, fade both edges as the title crawls. */
+.isl-pinnedRow:hover .isl-pinnedName {
+  text-overflow: clip;
+}
+
+.isl-pinnedRow .isl-pinnedName[data-scrolled] {
+  mask-image: linear-gradient(90deg, #0000, #000 12px);
+}
+
+.isl-pinnedRow .isl-pinnedName[data-clipped] {
+  mask-image: linear-gradient(270deg, #0000, #000 12px);
+}
+
+.isl-pinnedRow .isl-pinnedName[data-scrolled][data-clipped] {
+  mask-image: linear-gradient(90deg, #0000, #000 12px calc(100% - 12px), #0000);
+}
+
+.isl-pinnedRow:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+.isl-pinnedPinBtn,
+.isl-pinnedLocate {
+  display: none;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-xs, 6px);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+  transition:
+    background-color 0.12s var(--ds-ease-in-out),
+    color 0.12s var(--ds-ease-in-out);
+}
+
+.isl-pinnedRow:hover .isl-pinnedPinBtn,
+.isl-pinnedRow:focus-within .isl-pinnedPinBtn,
+.isl-pinnedPinBtn:focus-visible,
+.isl-pinnedRow:hover .isl-pinnedLocate,
+.isl-pinnedRow:focus-within .isl-pinnedLocate,
+.isl-pinnedLocate:focus-visible {
+  display: grid;
+}
+
+.isl-pinnedPinBtn:hover,
+.isl-pinnedLocate:hover {
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+}
+
+.isl-pinnedPinBtn:focus-visible,
+.isl-pinnedLocate:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* Brief highlight on the session the locate action focuses. */
+body[data-dsh-wc-islands] .JoiKIa_sessionRow.isl-located {
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 14%, transparent) !important;
+}
+
+/* ==========================================================================
+   Islands UI · 30 conversation & composer
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .kiGsTW_root {
+  background: transparent;
+}
+
+body[data-dsh-wc-islands] .kiGsTW_header {
+  border-bottom-color: var(--isl-border-soft);
+}
+
+body[data-dsh-wc-islands] .kiGsTW_headerBlank {
+  border-bottom-color: transparent;
+}
+
+body[data-dsh-wc-islands] .kiGsTW_scrollBody {
+  margin-right: 0;
+}
+
+/* Composer: the one element that should visibly float above the island. */
+body[data-dsh-wc-islands] .JZLxKW_card {
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] .JZLxKW_cardWorkspaceTrigger:after {
+  border-radius: var(--dsw-radius-panel);
+  color: var(--isl-border-strong);
+}
+
+body[data-dsh-wc-islands] .JZLxKW_notice {
+  border-radius: var(--isl-radius-md);
+  background: var(--isl-surface-muted);
+}
+
+/* Sticky composer seat fades into the island surface, not into a raw token. */
+body[data-dsh-wc-islands] .kiGsTW_root[data-phase='active'] .kiGsTW_composerSeat,
+body[data-dsh-wc-islands] .kiGsTW_embeddedBody[data-content-phase='active'] .kiGsTW_composerSeat {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--isl-surface) 0%, transparent) 0px,
+    var(--isl-surface) 36px
+  );
+}
+
+/* Hero: a calmer, slightly tighter headline on the open island. */
+body[data-dsh-wc-islands] ._8tPydW_headline {
+  letter-spacing: -0.01em;
+}
+
+body[data-dsh-wc-islands] ._8tPydW_workspace {
+  border-radius: 999px;
+  background: var(--isl-surface-muted);
+}
+
+body[data-dsh-wc-islands] ._8tPydW_workspace:hover {
+  background: var(--isl-hover);
+}
+
+/* Tool / turn cards keep their own hierarchy but gain island hairlines. */
+body[data-dsh-wc-islands] .CuF05a_root {
+  border-color: var(--isl-border-soft);
+  background: var(--isl-surface-muted);
+}
+
+body[data-dsh-wc-islands] .CuF05a_root:hover {
+  background: var(--isl-surface-sunken);
+}
+
+/* Header chips and breadcrumbs. */
+body[data-dsh-wc-islands] .kiGsTW_crumb {
+  border-radius: var(--isl-radius-sm);
+}
+
+/* View tabs sit on the island as a quiet segmented row. */
+body[data-dsh-wc-islands] .kiGsTW_viewTabs {
+  gap: 22px;
+}
+
+body[data-dsh-wc-islands] .kiGsTW_tabActive:after {
+  border-radius: 999px;
+  height: 2px;
+}
+
+/* ==========================================================================
+   Header utilities live in the window bar
+   The three trailing controls (session tools, side panel, right panel) leave
+   the conversation island and dock at the bar's right edge, vertically aligned
+   with the workspace toggle on the left.
+   ========================================================================== */
+@media (min-width: 768px) {
+  body[data-dsh-wc-islands] .kiGsTW_headerUtilities {
+    position: fixed;
+    top: calc(var(--isl-chrome-top) + 10px);
+    right: 41px; /* frame gap 5 + corner 28 + gap 8 */
+    z-index: 31;
+    height: 28px;
+    margin: 0;
+    align-items: center;
+  }
+
+  body[data-dsh-wc-islands] .kiGsTW_headerCorner {
+    position: fixed;
+    top: calc(var(--isl-chrome-top) + 10px);
+    right: var(--isl-gap);
+    z-index: 31;
+    height: 28px;
+    margin: 0;
+    align-items: center;
+  }
+}
+
+/* ==========================================================================
+   Always-visible right sidebar toggle
+   The native header button unmounts while the panel is open and the panel
+   carries its own collapse control. The top bar owns one persistent toggle
+   instead, and closes through the native collapse action. It applies at every
+   width: the narrow top bar keeps the same control.
+   ========================================================================== */
+/* Body-portaled (see RightPanelToggle): keep it out of the DOM flow while the
+   skin is off, so the base rule cannot leak a raw button into the page. */
+.isl-rightToggle {
+  display: none;
+}
+
+/* z-index 900: above the workbench panel host (dsh-better-sidebar: host 25,
+   dock 40, float 60, floating window 90) and the app's transient tooltip/
+   hovercard layer (100), below menus and dialogs (1000+). The button is
+   portaled to <body>, so this value competes with the body-level layers
+   directly instead of being trapped in the frame's z-index-20 overlay layer. */
+body[data-dsh-wc-islands] .isl-rightToggle {
+  position: fixed;
+  top: calc(var(--isl-chrome-top) + 10px);
+  right: var(--isl-gap);
+  z-index: 900;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+body[data-dsh-wc-islands] .isl-rightToggle:hover,
+body[data-dsh-wc-islands] .isl-rightToggle[aria-pressed='true'] {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-rightToggle:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* The top bar owns open and close; the island's own expand/collapse
+   controls would duplicate it. */
+body[data-dsh-wc-islands] [data-sidebar-right-expand] {
+  /* Keep the native expand button's box in the layout even though the top
+     bar's toggle paints over it. Other header plugins anchor to this
+     button's rect (dsh-better-sidebar's blank-session dock fallback does),
+     and \`display: none\` collapses that rect to 0x0, sending them to the
+     top-left corner where they collide with the workspace toggle. */
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body[data-dsh-wc-islands] [data-sidebar-right-toggle],
+/* dsh-sidenote's own "侧边" header entry is covered by the toggle above. */
+body[data-dsh-wc-islands] ._5KEEsG_headerSide {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Islands UI · 40 settings (and shared dialog surfaces)
+   The settings window is an island; its navigation is a recessed island.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] ._77Pn0W_overlay {
+  background: transparent;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_mask {
+  background: var(--dsw-alias-bg-mask-1);
+  backdrop-filter: var(--dsw-mask-blur);
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_panel {
+  width: 860px;
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+  border-radius: 24px;
+  box-shadow: var(--isl-shadow-float);
+  padding: 10px;
+  gap: 8px;
+  grid-template-columns: 188px minmax(0, 1fr);
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navTitle {
+  padding: 8px 8px 6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* The navigation mirrors the workspace list: no recessed panel, quiet rows. */
+body[data-dsh-wc-islands] ._77Pn0W_nav {
+  padding: 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navList {
+  gap: 2px;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navCell {
+  height: 32px;
+  padding: 6px 8px;
+  border-radius: var(--isl-radius-sm);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 18px;
+  gap: 8px;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navCell:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navCell._77Pn0W_active {
+  background: var(--isl-active);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navIcon {
+  width: 16px;
+  height: 16px;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_navIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_header {
+  height: 48px;
+  padding: 6px 6px 0 8px;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_options {
+  padding: 0 8px 16px;
+  background: transparent;
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_close {
+  border-radius: var(--isl-radius-sm);
+}
+
+/* Cards stay white; separation comes from hairlines, not fills. */
+body[data-dsh-wc-islands] ._77Pn0W_options [class*='_card'] {
+  border-radius: var(--isl-radius-lg);
+  background: var(--isl-surface);
+  border-color: var(--isl-border-soft);
+}
+
+body[data-dsh-wc-islands] ._77Pn0W_options [class*='_section'] {
+  border-radius: var(--isl-radius-md);
+  background: transparent;
+}
+
+/* The general-page rows keep their separators but at island quietness. */
+body[data-dsh-wc-islands] [data-slot='settings.general.item'] > * {
+  border-bottom-color: var(--isl-border-soft);
+}
+
+body[data-dsh-wc-islands] [data-slot='settings.general.item']:last-child > * {
+  border-bottom: 0;
+}
+
+/* Dialogs opened from settings (confirmations, pickers). */
+body[data-dsh-wc-islands] [role='dialog'] {
+  border-radius: var(--isl-radius-xl);
+}
+
+/* Account page hero cards. */
+body[data-dsh-wc-islands] .XGmX4q_card {
+  border-radius: var(--isl-radius-lg);
+  background: var(--isl-surface);
+  border: 1px solid var(--isl-border-soft);
+}
+
+body[data-dsh-wc-islands] ._7lc4_a_balanceCard {
+  border-radius: var(--isl-radius-lg);
+  border: 1px solid var(--isl-border-soft);
+  background: var(--isl-surface);
+}
+
+/* ==========================================================================
+   Islands UI · 45 composer model picker
+   Trigger chip + model list + reasoning slider, in the Islands language.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .isl-model {
+  position: relative;
+  min-width: 0;
+}
+
+body[data-dsh-wc-islands] .isl-modelTrigger {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 260px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--isl-surface-muted);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: background-color 0.12s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-modelTrigger:hover:not(:disabled) {
+  background: var(--isl-surface-sunken);
+}
+
+body[data-dsh-wc-islands] .isl-modelTrigger:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+body[data-dsh-wc-islands] .isl-modelTrigger:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 1px;
+}
+
+body[data-dsh-wc-islands] .isl-modelIcon {
+  display: var(--dsh-composer-model-icon-display, none);
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+body[data-dsh-wc-islands] .isl-modelName {
+  display: var(--dsh-composer-model-text-display, inline);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-modelEffort {
+  display: var(--dsh-composer-model-text-display, inline);
+  flex-shrink: 1000;
+  min-width: 0;
+  color: var(--dsw-alias-label-caption);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-modelChevron {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-caption);
+  transition: transform 0.12s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-modelChevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* ---- Menu ---------------------------------------------------------------- */
+body[data-dsh-wc-islands] .isl-modelMenu {
+  position: fixed;
+  z-index: 1100;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: min(460px, calc(100vh - 24px));
+  padding: 6px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  background: var(--isl-surface);
+  box-shadow: var(--isl-shadow-float);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-y: auto;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+body[data-dsh-wc-islands] .isl-modelPaneHead {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 6px;
+}
+
+body[data-dsh-wc-islands] .isl-modelMenuTitle {
+  padding: 2px 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-dsh-wc-islands] .isl-modelBack {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-modelBack:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-modelBackIcon {
+  display: inline-flex;
+  transform: rotate(90deg);
+}
+
+body[data-dsh-wc-islands] .isl-modelGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+body[data-dsh-wc-islands] .isl-modelGroup + .isl-modelGroup {
+  margin-top: 6px;
+}
+
+body[data-dsh-wc-islands] .isl-modelGroupName {
+  padding: 6px 8px 2px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+body[data-dsh-wc-islands] .isl-modelOption {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--isl-radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-modelOption:hover {
+  background: var(--isl-hover);
+}
+
+body[data-dsh-wc-islands] .isl-modelOption.is-selected {
+  background: var(--isl-surface-muted);
+}
+
+body[data-dsh-wc-islands] .isl-modelOptionName {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-modelCheck {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-modelEmpty {
+  padding: 10px 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+/* ---- Reasoning effort ---------------------------------------------------- */
+body[data-dsh-wc-islands] .isl-effortPopup {
+  position: relative;
+  padding: 9px 10px 8px;
+  text-align: center;
+}
+
+body[data-dsh-wc-islands] .isl-effortReset {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-effortReset:hover:not(:disabled) {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-effortReset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+body[data-dsh-wc-islands] .isl-effortName {
+  color: var(--dsw-alias-state-business-primary);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+body[data-dsh-wc-islands] .isl-effortModel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin-top: 1px;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-effortModel:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+
+body[data-dsh-wc-islands] .isl-effortModelName {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-effortModelChevron {
+  display: inline-flex;
+  flex: none;
+  color: inherit;
+  transform: rotate(-90deg);
+}
+
+body[data-dsh-wc-islands] .isl-effortSliderWrap {
+  position: relative;
+  margin: 7px 2px 0;
+}
+
+body[data-dsh-wc-islands] .isl-effortSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-effortSlider::-webkit-slider-runnable-track {
+  height: 20px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--dsw-alias-state-business-primary) 0
+      calc(12px + (100% - 24px) * var(--isl-ratio, 0)),
+    var(--isl-surface-sunken) calc(12px + (100% - 24px) * var(--isl-ratio, 0)) 100%
+  );
+}
+
+body[data-dsh-wc-islands] .isl-effortSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  margin-top: -2px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 1px 4px rgba(17, 24, 39, 0.22),
+    0 0 0 0.5px rgba(17, 24, 39, 0.06);
+}
+
+body[data-dsh-wc-islands] .isl-effortSlider:focus-visible {
+  outline: none;
+}
+
+body[data-dsh-wc-islands] .isl-effortSlider:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-business-primary) 26%, transparent),
+    0 1px 4px rgba(17, 24, 39, 0.22);
+}
+
+body[data-dsh-wc-islands] .isl-effortDots {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+body[data-dsh-wc-islands] .isl-effortDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--isl-border-strong);
+}
+
+body[data-dsh-wc-islands] .isl-effortDot.is-filled {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+body[data-dsh-wc-islands] .isl-modelError {
+  margin: 8px 8px 2px;
+  padding: 6px 8px;
+  border-radius: var(--isl-radius-sm);
+  background: var(--dsw-alias-interactive-bg-hover-danger);
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* ==========================================================================
+   Islands UI · 50 shared components
+   Small, reusable pieces used by the skin's own surfaces. All values come from
+   the token layer, so nothing here is page-specific.
+   ========================================================================== */
+
+/* ---- Preference row (rendered into settings.general.item) ---------------- */
+body[data-dsh-wc-islands] .isl-prefRow,
+.isl-prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-prefRow:last-child,
+.isl-prefRow:last-child {
+  border-bottom: 0;
+}
+
+.isl-prefText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.isl-prefTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.isl-prefDesc {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* ---- Switch -------------------------------------------------------------- */
+.isl-switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--dsw-alias-bg-layer-3);
+  box-shadow: inset 0 0 0 1px var(--dsw-alias-border-l2);
+  transition: background-color 0.15s var(--ds-ease-in-out);
+}
+
+.isl-switch[aria-checked='true'] {
+  background: var(--dsw-alias-state-business-primary);
+  box-shadow: none;
+}
+
+.isl-switch:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.isl-switchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.25);
+  transition: transform 0.15s var(--ds-ease-in-out);
+}
+
+.isl-switch[aria-checked='true'] .isl-switchThumb {
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isl-switch,
+  .isl-switchThumb {
+    transition: none;
+  }
+}
+
+/* ---- Popover / menu materials ------------------------------------------- */
+body[data-dsh-wc-islands] [data-menu-material] {
+  border-radius: var(--isl-radius-lg);
+  border: 1px solid var(--isl-border-soft);
+  box-shadow: var(--isl-shadow-float);
+}
+
+body[data-dsh-wc-islands] [role='dialog'],
+body[data-dsh-wc-islands] [role='menu'],
+body[data-dsh-wc-islands] [role='listbox'] {
+  border-radius: var(--isl-radius-lg);
+}
+
+/* ---- Scrollbars ---------------------------------------------------------- */
+body[data-dsh-wc-islands] ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+/* ---- Focus --------------------------------------------------------------- */
+body[data-dsh-wc-islands] :focus-visible {
+  outline-offset: 1px;
+}
+
+/* ---- Dedicated settings page ------------------------------------------- */
+.isl-settingsPage {
+  box-sizing: border-box;
+  max-width: 760px;
+  padding: 4px 8px 24px;
+}
+
+.isl-settingsPageHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.isl-settingsPageLogo {
+  display: inline-flex;
+  flex: none;
+}
+
+.isl-settingsPageHeadText {
+  min-width: 0;
+}
+
+.isl-settingsPageTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.isl-settingsPageDesc {
+  margin-top: 4px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-settingsPage .isl-prefRow:first-of-type {
+  margin-top: 12px;
+}
+
+/* Detected DSH release + sidebar dialect: diagnosis for support reports. */
+.isl-settingsMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.isl-settingsMetaValue {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--isl-surface-muted);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+}
+
+.isl-settingsMetaSeparator {
+  opacity: 0.6;
+}
+
+.isl-accentPicker {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.isl-accentSwatch {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 50%;
+  background-clip: padding-box;
+  cursor: pointer;
+  transition:
+    transform 0.12s var(--ds-ease-in-out),
+    box-shadow 0.12s var(--ds-ease-in-out);
+}
+
+.isl-accentSwatch:hover {
+  transform: scale(1.08);
+}
+
+.isl-accentSwatch.is-selected {
+  box-shadow:
+    0 0 0 2px var(--dsw-alias-bg-base),
+    0 0 0 3.5px var(--dsw-alias-label-primary);
+}
+
+.isl-accentSwatch.is-default {
+  background: linear-gradient(135deg, #ffffff 0 47%, #c4c8ce 47% 53%, #1b1c1f 53% 100%);
+}
+
+.isl-accentCustom {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: 50%;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.isl-accentCustom::before {
+  content: '+';
+  font-size: 14px;
+  line-height: 1;
+}
+
+.isl-accentCustom input {
+  position: absolute;
+  inset: -4px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+
+/* ---- Compatibility notice ------------------------------------------------
+   Rendered while the skin is OFF, so nothing here may rely on the \`--isl-*\`
+   scale or on \`body[data-dsh-wc-islands]\`. Every custom property carries a
+   fallback and every color comes from the public DSH theme tokens. */
+
+.isl-compatToast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2000;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 12px 10px 12px 14px;
+  border: 1px solid rgba(224, 160, 24, 0.5);
+  border-left: 3px solid #e0a018;
+  border-radius: var(--isl-radius-lg, 16px);
+  background: var(--dsw-alias-bg-overlay, #ffffff);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  box-shadow: 0 14px 36px -14px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  line-height: 19px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.isl-compatToast.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isl-compatToast {
+    transition: none;
+  }
+}
+
+.isl-compatToastBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.isl-compatToastTitle {
+  font-weight: 600;
+}
+
+.isl-compatToastText {
+  margin-top: 2px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-compatToastAction {
+  margin-top: 6px;
+  color: #a86b00;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.isl-compatToastClose {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, #737a82);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.isl-compatToastClose:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+/* The settings-page warning bar. */
+.isl-compatBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(224, 160, 24, 0.45);
+  border-radius: var(--isl-radius-lg, 16px);
+  background: rgba(240, 180, 41, 0.14);
+  background: color-mix(in srgb, #f0b429 14%, transparent);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.isl-compatBannerIcon {
+  flex: none;
+  display: inline-flex;
+  margin-top: 1px;
+  color: #b47400;
+}
+
+.isl-compatBannerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.isl-compatBannerTitle {
+  font-weight: 600;
+}
+
+.isl-compatBannerBody,
+.isl-compatBannerHint {
+  margin-top: 2px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-compatBannerHint {
+  margin-top: 6px;
+}
+
+.isl-compatBannerList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+}
+
+.isl-compatAnchor {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(17, 24, 39, 0.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.isl-compatBannerAction {
+  flex: none;
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 1px solid rgba(224, 160, 24, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: #8a5a00;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.isl-compatBannerAction:hover {
+  background: rgba(240, 180, 41, 0.18);
+}
+
+.isl-compatForced {
+  margin: 8px 0 0;
+  color: var(--dsw-alias-label-tertiary, #737a82);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The notice renders while the skin is off, so darkness is read straight from
+   the host theme attribute its own stylesheet uses. */
+body[data-ds-dark-theme] .isl-compatBannerIcon {
+  color: #e8b451;
+}
+
+body[data-ds-dark-theme] .isl-compatBannerAction {
+  border-color: rgba(240, 180, 41, 0.45);
+  color: #f2c879;
+}
+
+body[data-ds-dark-theme] .isl-compatBannerAction:hover {
+  background: rgba(240, 180, 41, 0.16);
+}
+
+body[data-ds-dark-theme] .isl-compatAnchor {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body[data-ds-dark-theme] .isl-compatToastAction {
+  color: #f0c274;
+}`;
+	const ISLANDS_CSS_VARIANTS = {
+	"scroll": "/* ==========================================================================\n   Islands UI · sidebar variant: scroll containers\n   Chosen at runtime for DSH releases from 0.2.2-rc.2, which wrapped the\n   sidebar's panel list and workspace browser in\n   `.kB3qhq_scrollRegion > .kB3qhq_scrollArea`. The base stylesheet keeps the\n   pre-rc.2 flat layout; this file only corrects the wrapper placement.\n\n   Every selector below names a class that does not exist in the older shell,\n   so inlining it there is inert; the client still injects it only for the\n   dialect it detected from `window.__DSH_BOOT__.release.version`.\n   ========================================================================== */\n\n/* The browser column replaces the old direct `.kB3qhq_regionArea` grid item. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion {\n  grid-area: 3 / 2 / 5 / 3;\n  display: flex;\n  flex-direction: column;\n  min-width: 0;\n  min-height: 0;\n  margin: 0;\n}\n\n/* The shipped grid only made sense inside the full-height shell; the island\n   grid wants a plain column so the workspace browser can fill the island. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollArea {\n  display: flex;\n  flex: 1;\n  flex-direction: column;\n  min-height: 0;\n  margin: 0;\n  overflow: hidden;\n}\n\nbody[data-dsh-wc-islands]\n  .kB3qhq_root:not(.kB3qhq_collapsed)\n  > .kB3qhq_scrollRegion\n  > .kB3qhq_scrollArea\n  > .kB3qhq_regionArea {\n  flex: 1;\n  min-height: 0;\n}\n\n/* The shipped bottom fade reads as a panel edge; the island supplies its own. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollFade {\n  display: none;\n}\n\n/* 0.2.2-rc.2 moved the selected-panel state from `.panelRow` onto the wrapping\n   `.panelEntry`, so mirror the base active rule for the shipped rail. */\nbody[data-dsh-wc-islands] .kB3qhq_root .kB3qhq_panelEntryActive .kB3qhq_panelRow {\n  background: var(--dsw-specific-sidebar-nav-item-active-accent);\n  color: var(--dsw-alias-state-business-primary);\n}"
+};
+
+	/**
+ * Islands 结构层：浮岛布局、顶栏、左侧图标栏、置顶聚合、模型弹层、更新入口、强调色。
+ * 移植自 dsh-islands-ui（MIT, DawnCHL），改名与配色后并入 sone-wx。
+ */
+function createSoneIslandsLayer(require, host) {
+    const React = require('react');
+    const ReactDOM = require('react-dom');
+    const h = React.createElement;
+    const CSS = host.css;
+    /**
+     * Structure-specific stylesheets keyed by dialect. The base sheet covers
+     * the flat sidebar; releases that change the shell get a variant that is
+     * inlined only for the build the client detected.
+     */
+    const CSS_VARIANTS = host.cssVariants;
+
+    const ATTRIBUTE = 'data-dsh-wc-islands';
+    const STORAGE_KEY = 'dsh-wechat-skin:islands:enabled';
+    const WORKSPACE_ATTR = 'data-dsh-wc-islands-workspace';
+    /** Escape hatch, session scoped so the next launch re-runs the check. */
+    const FORCE_KEY = 'dsh-wechat-skin:islands:force';
+    /**
+     * Layout anchors every Islands rule is written against. They do not exist
+     * when `apply()` runs (the shell mounts afterwards), so the gate waits for
+     * the frame and only then decides whether this build still matches.
+     */
+    const REQUIRED_ANCHORS = ['.PIRFFq_frame', '.PIRFFq_centerCol'];
+    const SIDEBAR_COLUMN = '.PIRFFq_sidebarCol';
+    const SIDEBAR_ROOT = '.kB3qhq_root';
+    /**
+     * Sidebar-shell dialects in release order. `since` is the first DSH release
+     * that ships the dialect; a build older than every row keeps the base
+     * stylesheet. Add a row (and a matching `src/variants/<dialect>.css`) when
+     * DSH restructures the shell again.
+     */
+    const SHELL_DIALECTS = [{ since: '0.2.2-rc.2', dialect: 'scroll' }];
+    const SHELL_FLAT = 'flat';
+    /** No shell content at all after this long: the build is unusable. */
+    const COMPAT_TIMEOUT_MS = 6000;
+    /** Content mounted but the frame anchor never showed up: rename, not slowness. */
+    const COMPAT_CONTENT_GRACE_MS = 1200;
+    let animateTimer;
+    let skinRegistrar = null;
+    let publishRightbarWidth = null;
+    let activated = false;
+    /** Release reported by the client boot, and the stylesheet it selects. */
+    let shellVersion = null;
+    let shellDialect = SHELL_FLAT;
+    let styleTag = null;
+    let compatState = { status: 'checking', missing: [], forced: false, version: null, dialect: SHELL_FLAT };
+    const compatListeners = new Set();
+
+    /** Copy for the preference row; the row is the only user-facing string. */
+    const COPY = {
+      zh: {
+        title: '浮岛布局',
+        description: '圆角面板浮在统一画布上：自绘顶栏、常驻左侧图标栏、置顶聚合与两级模型弹层。关闭后立即恢复平铺外观。',
+        topbarToggle: '折叠或展开工作区',
+        openRight: '打开侧边栏',
+        closeRight: '关闭侧边栏',
+        workspace: '工作区',
+        pinned: '置顶',
+        untitled: '未命名会话',
+        locate: '定位到会话',
+        unpin: '取消置顶',
+        schedules: '自动化任务',
+        plugins: '插件',
+        settings: '设置',
+        railTitle: '左侧栏图标',
+        railHint: '点击切换显示；按住图标拖动可排序',
+        railShow: '显示在左侧栏',
+        railHide: '从左侧栏移除',
+        builtIn: 'DSH 内置',
+        noExtras: '左侧栏还没有图标',
+        enable: '启用 Islands 界面',
+        enableDesc: '关闭后立即恢复 DSH 默认外观，设置会保留。',
+        accent: '强调色',
+        accentDesc: '用于选中状态、滑块、发送按钮等。',
+        accentDefault: '跟随主题',
+        accentCustom: '自定义颜色',
+        models: '选择模型',
+        effort: '推理等级',
+        back: '返回',
+        noEffort: '该模型没有可调推理等级',
+        reset: '恢复默认',
+        loading: '加载中…',
+        pick: '选择模型',
+        empty: '没有可用模型',
+        failed: '切换失败',
+        updateAvailable: '发现新版本 {version}',
+        updateAvailablePlain: '发现新版本',
+        updateDownloading: '正在下载更新 {percent}%',
+        updateDownloadingDetail: '正在下载更新：{percent}%\n目标版本：{version}',
+        updateVerifying: '正在校验更新文件…',
+        updateInstalling: '正在准备重启…',
+        updateReady: '安装并重启',
+        updateReadyDetail: '新版本 {version} 已准备就绪，点击安装并重启',
+        updateRetry: '重试更新',
+        updateFailedCheck: '检查更新失败，请稍后重试。',
+        updateFailedCheckNetwork: '检查更新失败，请检查网络连接后重试。',
+        updateFailedDownload: '下载更新失败，请重试。',
+        updateFailedDownloadNetwork: '下载更新失败，请检查网络连接后重试。',
+        updateFailedInstall: '安装更新失败，请稍后重试。',
+        updateFailedInstallNetwork: '安装更新失败，请检查网络连接后重试。',
+        updateFailedStop: '未能安全停止任务，更新尚未安装，请稍后重试。',
+        updateFailedTasksChanged: '有新任务开始运行，请重新确认是否停止任务并更新。',
+        updateFailedTasksUnavailable: '无法确认任务状态，请在工作区就绪后重试更新。',
+        updateFailedFullscreen: '无法退出全屏，请退出全屏后重试更新。',
+        updateFailedGeneric: '更新失败，请稍后重试。',
+        updateConfigUnavailable: '配置不可用',
+        updateConfigRead: '更新已暂停：无法读取配置文件',
+        updateConfigFormat: '更新已暂停：配置文件格式有误',
+        updateConfigChannel: '更新已暂停：channel 只能是 nightly 或 stable',
+        updateConfigCleanup: '更新已暂停：无法清理旧更新，请重启应用',
+        updateConfigGeneric: '更新已暂停：配置不可用',
+        updateShowcaseTitle: '更新按钮状态',
+        updateShowcaseDesc: '桌面端设置齿轮上方的更新入口在各阶段的外观；没有可用更新时按钮隐藏。',
+        updateStateAvailable: '发现新版本',
+        updateStateDownloading: '下载中',
+        updateStateVerifying: '校验中',
+        updateStateInstalling: '准备重启',
+        updateStateReady: '安装并重启',
+        updateStateError: '更新失败',
+        compatTitle: 'Islands UI 已自动关闭',
+        compatBody: '当前 DSH 构建的界面结构与插件不匹配，皮肤已回退到默认外观，以免出现双栏重叠或控件遮挡。',
+        compatView: '查看插件设置',
+        compatMissing: '缺失的界面锚点',
+        compatBannerTitle: '皮肤已自动停用：界面结构不匹配',
+        compatBannerBody:
+          'Islands UI 的样式写在当前 DSH 构建的类名和结构上。升级后的 DSH 改掉了这些锚点，浮岛布局、原生导航隐藏和工作区折叠都会失效，因此插件没有启用皮肤，DSH 保持默认外观。',
+        compatFix: '处理方式：把 Islands UI 更新到适配当前 DSH 的版本，或回退 DSH。若确认界面正常，可临时强制启用（下次启动会重新检测）。',
+        compatForce: '仍然启用',
+        compatForced: '已强制启用，本次会话跳过自动检测。',
+        compatDismiss: '关闭提示',
+        compatDetected: '检测到 DSH',
+        compatStructure: '侧栏结构',
+        compatStructureFlat: '平铺',
+        compatStructureScroll: '滚动容器',
+      },
+      en: {
+        title: 'Islands interface',
+        description:
+          'Floating-island layout with rounded panels, a persistent rail and an islanded workspace list. Turn off to return to the default look immediately.',
+        topbarToggle: 'Collapse or expand the workspace',
+        openRight: 'Open side panel',
+        closeRight: 'Close side panel',
+        workspace: 'Workspace',
+        pinned: 'Pinned',
+        untitled: 'Untitled session',
+        locate: 'Reveal in workspace',
+        unpin: 'Unpin session',
+        schedules: 'Automation',
+        plugins: 'Plugins',
+        settings: 'Settings',
+        railTitle: 'Left rail icons',
+        railHint: 'Click to show or hide; drag an icon to reorder',
+        railShow: 'Show in the left rail',
+        railHide: 'Remove from the left rail',
+        builtIn: 'Built into DSH',
+        noExtras: 'No icons on the left rail',
+        enable: 'Enable Islands UI',
+        enableDesc: 'Turn off to restore the default appearance immediately; your settings are kept.',
+        accent: 'Accent color',
+        accentDesc: 'Used for selected states, sliders, the send button and more.',
+        accentDefault: 'Follow theme',
+        accentCustom: 'Custom color',
+        models: 'Select model',
+        effort: 'Reasoning',
+        back: 'Back',
+        noEffort: 'This model has no adjustable reasoning level',
+        reset: 'Reset to default',
+        loading: 'Loading…',
+        pick: 'Select model',
+        empty: 'No models available',
+        failed: 'Selection failed',
+        updateAvailable: 'Update {version} available',
+        updateAvailablePlain: 'Update available',
+        updateDownloading: 'Downloading update {percent}%',
+        updateDownloadingDetail: 'Downloading update: {percent}%\nTarget version: {version}',
+        updateVerifying: 'Verifying update files…',
+        updateInstalling: 'Preparing to restart…',
+        updateReady: 'Install and restart',
+        updateReadyDetail: 'Version {version} is ready. Click to install and restart.',
+        updateRetry: 'Retry update',
+        updateFailedCheck: 'Could not check for updates. Please try again later.',
+        updateFailedCheckNetwork: 'Could not check for updates. Check your connection and try again.',
+        updateFailedDownload: 'Could not download the update. Please try again.',
+        updateFailedDownloadNetwork: 'Could not download the update. Check your connection and try again.',
+        updateFailedInstall: 'Could not install the update. Please try again later.',
+        updateFailedInstallNetwork: 'Could not install the update. Check your connection and try again.',
+        updateFailedStop: 'Could not safely stop the tasks. The update has not been installed. Please try again later.',
+        updateFailedTasksChanged: 'New tasks have started. Confirm again to stop the tasks and update.',
+        updateFailedTasksUnavailable: 'Task status is unavailable. Try updating again when the workspace is ready.',
+        updateFailedFullscreen: 'Could not exit fullscreen. Exit fullscreen, then retry the update.',
+        updateFailedGeneric: 'The update failed. Please try again later.',
+        updateConfigUnavailable: 'Configuration unavailable',
+        updateConfigRead: 'Updates paused: cannot read settings file',
+        updateConfigFormat: 'Updates paused: invalid settings file',
+        updateConfigChannel: 'Updates paused: channel must be nightly or stable',
+        updateConfigCleanup: 'Updates paused: cannot discard previous update; restart the app',
+        updateConfigGeneric: 'Updates paused: configuration unavailable',
+        updateShowcaseTitle: 'Update button states',
+        updateShowcaseDesc:
+          'How the desktop update entry above the settings gear looks in each phase. It is hidden when no update is available.',
+        updateStateAvailable: 'Update available',
+        updateStateDownloading: 'Downloading',
+        updateStateVerifying: 'Verifying',
+        updateStateInstalling: 'Preparing restart',
+        updateStateReady: 'Install and restart',
+        updateStateError: 'Update failed',
+        compatTitle: 'Islands UI turned itself off',
+        compatBody:
+          'This DSH build no longer matches the plugin, so the skin fell back to the default look instead of overlapping panels.',
+        compatView: 'Open plugin settings',
+        compatMissing: 'Missing interface anchors',
+        compatBannerTitle: 'Skin disabled: interface structure changed',
+        compatBannerBody:
+          'Islands UI styles itself against the class names and structure of the DSH build it ships for. This build changed those anchors, so the island layout, the hidden native navigation and the workspace collapse would all break. The skin therefore stayed off and DSH keeps its default look.',
+        compatFix:
+          'Update Islands UI to a release that matches this DSH build, or roll DSH back. If the interface looks fine, you can enable it anyway for this session.',
+        compatForce: 'Enable anyway',
+        compatForced: 'Enabled manually; automatic detection is skipped for this session.',
+        compatDismiss: 'Dismiss',
+        compatDetected: 'Detected DSH',
+        compatStructure: 'Sidebar structure',
+        compatStructureFlat: 'flat',
+        compatStructureScroll: 'scroll containers',
+      },
+    };
+
+    let localeService;
+    let layoutService;
+    let slotsService;
+    let shortcutsService;
+    let uiWorkspaceService;
+    let workspacesService;
+    let modelDirectories;
+    const RAIL_PIN_KEY = 'dsh-wechat-skin:islands:rail-pins';
+    /** Order + visibility of every left-rail panel entry. */
+    const RAIL_CONFIG_KEY = 'dsh-wechat-skin:islands:rail';
+    const ACCENT_KEY = 'dsh-wechat-skin:islands:accent';
+    const DEFAULT_ACCENT = '#4176e6';
+    const ACCENT_PRESETS = ['#4176e6', '#7c5cff', '#1f9d63', '#e07a2e', '#d94f8a', '#d64545'];
+    const listeners = new Set();
+
+    function readStored() {
+      // 宿主（sone-wx）持有唯一真源：设置页开关、分享码导出与重置都走它。
+      if (typeof host.readEnabled === 'function') {
+        try {
+          return host.readEnabled() !== false;
+        } catch {
+          /* 宿主读失败时退回本地键 */
+        }
+      }
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        return stored === null ? true : stored === '1';
+      } catch {
+        return true;
+      }
+    }
+
+    let enabled = readStored();
+
+    function syncAttribute() {
+      const body = document.body;
+      if (body === null) return;
+      if (enabled) body.setAttribute(ATTRIBUTE, '');
+      else body.removeAttribute(ATTRIBUTE);
+    }
+
+    function subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    }
+
+    function getSnapshot() {
+      return enabled;
+    }
+
+    function setEnabled(next) {
+      enabled = next === true;
+      if (typeof host.writeEnabled === 'function') {
+        try {
+          host.writeEnabled(enabled);
+        } catch {
+          /* 宿主写入失败不影响本次会话 */
+        }
+      }
+      try {
+        window.localStorage.setItem(STORAGE_KEY, enabled ? '1' : '0');
+      } catch {
+        /* private mode: the choice still applies for this page. */
+      }
+      syncAttribute();
+      for (const listener of listeners) listener();
+    }
+
+    function shortcutKeys(id, fallback = '') {
+      try {
+        const row = shortcutsService?.catalog?.getSnapshot?.().find((value) => value.id === id);
+        const keys = row?.keys;
+        if (Array.isArray(keys) && keys.length > 0) {
+          const mac =
+            document.documentElement.getAttribute('data-platform') === 'darwin' ||
+            /Mac/i.test(navigator.platform ?? '');
+          return keys.join(mac ? '' : '+');
+        }
+      } catch {
+        /* ignore */
+      }
+      return fallback;
+    }
+
+    function withShortcut(label, id, fallback = '') {
+      const keys = shortcutKeys(id, fallback);
+      return keys === '' ? label : `${label} (${keys})`;
+    }
+
+    function useEnabled() {
+      return React.useSyncExternalStore(subscribe, getSnapshot);
+    }
+
+    function setCompat(next) {
+      compatState = next;
+      for (const listener of compatListeners) listener();
+    }
+
+    function subscribeCompat(listener) {
+      compatListeners.add(listener);
+      return () => compatListeners.delete(listener);
+    }
+
+    function getCompatSnapshot() {
+      return compatState;
+    }
+
+    function useCompat() {
+      return React.useSyncExternalStore(subscribeCompat, getCompatSnapshot);
+    }
+
+    function currentCopy() {
+      try {
+        return String(localeService?.getSnapshot?.().active ?? 'en').toLowerCase().startsWith('zh')
+          ? COPY.zh
+          : COPY.en;
+      } catch {
+        return COPY.en;
+      }
+    }
+
+    function isForced() {
+      try {
+        return window.sessionStorage.getItem(FORCE_KEY) === '1';
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * The DSH release this page booted with. The client module system publishes
+     * it in `window.__DSH_BOOT__.release` (shared with the CLI version), so a
+     * plugin can pick the stylesheet written for the running shell without a
+     * Host round trip.
+     */
+    function readDshVersion() {
+      try {
+        const release = window.__DSH_BOOT__?.release;
+        return typeof release?.version === 'string' && release.version !== '' ? release.version : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function parseVersion(value) {
+      const match = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/u.exec(String(value).trim());
+      if (match === null) return null;
+      return {
+        core: [Number(match[1]), Number(match[2]), Number(match[3])],
+        pre: match[4] === undefined ? [] : match[4].split('.'),
+      };
+    }
+
+    /** Semver precedence, including numeric pre-release identifiers. */
+    function compareVersions(left, right) {
+      const a = parseVersion(left);
+      const b = parseVersion(right);
+      if (a === null || b === null) return null;
+      for (let index = 0; index < 3; index += 1) {
+        if (a.core[index] === b.core[index]) continue;
+        return a.core[index] < b.core[index] ? -1 : 1;
+      }
+      if (a.pre.length === 0 || b.pre.length === 0) {
+        return a.pre.length === b.pre.length ? 0 : a.pre.length === 0 ? 1 : -1;
+      }
+      const length = Math.max(a.pre.length, b.pre.length);
+      for (let index = 0; index < length; index += 1) {
+        const x = a.pre[index];
+        const y = b.pre[index];
+        if (x === undefined) return -1;
+        if (y === undefined) return 1;
+        const xNumeric = /^\d+$/u.test(x);
+        const yNumeric = /^\d+$/u.test(y);
+        if (xNumeric && yNumeric) {
+          const diff = Number(x) - Number(y);
+          if (diff !== 0) return diff < 0 ? -1 : 1;
+        } else if (xNumeric !== yNumeric) {
+          // Numeric identifiers always sort before alphanumeric ones.
+          return xNumeric ? -1 : 1;
+        } else if (x !== y) {
+          return x < y ? -1 : 1;
+        }
+      }
+      return 0;
+    }
+
+    /** Dialect the reported release ships; null when the version is unreadable. */
+    function dialectForVersion(version) {
+      if (version === null || parseVersion(version) === null) return null;
+      let dialect = SHELL_FLAT;
+      for (const row of SHELL_DIALECTS) {
+        const order = compareVersions(version, row.since);
+        if (order !== null && order >= 0) dialect = row.dialect;
+      }
+      return dialect;
+    }
+
+    /**
+     * Structure the mounted shell actually uses, read from the housekeeping
+     * classes rather than the version: `flat` is the pre-0.2.2-rc.2 sidebar,
+     * `scroll` the one wrapped in scroll containers, and `unknown` a shell no
+     * stylesheet was written against. Null means the shell has not mounted.
+     */
+    function detectShellDialect() {
+      const root = document.querySelector(SIDEBAR_ROOT);
+      if (root === null) return null;
+      const scrollRegion = root.querySelector(':scope > .kB3qhq_scrollRegion');
+      if (scrollRegion !== null) {
+        return scrollRegion.querySelector(':scope > .kB3qhq_scrollArea') !== null ? 'scroll' : 'unknown';
+      }
+      return root.querySelector(':scope > .kB3qhq_regionArea') !== null ? SHELL_FLAT : 'unknown';
+    }
+
+    function stylesheetFor(dialect) {
+      const variant = CSS_VARIANTS[dialect];
+      if (typeof variant !== 'string' || variant === '') return CSS;
+      return `${CSS}\n\n/* ---- variant: ${dialect} ---- */\n${variant}`;
+    }
+
+    /** Swap the injected stylesheet when the detected structure changes. */
+    function applyStylesheet(dialect) {
+      shellDialect = dialect;
+      if (styleTag !== null) styleTag.textContent = stylesheetFor(dialect);
+    }
+
+    /** Which anchors of the running DSH build are gone. */
+    function missingAnchors() {
+      const missing = REQUIRED_ANCHORS.filter((selector) => document.querySelector(selector) === null);
+      // A sidebar column without its root class means the sidebar was rebuilt
+      // under another name; the skin would render a second rail beside it.
+      if (document.querySelector(SIDEBAR_COLUMN) !== null && document.querySelector(SIDEBAR_ROOT) === null) {
+        missing.push(SIDEBAR_ROOT);
+      }
+      // A shell that matches no known dialect cannot be styled without the
+      // half-applied layout this gate exists to prevent.
+      if (detectShellDialect() === 'unknown') {
+        missing.push(shellDialect === 'scroll' ? '.kB3qhq_scrollRegion > .kB3qhq_scrollArea' : '.kB3qhq_regionArea');
+      }
+      return missing;
+    }
+
+    function readAccent() {
+      try {
+        const stored = window.localStorage.getItem(ACCENT_KEY);
+        return stored !== null && /^#[0-9a-f]{6}$/iu.test(stored) ? stored : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function applyAccent(color) {
+      const body = document.body;
+      if (body === null) return;
+      if (color === null) {
+        body.removeAttribute('data-dsh-wc-accent');
+        body.style.removeProperty('--isl-accent');
+      } else {
+        body.setAttribute('data-dsh-wc-accent', '');
+        body.style.setProperty('--isl-accent', color);
+      }
+    }
+
+    function storeAccent(color) {
+      try {
+        if (color === null) window.localStorage.removeItem(ACCENT_KEY);
+        else window.localStorage.setItem(ACCENT_KEY, color);
+      } catch {
+        /* private mode: keep the session choice. */
+      }
+    }
+
+    function useLocale() {
+      return React.useSyncExternalStore(
+        (listener) => (localeService === undefined ? () => {} : localeService.subscribe(listener)),
+        () => (localeService === undefined ? 'en' : localeService.getSnapshot().active),
+      );
+    }
+
+    /** Sidebar glyph for the window bar (divider on the left, workspace rail). */
+    function PanelGlyph() {
+      return h(
+        'svg',
+        { width: 16, height: 16, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('rect', {
+          x: 2.5,
+          y: 3.5,
+          width: 15,
+          height: 13,
+          rx: 3,
+          stroke: 'currentColor',
+          strokeWidth: 1.5,
+        }),
+        h('path', { d: 'M7.5 4v12', stroke: 'currentColor', strokeWidth: 1.5 }),
+      );
+    }
+
+    /** Mirror glyph for the right sidebar toggle (divider on the right). */
+    function RightPanelGlyph() {
+      return h(
+        'svg',
+        { width: 16, height: 16, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('rect', {
+          x: 2.5,
+          y: 3.5,
+          width: 15,
+          height: 13,
+          rx: 3,
+          stroke: 'currentColor',
+          strokeWidth: 1.5,
+        }),
+        h('path', { d: 'M12.5 4v12', stroke: 'currentColor', strokeWidth: 1.5 }),
+      );
+    }
+
+    /** Small glyphs used by the composer model picker. */
+    function ModelGlyph() {
+      return h(
+        'svg',
+        { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('rect', { x: 1.5, y: 1.5, width: 13, height: 13, rx: 4, stroke: 'currentColor', strokeWidth: 1.3 }),
+        h('path', { d: 'M5 9.5 6.8 6l1.7 3.5L10.2 6 12 9.5', stroke: 'currentColor', strokeWidth: 1.3, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+      );
+    }
+
+    function CheckGlyph() {
+      return h(
+        'svg',
+        { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'm3.5 8.5 3 3 6-6.5', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+      );
+    }
+
+    function ChevronGlyph() {
+      return h(
+        'svg',
+        { width: 12, height: 12, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'm4 6 4 4 4-4', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+      );
+    }
+
+    function ResetGlyph() {
+      return h(
+        'svg',
+        { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M3.5 6.5A5 5 0 1 1 3 9.5', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }),
+        h('path', { d: 'M3 3.5v3h3', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+      );
+    }
+
+    function DownloadGlyph() {
+      return h(
+        'svg',
+        { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M10 3.4v8.2', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' }),
+        h('path', { d: 'm6.7 8.7 3.3 3.3 3.3-3.3', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+        h('path', { d: 'M4.5 15.6h11', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' }),
+      );
+    }
+
+    function RestartGlyph() {
+      return h(
+        'svg',
+        { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M16.4 8.1A6.5 6.5 0 1 0 16.4 12', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' }),
+        h('path', { d: 'M16.4 3.9v4.2h-4.2', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+      );
+    }
+
+    function DotMatrixGlyph({ variant }) {
+      const rings = [2, 1, 2, 1, 0, 1, 2, 1, 2];
+      const smiley = new Set([0, 2, 7]);
+      // Windows for the 720 ms smiley rotation: each cell is lit for one or
+      // two 180 ms phases; the first cell wraps across the cycle boundary.
+      const phases = [
+        { span: 'wrap', delay: 0 },
+        { span: 1, delay: 360 },
+        { span: 2, delay: 0 },
+        { span: 1, delay: 180 },
+        { span: null, delay: 0 },
+        { span: 1, delay: 540 },
+        { span: 2, delay: 360 },
+        { span: 1, delay: 0 },
+        { span: 2, delay: 180 },
+      ];
+      return h(
+        'span',
+        { className: `isl-dmx isl-dmx-${variant}`, 'aria-hidden': true },
+        Array.from({ length: 9 }, (_, index) =>
+          h('span', {
+            key: index,
+            className: 'isl-dmx-dot',
+            'data-col': index % 3,
+            'data-ring': rings[index],
+            'data-on': smiley.has(index) ? '1' : '0',
+            'data-span': variant === 'smiley' ? phases[index].span ?? undefined : undefined,
+            style:
+              variant === 'smiley'
+                ? { animationDelay: `${phases[index].delay}ms` }
+                : { '--dmx-col': index % 3, '--dmx-ring': rings[index] },
+          }),
+        ),
+      );
+    }
+
+    /** Shared face for the live rail button and the settings showcase. */
+    function UpdateGlyph({ phase }) {
+      if (phase === 'available') return h(DownloadGlyph);
+      if (phase === 'ready' || phase === 'error') return h(RestartGlyph);
+      if (phase === 'downloading') return h(DotMatrixGlyph, { variant: 'column' });
+      if (phase === 'verifying') return h(DotMatrixGlyph, { variant: 'smiley' });
+      return h(DotMatrixGlyph, { variant: 'ripple' });
+    }
+
+    function readRailPins() {
+      try {
+        const raw = window.localStorage.getItem(RAIL_PIN_KEY);
+        const parsed = raw === null ? [] : JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'string') : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function uniqueRailIds(values) {
+      const seen = new Set();
+      const result = [];
+      for (const value of values) {
+        if (typeof value !== 'string' || value === '' || seen.has(value)) continue;
+        seen.add(value);
+        result.push(value);
+      }
+      return result;
+    }
+
+    /**
+     * The rail shows every panel entry by default and remembers the user's
+     * order and the entries they hid. Configurations written by 1.0.x only
+     * stored pins, so they are read once and migrated into an order prefix.
+     */
+    function readRailConfig() {
+      try {
+        const raw = window.localStorage.getItem(RAIL_CONFIG_KEY);
+        if (raw !== null) {
+          const parsed = JSON.parse(raw);
+          return {
+            order: uniqueRailIds(Array.isArray(parsed?.order) ? parsed.order : []),
+            hidden: uniqueRailIds(Array.isArray(parsed?.hidden) ? parsed.hidden : []),
+          };
+        }
+      } catch {
+        /* fall through to the legacy pin list */
+      }
+      return { order: uniqueRailIds(['schedules', 'plugins', ...readRailPins()]), hidden: [] };
+    }
+
+    function writeRailConfig(config) {
+      try {
+        window.localStorage.setItem(RAIL_CONFIG_KEY, JSON.stringify(config));
+        // The legacy key only seeds the first migration; drop it once the new
+        // configuration exists so clearing that key really resets the rail.
+        window.localStorage.removeItem(RAIL_PIN_KEY);
+      } catch {
+        /* private mode: keep the arrangement for this session only. */
+      }
+    }
+
+    function HouseGlyph() {
+      return h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M3 8.6 10 3l7 5.6V16a1 1 0 0 1-1 1h-4v-4.5H8V17H4a1 1 0 0 1-1-1V8.6Z', stroke: 'currentColor', strokeWidth: 1.5, strokeLinejoin: 'round' }));
+    }
+
+    function ClockGlyph() {
+      return h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('circle', { cx: 10, cy: 10, r: 7, stroke: 'currentColor', strokeWidth: 1.5 }),
+        h('path', { d: 'M10 6.2V10l2.6 1.6', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' }));
+    }
+
+    function PluginsGlyph() {
+      return h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('rect', { x: 3, y: 3, width: 6, height: 6, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.4 }),
+        h('rect', { x: 11, y: 3, width: 6, height: 6, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.4 }),
+        h('rect', { x: 3, y: 11, width: 6, height: 6, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.4 }),
+        h('path', { d: 'M14 11v6M11 14h6', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }));
+    }
+
+    function PlugGlyph() {
+      return h('svg', { width: 17, height: 17, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M7 3v4M13 3v4M5 7h10v3a5 5 0 0 1-10 0V7ZM10 15v3', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round', strokeLinejoin: 'round' }));
+    }
+
+    function CheckGlyph() {
+      return h('svg', { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'm3 8.4 3.2 3.2L13 4.8', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }));
+    }
+
+    function PlusGlyph() {
+      return h('svg', { width: 18, height: 18, viewBox: '0 0 20 20', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M10 4v12M4 10h12', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' }));
+    }
+
+    function GearGlyph() {
+      return h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': true },
+        h('circle', { cx: 12, cy: 12, r: 3, stroke: 'currentColor', strokeWidth: 1.6 }),
+        h('path', {
+          d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z',
+          stroke: 'currentColor',
+          strokeWidth: 1.6,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        }),
+      );
+    }
+
+    /**
+     * Best effort selection of one settings section once the dialog is up. The
+     * settings navigation has no service of its own, so the row is matched by
+     * its label inside the dialog and simply skipped when it is not there.
+     */
+    function revealSettingsSection(label) {
+      if (typeof label !== 'string' || label === '') return;
+      let attempts = 0;
+      const tick = () => {
+        attempts += 1;
+        const scope = document.querySelector('[role="dialog"]') ?? document;
+        const cells = [
+          ...scope.querySelectorAll('button, a, [role="tab"], [role="option"], [class*="navCell"]'),
+        ];
+        const target = cells.find((cell) => (cell.textContent ?? '').trim() === label);
+        if (target instanceof HTMLElement) {
+          target.click();
+          return;
+        }
+        if (attempts < 12) window.setTimeout(tick, 120);
+      };
+      window.setTimeout(tick, 140);
+    }
+
+    function openSettings(options) {
+      const section = options?.section;
+      // The account launcher owns the Settings row; clicking that row is the
+      // reliable path on desktop (configurable shortcuts go through the native
+      // keyboard bridge, so a synthetic keydown never reaches them).
+      const trigger = document.querySelector('.kB3qhq_footArea button[aria-haspopup="menu"]');
+      if (trigger instanceof HTMLElement) {
+        trigger.click();
+        window.setTimeout(() => {
+          const item = [
+            ...document.querySelectorAll('[role="menu"] [role="menuitem"], [role="menu"] [role="menuitemradio"], [role="menu"] button, [role="menu"] a'),
+          ].find((element) => /设置|Settings|偏好|Preferences/i.test(element.textContent ?? ''));
+          if (item instanceof HTMLElement) item.click();
+          revealSettingsSection(section);
+        }, 60);
+        return;
+      }
+      try {
+        const row = (shortcutsService?.catalog?.getSnapshot?.() ?? []).find(
+          (value) => value.id === 'settings.open' && value.binding !== null && value.binding !== undefined,
+        );
+        if (row?.binding !== undefined) {
+          const modifiers = new Set(row.binding.modifiers ?? []);
+          window.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              code: row.binding.code,
+              key: ',',
+              metaKey: modifiers.has('meta'),
+              ctrlKey: modifiers.has('control'),
+              altKey: modifiers.has('alt'),
+              shiftKey: modifiers.has('shift'),
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+      revealSettingsSection(section);
+    }
+
+    function LocateGlyph() {
+      return h('svg', { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('circle', { cx: 8, cy: 8, r: 4, stroke: 'currentColor', strokeWidth: 1.3 }),
+        h('path', { d: 'M8 1.5v2.2M8 12.3v2.2M1.5 8h2.2M12.3 8h2.2', stroke: 'currentColor', strokeWidth: 1.3, strokeLinecap: 'round' }));
+    }
+
+    function defaultPinIcon() {
+      try {
+        const entries = slotsService?.entriesOfSlot?.('contextMenu.icon') ?? [];
+        const entry =
+          entries.find((value) => value.options?.key === 'workspace.unpin') ??
+          entries.find((value) => value.options?.key === 'workspace.pin');
+        if (entry?.component !== undefined) return h(entry.component, { size: 14 });
+      } catch {
+        /* fall back to the local glyph */
+      }
+      return h(PinGlyph);
+    }
+
+    function revealPinnedSession(sessionId, title) {
+      const projectRows = () => [...document.querySelectorAll('.JoiKIa_projectRow')];
+      const stateOf = (row) =>
+        row.getAttribute('aria-expanded') ??
+        row.querySelector('[aria-expanded]')?.getAttribute('aria-expanded');
+      const expanded = (row) => stateOf(row) === 'true';
+      const toggle = (row) => {
+        const chevron = row.querySelector('.JoiKIa_chevron');
+        if (chevron instanceof HTMLElement) chevron.click();
+        else row.click();
+      };
+
+      // Expand every workspace briefly so the target session exists in the DOM.
+      for (const row of projectRows()) {
+        if (!expanded(row)) toggle(row);
+      }
+
+      window.setTimeout(() => {
+        const candidates = [...document.querySelectorAll('.JoiKIa_sessionRow')].filter((row) =>
+          (row.textContent ?? '').includes(title),
+        );
+        if (candidates.length === 0) return;
+        const row = candidates[0];
+
+        // The owner is the nearest preceding Workspace row; nested ancestors stay open.
+        let owner = null;
+        for (const project of projectRows()) {
+          if ((project.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) owner = project;
+        }
+
+        for (const project of projectRows()) {
+          const keep = project === owner || project.contains(owner);
+          if (keep) {
+            if (!expanded(project)) toggle(project);
+          } else if (expanded(project)) {
+            toggle(project);
+          }
+        }
+
+        window.setTimeout(() => {
+          row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          if (!row.hasAttribute('tabindex')) row.setAttribute('tabindex', '-1');
+          row.focus({ preventScroll: true });
+          row.classList.add('isl-located');
+          window.setTimeout(() => row.classList.remove('isl-located'), 1400);
+        }, 140);
+      }, 180);
+    }
+
+    function PinGlyph() {
+      return h('svg', { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M6 2v4L4 8v1.5h3.2V14l.8 1 .8-1V9.5H12V8l-2-2V2', stroke: 'currentColor', strokeWidth: 1.3, strokeLinejoin: 'round' }));
+    }
+
+    /**
+     * Left rail: the workspace home plus every panel launcher registered in
+     * `sidebar.panellist`. Entries are shown directly, reordered by dragging,
+     * and shown or hidden from the right-click management menu.
+     */
+    function IslandsRail({ usePanelInfo }) {
+      const active = usePanelInfo((info) => info.activePanelId ?? null);
+      const [config, setConfig] = React.useState(readRailConfig);
+      const [menu, setMenu] = React.useState(null);
+      const [dragId, setDragId] = React.useState(null);
+      const [ripples, setRipples] = React.useState([]);
+      const rippleSeq = React.useRef(0);
+      const [, refreshEntries] = React.useState(0);
+      const railRef = React.useRef(null);
+      const menuRef = React.useRef(null);
+      const itemRefs = React.useRef(new Map());
+      const configRef = React.useRef(config);
+      const dragRef = React.useRef(null);
+      const suppressClickRef = React.useRef(false);
+      const lang = useLocale() ?? 'en';
+      const copy = String(lang).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      configRef.current = config;
+
+      const allEntries = (() => {
+        try {
+          const seen = new Set();
+          return (slotsService?.entriesOfSlot('sidebar.panellist') ?? []).flatMap((entry) => {
+            const id = entry.options.id;
+            if (typeof id !== 'string' || id === '' || seen.has(id)) return [];
+            seen.add(id);
+            return [{
+              id,
+              order: entry.options.order ?? 0,
+              label: typeof entry.options.label === 'function' ? entry.options.label() : entry.options.label,
+              registrant: entry.registrant,
+              component: entry.component,
+            }];
+          });
+        } catch {
+          return [];
+        }
+      })();
+
+      const byId = new Map(allEntries.map((entry) => [entry.id, entry]));
+      const storedIndex = new Map(config.order.map((id, index) => [id, index]));
+      // The two shipped panels lead on a fresh install; every other launcher
+      // follows registration order until the user drags it somewhere else.
+      const defaultIds = [
+        ...['schedules', 'plugins'].filter((id) => byId.has(id)),
+        ...allEntries.map((entry) => entry.id).filter((id) => id !== 'schedules' && id !== 'plugins'),
+      ];
+      const defaultIndex = new Map(defaultIds.map((id, index) => [id, index]));
+      const orderedEntries = [...allEntries].sort((left, right) => {
+        const leftIndex = storedIndex.get(left.id);
+        const rightIndex = storedIndex.get(right.id);
+        if (leftIndex !== undefined || rightIndex !== undefined) {
+          if (leftIndex === undefined) return 1;
+          if (rightIndex === undefined) return -1;
+          if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+        }
+        return (defaultIndex.get(left.id) ?? 0) - (defaultIndex.get(right.id) ?? 0);
+      });
+      const visible = orderedEntries.filter((entry) => !config.hidden.includes(entry.id));
+
+      // A plugin can register a panel after the shell is already mounted.
+      React.useEffect(() => {
+        try {
+          const unsubscribe = slotsService?.subscribe?.('sidebar.panellist', () => refreshEntries((value) => value + 1));
+          return typeof unsubscribe === 'function' ? unsubscribe : undefined;
+        } catch {
+          return undefined;
+        }
+      }, []);
+
+      React.useEffect(() => {
+        if (menu === null) return;
+        const onDown = (event) => {
+          if (railRef.current?.contains(event.target) === true) return;
+          if (menuRef.current?.contains(event.target) === true) return;
+          setMenu(null);
+        };
+        const onKey = (event) => {
+          if (event.key === 'Escape') setMenu(null);
+        };
+        document.addEventListener('mousedown', onDown, true);
+        document.addEventListener('keydown', onKey, true);
+        return () => {
+          document.removeEventListener('mousedown', onDown, true);
+          document.removeEventListener('keydown', onKey, true);
+        };
+      }, [menu]);
+
+      React.useEffect(
+        () => () => {
+          dragRef.current?.detach?.();
+          dragRef.current = null;
+        },
+        [],
+      );
+
+      const iconFor = (id, size) => {
+        const entry = byId.get(id);
+        if (entry?.component !== undefined) {
+          try {
+            return h(entry.component, { size, active: active === id });
+          } catch {
+            /* fall back to the generic glyph */
+          }
+        }
+        if (id === 'schedules') return h(ClockGlyph);
+        if (id === 'plugins') return h(PluginsGlyph);
+        return h(PlugGlyph);
+      };
+
+      // Official panels are registered by the bundled web-client fiber, whose
+      // internal name is `wc`; that code means nothing in the UI. Third-party
+      // entries keep their package name so the owner is still recognizable.
+      const ownerFor = (registrant) => {
+        if (typeof registrant !== 'string') return undefined;
+        const code = registrant.trim();
+        if (code === '') return undefined;
+        // The bundled client reports the fiber as `WC` (older bundles may use
+        // lower case); both are the same internal name, not a plugin name.
+        return code.toLowerCase() === 'wc' ? copy.builtIn : code;
+      };
+
+      const labelFor = (id) => {
+        const entry = byId.get(id);
+        const label = entry?.label ?? id;
+        const owner = ownerFor(entry?.registrant);
+        return owner === undefined ? label : `${label} · ${owner}`;
+      };
+
+      const openMenuAt = (x, y, contextId) => {
+        const width = 248;
+        const height = Math.min(window.innerHeight - 16, 76 + orderedEntries.length * 36);
+        const left = Math.max(8, Math.min(x, window.innerWidth - width - 8));
+        const top = y + height + 8 <= window.innerHeight ? y : Math.max(8, y - height);
+        setMenu({ left, top, contextId });
+      };
+
+      const toggleHidden = (id) => {
+        const current = configRef.current;
+        const hidden = current.hidden.includes(id)
+          ? current.hidden.filter((value) => value !== id)
+          : [...current.hidden, id];
+        const next = { order: current.order, hidden };
+        configRef.current = next;
+        setConfig(next);
+        writeRailConfig(next);
+      };
+
+      const addRipple = (event) => {
+        const button = event.currentTarget;
+        if (button === null) return;
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height) * 2.4;
+        // Keyboard activation (Enter/Space) reports detail 0 and no pointer
+        // position; centre the ripple on the tile instead.
+        const centered = event.detail === 0 || (event.clientX === 0 && event.clientY === 0);
+        const x = centered ? rect.width / 2 : event.clientX - rect.left;
+        const y = centered ? rect.height / 2 : event.clientY - rect.top;
+        const key = `ripple-${rippleSeq.current++}`;
+        setRipples((values) => [...values, { key, x, y, size }]);
+      };
+
+      const removeRipple = (key) => {
+        setRipples((values) => values.filter((value) => value.key !== key));
+      };
+
+      const select = (id) => {
+        setMenu(null);
+        // The home button is the workspace drawer's opener in the narrow
+        // layout; on desktop it returns to the conversation as before.
+        if (id === null) {
+          const frame = document.querySelector('.PIRFFq_frame');
+          if (frame !== null && frame.hasAttribute('data-sidebar-drawer')) {
+            layoutService?.toggleSidebar();
+            return;
+          }
+        }
+        layoutService?.selectPanel(id);
+      };
+
+      const autoScroll = (clientY) => {
+        const rail = railRef.current;
+        if (rail === null) return;
+        const rect = rail.getBoundingClientRect();
+        if (clientY < rect.top + 32) rail.scrollTop -= 12;
+        else if (clientY > rect.bottom - 32) rail.scrollTop += 12;
+      };
+
+      const beforeIdAt = (clientY, id) => {
+        for (const entry of visible) {
+          if (entry.id === id) continue;
+          const node = itemRefs.current.get(entry.id);
+          if (node === undefined) continue;
+          const rect = node.getBoundingClientRect();
+          if (clientY < rect.top + rect.height / 2) return entry.id;
+        }
+        return null;
+      };
+
+      const moveEntryBefore = (id, beforeId) => {
+        const current = configRef.current;
+        const baseOrder = orderedEntries.map((entry) => entry.id);
+        const currentOrder = uniqueRailIds([...current.order, ...baseOrder]);
+        const without = currentOrder.filter((value) => value !== id);
+        let index = beforeId === null ? without.length : without.indexOf(beforeId);
+        if (index === -1) index = without.length;
+        without.splice(index, 0, id);
+        if (without.length === currentOrder.length && without.every((value, at) => value === currentOrder[at])) return;
+        const next = { order: without, hidden: current.hidden };
+        configRef.current = next;
+        setConfig(next);
+      };
+
+      const beginDrag = (event, id) => {
+        if (event.button !== 0 || dragRef.current !== null) return;
+        const pointerId = event.pointerId;
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const source = event.currentTarget;
+        const origin = source.getBoundingClientRect();
+        const state = {
+          id,
+          active: false,
+          detach: null,
+          ghost: null,
+          offsetX: startX - origin.left,
+          offsetY: startY - origin.top,
+        };
+        const positionGhost = (x, y) => {
+          if (state.ghost === null) return;
+          state.ghost.style.transform = `translate3d(${x - state.offsetX}px, ${y - state.offsetY}px, 0)`;
+        };
+        const detach = () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp, true);
+          window.removeEventListener('pointercancel', onUp, true);
+          if (state.ghost !== null) {
+            state.ghost.remove();
+            state.ghost = null;
+          }
+        };
+        const onMove = (moveEvent) => {
+          if (moveEvent.pointerId !== pointerId) return;
+          if (!state.active) {
+            if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 4) return;
+            state.active = true;
+            suppressClickRef.current = true;
+            setDragId(id);
+            setMenu(null);
+            // Clone the rendered icon so the ghost keeps the exact glyph and
+            // size of the row, then park it under the pointer at the grab
+            // offset. It must never intercept pointer events.
+            const ghost = source.cloneNode(true);
+            ghost.className = 'isl-railGhost';
+            ghost.removeAttribute('data-rail-id');
+            ghost.removeAttribute('data-draggable');
+            ghost.removeAttribute('title');
+            ghost.removeAttribute('aria-label');
+            ghost.removeAttribute('aria-pressed');
+            ghost.setAttribute('aria-hidden', 'true');
+            ghost.tabIndex = -1;
+            state.ghost = ghost;
+            positionGhost(moveEvent.clientX, moveEvent.clientY);
+            document.body.appendChild(ghost);
+          }
+          moveEvent.preventDefault();
+          positionGhost(moveEvent.clientX, moveEvent.clientY);
+          autoScroll(moveEvent.clientY);
+          moveEntryBefore(id, beforeIdAt(moveEvent.clientY, id));
+        };
+        const onUp = (upEvent) => {
+          if (upEvent.pointerId !== pointerId) return;
+          detach();
+          dragRef.current = null;
+          if (!state.active) return;
+          upEvent.preventDefault();
+          setDragId(null);
+          writeRailConfig(configRef.current);
+          // The click that follows a drag must not select the icon; clear the
+          // guard after the browser has dispatched it.
+          window.setTimeout(() => {
+            suppressClickRef.current = false;
+          }, 0);
+        };
+        state.detach = detach;
+        dragRef.current = state;
+        window.addEventListener('pointermove', onMove, { passive: false });
+        window.addEventListener('pointerup', onUp, true);
+        window.addEventListener('pointercancel', onUp, true);
+      };
+
+      const button = (id, label, glyph, extraClass, draggable = false) => {
+        // The house is a navigation trigger (conversation / workspace drawer),
+        // not a destination in the panel model. It therefore never carries the
+        // persistent selected fill; hover and focus still show that it is live.
+        const selected = id !== null && active === id;
+        // `dragId` is null while idle, so the house (id null) must not match it.
+        const dragging = id !== null && dragId === id;
+        return h(
+          'button',
+          {
+            type: 'button',
+            key: id ?? 'workspace',
+            ref: draggable
+              ? (node) => {
+                  if (node === null) itemRefs.current.delete(id);
+                  else itemRefs.current.set(id, node);
+                }
+              : undefined,
+            className:
+              'isl-railBtn' +
+              (selected ? ' is-active' : '') +
+              (dragging ? ' is-dragging' : '') +
+              (extraClass ? ` ${extraClass}` : ''),
+            title: label,
+            'aria-label': label,
+            'aria-pressed': id === null ? undefined : selected,
+            'data-rail-id': id ?? 'workspace',
+            'data-draggable': draggable ? '' : undefined,
+            onClick: (event) => {
+              if (suppressClickRef.current) {
+                suppressClickRef.current = false;
+                return;
+              }
+              if (id === null) addRipple(event);
+              select(id);
+            },
+            onPointerDown: draggable ? (event) => beginDrag(event, id) : undefined,
+          },
+          glyph,
+          id === null
+            ? ripples.map((ripple) =>
+                h('span', {
+                  key: ripple.key,
+                  className: 'isl-railRipple',
+                  'aria-hidden': true,
+                  style: {
+                    left: `${ripple.x}px`,
+                    top: `${ripple.y}px`,
+                    width: `${ripple.size}px`,
+                    height: `${ripple.size}px`,
+                  },
+                  onAnimationEnd: () => removeRipple(ripple.key),
+                }),
+              )
+            : null,
+        );
+      };
+
+      const menuNode = menu !== null
+        ? ReactDOM.createPortal(
+            h(
+              'div',
+              {
+                ref: menuRef,
+                className: 'isl-railMenu',
+                role: 'menu',
+                style: { left: menu.left, top: menu.top },
+                onContextMenu: (event) => event.preventDefault(),
+              },
+              h('div', { className: 'isl-railMenuTitle' }, copy.railTitle),
+              orderedEntries.length === 0
+                ? h('div', { className: 'isl-railMenuEmpty' }, copy.noExtras)
+                : orderedEntries.map((entry) => {
+                    const shown = !config.hidden.includes(entry.id);
+                    const owner = ownerFor(entry.registrant);
+                    return h(
+                      'button',
+                      {
+                        type: 'button',
+                        key: entry.id,
+                        className:
+                          'isl-railMenuRow' +
+                          (menu.contextId === entry.id ? ' is-current' : '') +
+                          (shown ? '' : ' is-hidden'),
+                        role: 'menuitemcheckbox',
+                        'aria-checked': shown,
+                        title: shown ? copy.railHide : copy.railShow,
+                        onClick: () => toggleHidden(entry.id),
+                      },
+                      h('span', { className: 'isl-railMenuIcon' }, iconFor(entry.id, 16)),
+                      h(
+                        'span',
+                        { className: 'isl-railMenuText' },
+                        h('span', { className: 'isl-railMenuLabel' }, entry.label ?? entry.id),
+                        owner === undefined
+                          ? null
+                          : h('span', { className: 'isl-railMenuSub' }, owner),
+                      ),
+                      h(
+                        'span',
+                        { className: 'isl-railMenuCheck' + (shown ? ' is-on' : ''), 'aria-hidden': true },
+                        shown ? h(CheckGlyph) : null,
+                      ),
+                    );
+                  }),
+              h('div', { className: 'isl-railMenuHint' }, copy.railHint),
+            ),
+            document.body,
+          )
+        : null;
+
+      return h(
+        'nav',
+        {
+          ref: railRef,
+          className: 'isl-rail' + (dragId === null ? '' : ' is-dragging'),
+          'aria-label': copy.workspace,
+          onContextMenu: (event) => {
+            event.preventDefault();
+            const target = event.target instanceof Element ? event.target.closest('[data-rail-id]') : null;
+            const id = target?.getAttribute('data-rail-id') ?? null;
+            const anchor = target?.getBoundingClientRect() ?? railRef.current?.getBoundingClientRect();
+            // Shift+F10 and the context-menu key dispatch a contextmenu event
+            // without a pointer position; anchor that menu on the focused row.
+            const point = event.clientX === 0 && event.clientY === 0
+              ? { x: (anchor?.right ?? 48) + 8, y: anchor?.top ?? 8 }
+              : { x: event.clientX, y: event.clientY };
+            openMenuAt(point.x, point.y, id === 'workspace' ? null : id);
+          },
+        },
+        button(null, copy.workspace, h(HouseGlyph)),
+        h('div', { className: 'isl-railDivider', 'aria-hidden': true }),
+        visible.map((entry) => button(entry.id, labelFor(entry.id), iconFor(entry.id, 18), null, true)),
+        visible.length === 0
+          ? h(
+              'button',
+              {
+                type: 'button',
+                className: 'isl-railBtn isl-railAdd',
+                title: copy.railTitle,
+                'aria-label': copy.railTitle,
+                'aria-haspopup': 'menu',
+                'aria-expanded': menu !== null,
+                onClick: (event) => {
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  openMenuAt(rect.right + 8, rect.top, null);
+                },
+              },
+              h(PlusGlyph),
+            )
+          : null,
+        menuNode,
+      );
+    }
+
+    function IslandsRailSettings() {
+      const lang = useLocale() ?? 'en';
+      const copy = String(lang).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'isl-railBtn isl-railSettings',
+          title: withShortcut(copy.settings, 'settings.open'),
+          'aria-label': withShortcut(copy.settings, 'settings.open'),
+          onClick: openSettings,
+        },
+        h(GearGlyph),
+      );
+    }
+
+    /**
+     * The desktop preload exposes update state only to the product page. Keep
+     * the lookup optional so the same bundle stays inert in a plain browser.
+     */
+    function desktopUpdateBridge() {
+      try {
+        const bridge = globalThis.dshDesktop;
+        return bridge?.protocolVersion === 1 ? bridge.updates : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+
+    function formatCopy(template, values) {
+      return String(template).replace(/\{(\w+)\}/g, (match, key) =>
+        values[key] === undefined ? match : String(values[key]),
+      );
+    }
+
+    const UPDATE_FAILURE_KEYS = {
+      check: 'updateFailedCheck',
+      'check-network': 'updateFailedCheckNetwork',
+      download: 'updateFailedDownload',
+      'download-network': 'updateFailedDownloadNetwork',
+      install: 'updateFailedInstall',
+      'install-network': 'updateFailedInstallNetwork',
+      'stop-failed': 'updateFailedStop',
+      'tasks-changed': 'updateFailedTasksChanged',
+      'tasks-unavailable': 'updateFailedTasksUnavailable',
+      'fullscreen-timeout': 'updateFailedFullscreen',
+    };
+
+    function updateFailureCopy(state, copy) {
+      const key = UPDATE_FAILURE_KEYS[state?.failure] ?? 'updateFailedGeneric';
+      return copy[key] ?? copy.updateFailedGeneric;
+    }
+
+    const UPDATE_CONFIGURATION_KEYS = {
+      read: 'updateConfigRead',
+      format: 'updateConfigFormat',
+      channel: 'updateConfigChannel',
+      cleanup: 'updateConfigCleanup',
+    };
+
+    /** DSH 0.2.2-rc.2 added channel configuration failures to the presentation. */
+    function updateConfigurationCopy(state, copy) {
+      const key = UPDATE_CONFIGURATION_KEYS[state?.configurationError] ?? 'updateConfigGeneric';
+      return {
+        label: copy.updateConfigUnavailable,
+        detail: copy[key] ?? copy.updateConfigGeneric,
+      };
+    }
+
+    function updatePresentationCopy(state, failed, copy) {
+      if (failed) return { label: copy.updateRetry, detail: copy.updateRetry };
+      if (typeof state?.configurationError === 'string') return updateConfigurationCopy(state, copy);
+      const version = typeof state?.version === 'string' ? state.version : undefined;
+      switch (state?.phase) {
+        case 'available': {
+          const label = version === undefined
+            ? copy.updateAvailablePlain
+            : formatCopy(copy.updateAvailable, { version });
+          return { label, detail: label };
+        }
+        case 'downloading': {
+          const percent = Math.max(0, Math.min(100, Math.round(Number(state.percent) || 0)));
+          const label = formatCopy(copy.updateDownloading, { percent });
+          return {
+            label,
+            detail: version === undefined
+              ? label
+              : formatCopy(copy.updateDownloadingDetail, { percent, version }),
+          };
+        }
+        case 'verifying':
+          return { label: copy.updateVerifying, detail: copy.updateVerifying };
+        case 'installing':
+          return { label: copy.updateInstalling, detail: copy.updateInstalling };
+        case 'ready':
+          return {
+            label: copy.updateReady,
+            detail: version === undefined
+              ? copy.updateReady
+              : formatCopy(copy.updateReadyDetail, { version }),
+          };
+        case 'error':
+          return { label: copy.updateRetry, detail: updateFailureCopy(state, copy) };
+        default:
+          return { label: '', detail: '' };
+      }
+    }
+
+    /** One subscription shared by the rail button; null until the bridge answers. */
+    function useDesktopUpdate() {
+      const updates = React.useMemo(() => desktopUpdateBridge(), []);
+      const [view, setView] = React.useState({ state: undefined, failed: false });
+
+      React.useEffect(() => {
+        if (updates === undefined) return undefined;
+        let live = true;
+        let received = false;
+        const apply = (state) => {
+          if (!live) return;
+          received = true;
+          setView({ state, failed: false });
+        };
+        let unsubscribe;
+        try {
+          unsubscribe = updates.subscribe?.(apply);
+        } catch {
+          /* a bridge without a subscriber still gets the status probe */
+        }
+        Promise.resolve()
+          .then(() => updates.status())
+          .then(
+            (state) => {
+              if (live && !received) apply(state);
+            },
+            () => {
+              if (live && !received) setView({ state: undefined, failed: true });
+            },
+          );
+        return () => {
+          live = false;
+          try {
+            unsubscribe?.();
+          } catch {
+            /* already detached by the shell */
+          }
+        };
+      }, [updates]);
+
+      return { updates, ...view };
+    }
+
+    /**
+     * Desktop update entry above the settings gear. Available and ready are
+     * actionable; busy phases are a 3x3 dot-matrix animation; failures keep
+     * the same footprint with a danger tint and a retry glyph.
+     */
+    function IslandsUpdateButton() {
+      const { updates, state, failed } = useDesktopUpdate();
+      const [pending, setPending] = React.useState(false);
+      const enabled = useEnabled();
+      const lang = useLocale() ?? 'en';
+      const copy = String(lang).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      const configurationError = typeof state?.configurationError === 'string';
+      const phase = failed || configurationError ? 'error' : state?.phase;
+      if (!enabled || updates === undefined || phase === undefined || phase === 'idle') return null;
+      if (!['available', 'downloading', 'verifying', 'installing', 'ready', 'error'].includes(phase)) return null;
+
+      const clickable = phase === 'available' || phase === 'ready' || phase === 'error';
+      const busy = pending || phase === 'downloading' || phase === 'verifying' || phase === 'installing';
+      const { label, detail } = updatePresentationCopy(state, failed, copy);
+      const open = () => {
+        if (!clickable || pending) return;
+        setPending(true);
+        Promise.resolve()
+          .then(() => updates.open())
+          .catch(() => {})
+          .finally(() => setPending(false));
+      };
+
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: `isl-updateButton is-${phase}${clickable ? ' is-clickable' : ''}${pending ? ' is-pending' : ''}`,
+          'data-phase': phase,
+          'data-clickable': clickable ? 'true' : 'false',
+          title: detail,
+          'aria-label': label,
+          'aria-disabled': clickable ? undefined : 'true',
+          'aria-busy': busy ? 'true' : undefined,
+          onClick: open,
+        },
+        h(UpdateGlyph, { phase }),
+        phase === 'error' ? h('span', { className: 'isl-updateErrorDot', 'aria-hidden': true }) : null,
+      );
+    }
+
+    const UPDATE_SHOWCASE_PHASES = ['available', 'downloading', 'verifying', 'installing', 'ready', 'error'];
+    const UPDATE_STATE_LABELS = {
+      available: 'updateStateAvailable',
+      downloading: 'updateStateDownloading',
+      verifying: 'updateStateVerifying',
+      installing: 'updateStateInstalling',
+      ready: 'updateStateReady',
+      error: 'updateStateError',
+    };
+
+    /** Static, non-interactive copies of the rail button for the settings page. */
+    function IslandsUpdateShowcase({ copy }) {
+      return h(
+        'div',
+        { className: 'isl-updateShowcase' },
+        h(
+          'div',
+          { className: 'isl-updateShowcaseHead' },
+          h('div', { className: 'isl-updateShowcaseTitle' }, copy.updateShowcaseTitle),
+          h('div', { className: 'isl-updateShowcaseDesc' }, copy.updateShowcaseDesc),
+        ),
+        h(
+          'div',
+          { className: 'isl-updateShowcaseGrid' },
+          UPDATE_SHOWCASE_PHASES.map((phase) => {
+            const label = copy[UPDATE_STATE_LABELS[phase]] ?? phase;
+            return h(
+              'div',
+              { className: 'isl-updateShowcaseItem', key: phase },
+              h(
+                'div',
+                { className: 'isl-updateShowcaseStage' },
+                h(
+                  'span',
+                  {
+                    className: `isl-updateButton is-preview is-${phase}`,
+                    'data-phase': phase,
+                    title: label,
+                    'aria-hidden': 'true',
+                  },
+                  h(UpdateGlyph, { phase }),
+                  phase === 'error' ? h('span', { className: 'isl-updateErrorDot' }) : null,
+                ),
+              ),
+              h('div', { className: 'isl-updateShowcaseLabel' }, label),
+              h('div', { className: 'isl-updateShowcasePhase' }, phase),
+            );
+          }),
+        ),
+      );
+    }
+
+    const EMPTY_MENU_STATE = Object.freeze({ current: null, groups: [], status: 'idle', retainedEffort: undefined, error: null });
+
+    function modelIn(groups, selection) {
+      for (const group of groups) {
+        if (group.id !== selection.provider) continue;
+        const model = group.models.find((entry) => entry.id === selection.model);
+        if (model !== undefined) return model;
+      }
+      return undefined;
+    }
+
+    /**
+     * Composer model + reasoning picker. Replaces the shipped two-level menu:
+     * the trigger is a chip, the menu opens straight onto the model list, and
+     * reasoning effort lives on a stepped slider.
+     */
+    function ModelPicker({ sessionId, locked }) {
+      const active = useLocale() ?? 'en';
+      const copy = String(active).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      const directory = React.useMemo(() => {
+        try {
+          return modelDirectories !== undefined && sessionId !== undefined
+            ? modelDirectories.directoryFor(sessionId)
+            : null;
+        } catch {
+          return null;
+        }
+      }, [sessionId]);
+      const subscribe = React.useCallback(
+        (listener) => (directory === null ? () => {} : directory.store.subscribe(listener)),
+        [directory],
+      );
+      const getSnapshot = React.useCallback(
+        () => (directory === null ? EMPTY_MENU_STATE : directory.store.getSnapshot()),
+        [directory],
+      );
+      const state = React.useSyncExternalStore(subscribe, getSnapshot);
+      const [open, setOpen] = React.useState(false);
+      const [position, setPosition] = React.useState(null);
+      const [pane, setPane] = React.useState('effort');
+      const [draft, setDraft] = React.useState(null);
+      const [busy, setBusy] = React.useState(false);
+      const [error, setError] = React.useState('');
+      const rootRef = React.useRef(null);
+      const triggerRef = React.useRef(null);
+      const panelRef = React.useRef(null);
+
+      React.useEffect(() => {
+        if (directory !== null) directory.load().catch(() => {});
+      }, [directory]);
+
+      const current = state.current ?? null;
+      const groups = Array.isArray(state.groups) ? state.groups : [];
+      const reasoning = current !== null && directory !== null ? directory.catalog.reasoningFor(current) : undefined;
+      const efforts = Array.isArray(reasoning?.efforts) ? reasoning.efforts : [];
+      const effective = current?.reasoningEffort ?? reasoning?.defaultEffort;
+      const effortName = efforts.find((level) => level.id === effective)?.name ?? state.retainedEffort;
+      const modelName = current === null
+        ? state.status === 'loading' ? copy.loading : copy.pick
+        : modelIn(groups, current)?.name ?? current.model;
+
+      const close = () => {
+        setOpen(false);
+        setError('');
+        setDraft(null);
+      };
+
+      const openMenu = () => {
+        if (locked || directory === null) return;
+        const rect = triggerRef.current?.getBoundingClientRect();
+        if (rect === undefined) return;
+        setPosition({
+          bottom: Math.max(8, window.innerHeight - rect.top + 8),
+          right: Math.max(8, window.innerWidth - rect.right),
+          width: Math.min(300, window.innerWidth - 24),
+        });
+        setPane('effort');
+        setDraft(null);
+        setError('');
+        setOpen(true);
+        directory.load().catch(() => {});
+      };
+
+      React.useEffect(() => {
+        const onOpen = () => openMenu();
+        window.addEventListener('islands:model-open', onOpen);
+        return () => window.removeEventListener('islands:model-open', onOpen);
+      }, [openMenu]);
+
+      React.useEffect(() => {
+        if (!open) return;
+        const onDown = (event) => {
+          if (rootRef.current?.contains(event.target) === true) return;
+          if (panelRef.current?.contains(event.target) === true) return;
+          close();
+        };
+        const onKey = (event) => {
+          if (event.key !== 'Escape') return;
+          event.stopPropagation();
+          close();
+        };
+        document.addEventListener('mousedown', onDown, true);
+        document.addEventListener('keydown', onKey, true);
+        return () => {
+          document.removeEventListener('mousedown', onDown, true);
+          document.removeEventListener('keydown', onKey, true);
+        };
+      }, [open]);
+
+      const choose = (selection, stayOpen = false) => {
+        if (directory === null || busy) return;
+        setBusy(true);
+        setError('');
+        directory
+          .select(selection)
+          .then((result) => {
+            setBusy(false);
+            if (result.ok) {
+              if (stayOpen) {
+                setPane('effort');
+                setDraft(null);
+              } else {
+                close();
+              }
+            } else {
+              setError(result.error?.message ?? copy.failed);
+            }
+          })
+          .catch((problem) => {
+            setBusy(false);
+            setError(String(problem?.message ?? problem));
+          });
+      };
+
+      const chooseEffort = (effortId) => {
+        if (directory === null || current === null || busy) return;
+        setDraft(effortId);
+        setBusy(true);
+        setError('');
+        directory
+          .select({ provider: current.provider, model: current.model, reasoningEffort: effortId })
+          .then((result) => {
+            setBusy(false);
+            if (!result.ok) setError(result.error?.message ?? copy.failed);
+          })
+          .catch((problem) => {
+            setBusy(false);
+            setError(String(problem?.message ?? problem));
+          });
+      };
+
+      const sliderId = draft ?? effective;
+      const sliderIndex = Math.max(0, efforts.findIndex((level) => level.id === sliderId));
+      const percent = efforts.length > 1 ? Math.round((sliderIndex / (efforts.length - 1)) * 100) : 0;
+
+      const trigger = h(
+        'button',
+        {
+          ref: triggerRef,
+          type: 'button',
+          className: 'isl-modelTrigger',
+          'aria-haspopup': 'menu',
+          'aria-expanded': open,
+          'aria-label': modelName,
+          title: withShortcut(
+            effortName === undefined ? modelName : `${modelName} · ${effortName}`,
+            'islands.model.open',
+            /Mac/i.test(navigator.platform ?? '') ? '⌘⇧M' : 'Ctrl+Shift+M',
+          ),
+          disabled: locked || directory === null,
+          onClick: () => (open ? close() : openMenu()),
+        },
+        h('span', { className: 'isl-modelIcon' }, h(ModelGlyph)),
+        h('span', { className: 'isl-modelName' }, modelName),
+        effortName === undefined ? null : h('span', { className: 'isl-modelEffort' }, effortName),
+        h('span', { className: 'isl-modelChevron' + (open ? ' is-open' : '') }, h(ChevronGlyph)),
+      );
+
+      const modelPane = h(
+        React.Fragment,
+        null,
+        h(
+          'div',
+          { className: 'isl-modelPaneHead' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'isl-modelBack',
+              title: copy.back,
+              'aria-label': copy.back,
+              onClick: () => setPane('effort'),
+            },
+            h('span', { className: 'isl-modelBackIcon' }, h(ChevronGlyph)),
+          ),
+          h('span', { className: 'isl-modelMenuTitle' }, copy.models),
+        ),
+        h(
+          'div',
+          { className: 'isl-modelGroups' },
+          groups.length === 0
+            ? h('div', { className: 'isl-modelEmpty' }, state.status === 'loading' ? copy.loading : copy.empty)
+            : groups.map((group) =>
+                h(
+                  'div',
+                  { className: 'isl-modelGroup', key: group.id },
+                  h('div', { className: 'isl-modelGroupName' }, group.name),
+                  group.models.map((model) => {
+                    const selected = current !== null && current.provider === group.id && current.model === model.id;
+                    return h(
+                      'button',
+                      {
+                        type: 'button',
+                        role: 'menuitemradio',
+                        'aria-checked': selected,
+                        className: 'isl-modelOption' + (selected ? ' is-selected' : ''),
+                        key: model.id,
+                        onClick: () => choose({ provider: group.id, model: model.id }, true),
+                      },
+                      h('span', { className: 'isl-modelOptionName' }, model.name),
+                      selected ? h('span', { className: 'isl-modelCheck' }, h(CheckGlyph)) : null,
+                    );
+                  }),
+                ),
+              ),
+        ),
+      );
+
+      const ratio = efforts.length > 1 ? sliderIndex / (efforts.length - 1) : 0;
+
+      const effortPane = h(
+        React.Fragment,
+        null,
+        h(
+          'div',
+          { className: 'isl-effortPopup' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'isl-effortReset',
+              title: copy.reset,
+              'aria-label': copy.reset,
+              disabled: reasoning?.defaultEffort === undefined,
+              onClick: () => chooseEffort(reasoning?.defaultEffort),
+            },
+            h(ResetGlyph),
+          ),
+          h('div', { className: 'isl-effortName' }, effortName ?? ''),
+          h(
+            'button',
+            { type: 'button', className: 'isl-effortModel', onClick: () => setPane('model'), title: copy.models },
+            h('span', { className: 'isl-effortModelName' }, modelName),
+            h('span', { className: 'isl-effortModelChevron' }, h(ChevronGlyph)),
+          ),
+          efforts.length > 1
+            ? h(
+                'div',
+                { className: 'isl-effortSliderWrap' },
+                h('input', {
+                  type: 'range',
+                  className: 'isl-effortSlider',
+                  min: 0,
+                  max: Math.max(0, efforts.length - 1),
+                  step: 1,
+                  value: sliderIndex,
+                  'aria-label': copy.effort,
+                  style: { '--isl-ratio': String(ratio) },
+                  onChange: (event) => setDraft(efforts[Number(event.target.value)]?.id),
+                  onPointerUp: () => {
+                    if (draft !== null && draft !== effective) chooseEffort(draft);
+                  },
+                  onKeyUp: () => {
+                    if (draft !== null && draft !== effective) chooseEffort(draft);
+                  },
+                }),
+                h(
+                  'div',
+                  { className: 'isl-effortDots', 'aria-hidden': true },
+                  efforts.map((level, index) =>
+                    h('span', {
+                      key: level.id,
+                      className: 'isl-effortDot' + (index <= sliderIndex ? ' is-filled' : ''),
+                    }),
+                  ),
+                ),
+              )
+            : h('div', { className: 'isl-modelEmpty' }, copy.noEffort),
+        ),
+      );
+
+      const panel = open && position !== null
+        ? ReactDOM.createPortal(
+            h(
+              'div',
+              {
+                ref: panelRef,
+                className: 'isl-modelMenu',
+                role: 'menu',
+                style: { right: position.right, bottom: position.bottom, width: position.width },
+              },
+              pane === 'model' ? modelPane : effortPane,
+              error === '' ? null : h('div', { className: 'isl-modelError' }, error),
+            ),
+            document.body,
+          )
+        : null;
+
+      return h('div', { className: 'isl-model', ref: rootRef }, trigger, panel);
+    }
+
+    /** Live open/closed state of the native right sidebar, read from its attribute. */
+    function useRightPanelOpen() {
+      const [open, setOpen] = React.useState(false);
+      React.useEffect(() => {
+        const read = () => setOpen(document.querySelector('.Dv5QdW_panel[data-sidebar-right-open]') !== null);
+        read();
+        const observer = new MutationObserver(read);
+        // The pane can mount already open (restored layout), in which case no
+        // attribute mutation for its open state is ever observed. Watch for
+        // insertion too, not only later attribute flips.
+        observer.observe(document.getElementById('root') ?? document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ['data-sidebar-right-open'],
+        });
+        return () => observer.disconnect();
+      }, []);
+      return open;
+    }
+
+    function rightPanelOpenNow() {
+      return document.querySelector('.Dv5QdW_panel[data-sidebar-right-open]') !== null;
+    }
+
+    /**
+     * The shipped control is a button that the skin hides and DSH can disable
+     * (it is `disabled` whenever the layout already counts the pane as open),
+     * so clicking it is not a dependable contract. Ask the layout service
+     * first and only fall back to the control when the service ignored us.
+     */
+    function toggleRightPanel() {
+      const wantOpen = !rightPanelOpenNow();
+      try {
+        if (wantOpen) layoutService?.openRightbar?.(true, false);
+        else layoutService?.closeRightbar?.();
+      } catch {
+        /* fall through to the shipped control */
+      }
+      window.setTimeout(() => {
+        if (rightPanelOpenNow() === wantOpen) {
+          // The pane can be mounted with its width preference already set;
+          // republish so a collapsed workspace gets the right grid track.
+          if (wantOpen) publishRightbarWidth?.();
+          return;
+        }
+        const selector = wantOpen ? '[data-sidebar-right-expand]' : '[data-sidebar-right-toggle]';
+        const target = document.querySelector(selector);
+        if (target instanceof HTMLElement) target.click();
+      }, 120);
+    }
+
+    /**
+     * Always-visible right sidebar toggle; drives the native open/collapse actions.
+     *
+     * Rendered into `document.body`, not into the top bar: the frame's overlay
+     * layer is z-index 20, while the workbench panel host (dsh-better-sidebar)
+     * is a full-viewport fixed layer at z-index 25 and re-enables pointer
+     * events on its dock strip — the same top-right band the native expand
+     * button used to occupy. Anything painted inside the frame therefore sits
+     * UNDER that strip: the toggle still renders (the strip is transparent
+     * there) but never sees hover or clicks. A body-level portal escapes both
+     * stacking contexts; the stylesheet keeps it above the workbench
+     * (25/40/60/90) and below the app's menus and dialogs (1000+).
+     */
+    function RightPanelToggle() {
+      const open = useRightPanelOpen();
+      const active = useLocale() ?? 'en';
+      const copy = String(active).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      const label = open ? copy.closeRight : copy.openRight;
+      return ReactDOM.createPortal(
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'isl-rightToggle',
+            'aria-label': withShortcut(label, 'sidebar.right.toggle'),
+            title: withShortcut(label, 'sidebar.right.toggle'),
+            'aria-pressed': open,
+            onClick: toggleRightPanel,
+          },
+          h(RightPanelGlyph),
+        ),
+        document.body,
+      );
+    }
+
+    /**
+     * Collapse the workspace island without asking DSH to swap the sidebar for
+     * its rail-only render tree. The expanded rail stays mounted, the workspace
+     * column is hidden, and the frame track shrinks to the rail width.
+     */
+    function toggleWorkspace() {
+      const frame = document.querySelector('.PIRFFq_frame');
+      if (frame !== null && frame.hasAttribute('data-sidebar-drawer')) {
+        // Narrow layout: the workspace is a drawer, owned by DSH's native
+        // narrow expansion state. The rail's home button and the shortcut both
+        // open/close it here.
+        layoutService?.toggleSidebar();
+        return;
+      }
+      if (frame !== null && frame.hasAttribute('data-sidebar-collapsed')) {
+        layoutService?.toggleSidebar();
+        document.body.removeAttribute(WORKSPACE_ATTR);
+        return;
+      }
+      const collapsed = document.body.hasAttribute(WORKSPACE_ATTR);
+      if (collapsed) document.body.removeAttribute(WORKSPACE_ATTR);
+      else document.body.setAttribute(WORKSPACE_ATTR, '');
+      if (frame !== null) {
+        frame.setAttribute('data-islands-animating', '');
+        window.clearTimeout(animateTimer);
+        animateTimer = window.setTimeout(() => {
+          frame.removeAttribute('data-islands-animating');
+        }, 360);
+      }
+    }
+
+    /** Window chrome strip above the islands; owns the workspace toggle. */
+    function IslandsTopBar() {
+      const active = useLocale() ?? 'en';
+      const copy = String(active).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      return h(
+        'header',
+        { className: 'isl-topbar' },
+        h('div', { className: 'isl-topbarLead', 'aria-hidden': true }),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'isl-topbarToggle',
+            'aria-label': withShortcut(copy.topbarToggle, 'sidebar.left.toggle'),
+            title: withShortcut(copy.topbarToggle, 'sidebar.left.toggle'),
+            onClick: () => toggleWorkspace(),
+          },
+          h(PanelGlyph),
+        ),
+        h('div', { className: 'isl-topbarDrag', 'aria-hidden': true }),
+        h(RightPanelToggle),
+      );
+    }
+
+    function IslandsLogo({ size = 30 }) {
+      return h(
+        'svg',
+        { width: size, height: size, viewBox: '0 0 64 64', fill: 'none', 'aria-hidden': true },
+        h('rect', { width: 64, height: 64, rx: 16, fill: '#0f1115' }),
+        h('rect', { x: 10, y: 10, width: 44, height: 44, rx: 11, fill: '#22252b' }),
+        h('rect', { x: 16, y: 16, width: 14, height: 32, rx: 6, fill: '#4176e6' }),
+        h('rect', { x: 34, y: 16, width: 14, height: 14, rx: 6, fill: '#f5f7fa' }),
+        h('rect', { x: 34, y: 34, width: 14, height: 14, rx: 6, fill: '#7aaaff' }),
+      );
+    }
+
+    /** One pinned row: hover reveals unpin + locate, and a clipped title marquees. */
+    function PinnedRow({ session, copy, pinIcon }) {
+      const titleRef = React.useRef(null);
+      const frameRef = React.useRef(0);
+      const revealingRef = React.useRef(false);
+      const id = session.id ?? session.sessionId;
+      const title = String(session.title ?? '').trim() || copy.untitled;
+
+      React.useEffect(() => () => cancelAnimationFrame(frameRef.current), []);
+
+      const place = (left, range) => {
+        const element = titleRef.current;
+        if (element === null) return;
+        if (typeof element.scrollTo === 'function') element.scrollTo({ left, behavior: 'instant' });
+        else element.scrollLeft = left;
+        if (left > 0) element.dataset.scrolled = '';
+        else delete element.dataset.scrolled;
+        if (left < range) element.dataset.clipped = '';
+        else delete element.dataset.clipped;
+      };
+
+      const enter = (event) => {
+        if (event?.pointerType === 'touch') return;
+        if (titleRef.current === null || revealingRef.current) return;
+        revealingRef.current = true;
+        cancelAnimationFrame(frameRef.current);
+        // Measure after hover has laid out the two action buttons; otherwise
+        // the title still has its resting width and the marquee never starts.
+        frameRef.current = requestAnimationFrame(() => {
+          const element = titleRef.current;
+          if (element === null) return;
+          const range = element.scrollWidth - element.clientWidth;
+          if (range <= 8) return;
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            place(range, range);
+            return;
+          }
+          let previous;
+          let position = 0;
+          const step = (now) => {
+            position += previous === undefined ? 0 : (now - previous) * 0.03;
+            previous = now;
+            place(Math.min(position, range), range);
+            if (position < range) frameRef.current = requestAnimationFrame(step);
+          };
+          frameRef.current = requestAnimationFrame(step);
+        });
+      };
+
+      const leave = () => {
+        revealingRef.current = false;
+        cancelAnimationFrame(frameRef.current);
+        place(0, 0);
+      };
+
+      return h(
+        'div',
+        {
+          className: 'isl-pinnedRow',
+          role: 'button',
+          tabIndex: 0,
+          title,
+          onClick: () => uiWorkspaceService?.openSession(id),
+          onKeyDown: (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            uiWorkspaceService?.openSession(id);
+          },
+          onPointerEnter: enter,
+          onPointerLeave: leave,
+        },
+        h('span', { className: 'isl-pinnedName', ref: titleRef }, title),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'isl-pinnedPinBtn',
+            title: copy.unpin,
+            'aria-label': copy.unpin,
+            onClick: (event) => {
+              event.stopPropagation();
+              workspacesService?.unpinSession?.(id).catch?.(() => {});
+            },
+          },
+          pinIcon,
+        ),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'isl-pinnedLocate',
+            title: copy.locate,
+            'aria-label': copy.locate,
+            onClick: (event) => {
+              event.stopPropagation();
+              revealPinnedSession(id, title);
+            },
+          },
+          h(LocateGlyph),
+        ),
+      );
+    }
+
+    /**
+     * Aggregate pinned sessions above the workspace groups. The block lives
+     * in a host div inserted before the DSH workspace list, so it participates
+     * in the sidebar flow while rendering as React through a portal.
+     */
+    function IslandsPinnedSection({ useWorkspaces, useSessions }) {
+      const pinnedIds = useWorkspaces((state) => state.pinnedSessionIds ?? []);
+      const sessions = useSessions((state) => state.byId ?? {});
+      const [host, setHost] = React.useState(null);
+      const [collapsed, setCollapsed] = React.useState(() => {
+        try {
+          return window.localStorage.getItem('dsh-wechat-skin:islands:pinned-collapsed') === '1';
+        } catch {
+          return false;
+        }
+      });
+      const lang = useLocale() ?? 'en';
+      const copy = String(lang).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+
+      React.useEffect(() => {
+        let current = null;
+        const attach = () => {
+          const header = document.querySelector('.Kjh-qa_sectionHeader');
+          const tree = document.querySelector('.Kjh-qa_treeBody') ?? document.querySelector('.Kjh-qa_list');
+          const target = header?.parentElement ?? tree?.parentElement;
+          if (target === null || target === undefined) return;
+          let anchor = target.querySelector(':scope > .isl-pinnedHost');
+          if (anchor === null || !anchor.isConnected) {
+            anchor = document.createElement('div');
+            anchor.className = 'isl-pinnedHost';
+          }
+          // Sit between the New Session row and the Workspace section header.
+          if (header !== null && header !== undefined) {
+            if (anchor.nextElementSibling !== header) target.insertBefore(anchor, header);
+          } else if (tree !== null && tree !== undefined) {
+            if (anchor.nextElementSibling !== tree) target.insertBefore(anchor, tree);
+          } else {
+            target.appendChild(anchor);
+          }
+          if (current !== anchor) {
+            current = anchor;
+            setHost(anchor);
+          }
+        };
+        attach();
+        const timer = window.setInterval(attach, 800);
+        return () => {
+          window.clearInterval(timer);
+          current?.remove();
+        };
+      }, []);
+
+      const rows = pinnedIds.map((id) => sessions[id]).filter((session) => session !== undefined);
+      const pinIcon = defaultPinIcon();
+      if (host === null || rows.length === 0) return null;
+
+      const toggle = () => {
+        const next = !collapsed;
+        setCollapsed(next);
+        try {
+          window.localStorage.setItem('dsh-wechat-skin:islands:pinned-collapsed', next ? '1' : '0');
+        } catch {
+          /* ignore */
+        }
+      };
+
+      return ReactDOM.createPortal(
+        h(
+          'div',
+          { className: 'isl-pinned', 'data-open': collapsed ? undefined : '' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'isl-pinnedHead',
+              'aria-expanded': !collapsed,
+              title: copy.pinned,
+              onClick: toggle,
+            },
+            h('span', { className: 'isl-pinnedChevron' }, h(ChevronGlyph)),
+            h('span', { className: 'isl-pinnedTitle' }, copy.pinned),
+            h('span', { className: 'isl-pinnedCount' }, String(rows.length)),
+          ),
+          collapsed
+            ? null
+            : h(
+                'div',
+                { className: 'isl-pinnedList' },
+                rows.map((session) =>
+                  h(PinnedRow, {
+                    key: session.id ?? session.sessionId,
+                    session,
+                    copy,
+                    pinIcon,
+                  }),
+                ),
+              ),
+        ),
+        host,
+      );
+    }
+
+    function WarningGlyph() {
+      return h(
+        'svg',
+        { width: 16, height: 16, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('path', { d: 'M8 2.4 14.2 13H1.8L8 2.4Z', stroke: 'currentColor', strokeWidth: 1.4, strokeLinejoin: 'round' }),
+        h('path', { d: 'M8 6.4v3', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }),
+        h('circle', { cx: 8, cy: 11.3, r: 0.9, fill: 'currentColor' }),
+      );
+    }
+
+    /** Amber bar at the top of the Islands page explaining the auto-disable. */
+    function CompatibilityBanner({ copy, compat, onForce }) {
+      if (compat.status !== 'missing') return null;
+      return h(
+        'div',
+        { className: 'isl-compatBanner', role: 'alert' },
+        h('span', { className: 'isl-compatBannerIcon' }, h(WarningGlyph)),
+        h(
+          'div',
+          { className: 'isl-compatBannerText' },
+          h('div', { className: 'isl-compatBannerTitle' }, copy.compatBannerTitle),
+          h('div', { className: 'isl-compatBannerBody' }, copy.compatBannerBody),
+          h(
+            'div',
+            { className: 'isl-compatBannerList' },
+            h('span', null, `${copy.compatMissing}:`),
+            compat.missing.map((selector) => h('code', { key: selector, className: 'isl-compatAnchor' }, selector)),
+          ),
+          h('div', { className: 'isl-compatBannerHint' }, copy.compatFix),
+        ),
+        h('button', { type: 'button', className: 'isl-compatBannerAction', onClick: onForce }, copy.compatForce),
+      );
+    }
+
+    /**
+     * Turn the skin on only when the build still matches the stylesheet.
+     *
+     * The plugin's own chrome is plain React and keeps rendering no matter what
+     * DSH does, while every layout rule is keyed to the shipped class names. A
+     * renamed anchor therefore yields a half-skinned, overlapping UI instead of
+     * a clean fallback, so a mismatched build stays on the untouched default.
+     */
+    function startCompatibilityGate() {
+      let frameHandle = null;
+      let settled = false;
+      let retries = 0;
+      let contentSeenAt = null;
+      const startedAt = Date.now();
+
+      const stop = () => {
+        if (frameHandle !== null) cancelAnimationFrame(frameHandle);
+        frameHandle = null;
+      };
+
+      const fail = (missing) => {
+        if (settled) return;
+        settled = true;
+        stop();
+        setCompat({ status: 'missing', missing, forced: false, version: shellVersion, dialect: shellDialect });
+        console.warn('[islands-ui] interface anchors missing; the skin stayed off:', {
+          version: shellVersion,
+          dialect: shellDialect,
+          missing,
+        });
+        // Someone who already switched the skin off does not need a popup; the
+        // settings page still carries the explanation.
+        if (readStored()) showCompatibilityToast();
+      };
+
+      const pass = () => {
+        if (settled) return;
+        settled = true;
+        stop();
+        setCompat({ status: 'ok', missing: [], forced: false, version: shellVersion, dialect: shellDialect });
+        activate();
+      };
+
+      const settle = () => {
+        frameHandle = null;
+        if (settled) return;
+        // The version map picks the stylesheet, but the DOM is the authority on
+        // what is actually rendered: if they disagree, trust the structure and
+        // swap the variant before the skin turns on.
+        const structure = detectShellDialect();
+        if (structure !== null && structure !== 'unknown' && structure !== shellDialect) {
+          console.warn('[islands-ui] shell structure differs from the reported version; selecting the matching stylesheet', {
+            version: shellVersion,
+            expected: shellDialect,
+            actual: structure,
+          });
+          applyStylesheet(structure);
+        }
+        const missing = missingAnchors();
+        if (missing.length === 0) {
+          pass();
+          return;
+        }
+        // Siblings can mount a frame after the frame element itself.
+        retries += 1;
+        if (retries < 4) {
+          frameHandle = requestAnimationFrame(settle);
+          return;
+        }
+        fail(missing);
+      };
+
+      const watch = () => {
+        frameHandle = null;
+        if (settled) return;
+        if (document.querySelector(REQUIRED_ANCHORS[0]) !== null) {
+          settle();
+          return;
+        }
+        // Anything rendered into the app root means the shell mounted; if the
+        // frame anchor is still absent after a grace period it was renamed,
+        // and waiting for the hard timeout would only delay the notice.
+        const root = document.getElementById('root') ?? document.body;
+        if (contentSeenAt === null && root !== null && root.childElementCount > 0) {
+          contentSeenAt = Date.now();
+        }
+        if (contentSeenAt !== null && Date.now() - contentSeenAt > COMPAT_CONTENT_GRACE_MS) {
+          fail(missingAnchors());
+          return;
+        }
+        if (Date.now() - startedAt > COMPAT_TIMEOUT_MS) {
+          fail(missingAnchors());
+          return;
+        }
+        frameHandle = requestAnimationFrame(watch);
+      };
+
+      frameHandle = requestAnimationFrame(watch);
+      return stop;
+    }
+
+    function activate() {
+      if (activated || skinRegistrar === null) return;
+      activated = true;
+      syncAttribute();
+      applyAccent(readAccent());
+      try {
+        skinRegistrar();
+      } catch (error) {
+        console.warn('[islands-ui] failed to mount the skin', error);
+        document.body?.removeAttribute(ATTRIBUTE);
+      }
+    }
+
+    function forceEnable() {
+      try {
+        window.sessionStorage.setItem(FORCE_KEY, '1');
+      } catch {
+        /* private mode: the choice still applies for this page. */
+      }
+      const structure = detectShellDialect();
+      if (structure !== null && structure !== 'unknown') applyStylesheet(structure);
+      setCompat({ status: 'ok', missing: [], forced: true, version: shellVersion, dialect: shellDialect });
+      activate();
+    }
+
+    /**
+     * Plain-DOM toast: it must work while the shell is in an unknown state, so
+     * it is appended to `body`, styled by the always-injected stylesheet and
+     * removed without React.
+     */
+    function showCompatibilityToast() {
+      if (document.body === null) return;
+      const copy = currentCopy();
+      const host = document.createElement('div');
+      host.className = 'isl-compatToast';
+      host.setAttribute('role', 'status');
+      host.setAttribute('aria-live', 'polite');
+      host.tabIndex = 0;
+      host.title = copy.compatView;
+
+      const body = document.createElement('div');
+      body.className = 'isl-compatToastBody';
+      const title = document.createElement('div');
+      title.className = 'isl-compatToastTitle';
+      title.textContent = copy.compatTitle;
+      const text = document.createElement('div');
+      text.className = 'isl-compatToastText';
+      text.textContent = copy.compatBody;
+      const action = document.createElement('div');
+      action.className = 'isl-compatToastAction';
+      action.textContent = copy.compatView;
+      body.append(title, text, action);
+
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'isl-compatToastClose';
+      close.setAttribute('aria-label', copy.compatDismiss);
+      close.textContent = '\u00d7';
+
+      let timer = null;
+      let closed = false;
+      const dismiss = () => {
+        if (closed) return;
+        closed = true;
+        if (timer !== null) window.clearTimeout(timer);
+        host.classList.remove('is-visible');
+        window.setTimeout(() => host.remove(), 200);
+      };
+
+      const openSection = () => {
+        dismiss();
+        openSettings({ section: 'Islands UI' });
+      };
+
+      timer = window.setTimeout(dismiss, 5000);
+      close.addEventListener('click', (event) => {
+        event.stopPropagation();
+        dismiss();
+      });
+      host.addEventListener('click', openSection);
+      host.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openSection();
+      });
+
+      host.append(body, close);
+      document.body.append(host);
+      requestAnimationFrame(() => host.classList.add('is-visible'));
+    }
+
+    /** Islands settings page: skin switch + accent color. */
+    function IslandsSettingsPage() {
+      const on = useEnabled();
+      const compat = useCompat();
+      const lang = useLocale() ?? 'en';
+      const copy = String(lang).toLowerCase().startsWith('zh') ? COPY.zh : COPY.en;
+      const blocked = compat.status === 'missing';
+      const [accent, setAccent] = React.useState(readAccent);
+      const chooseAccent = (color) => {
+        setAccent(color);
+        applyAccent(color);
+        storeAccent(color);
+      };
+      return h(
+        'div',
+        { className: 'isl-settingsPage' },
+        h(
+          'div',
+          { className: 'isl-settingsPageHead' },
+          h('span', { className: 'isl-settingsPageLogo' }, h(IslandsLogo, { size: 30 })),
+          h(
+            'div',
+            { className: 'isl-settingsPageHeadText' },
+            h('div', { className: 'isl-settingsPageTitle' }, copy.title),
+            h('div', { className: 'isl-settingsPageDesc' }, copy.description),
+          ),
+        ),
+        h(
+          'div',
+          { className: 'isl-settingsMeta' },
+          h('span', null, copy.compatDetected),
+          h('code', { className: 'isl-settingsMetaValue' }, shellVersion ?? 'unknown'),
+          h('span', { className: 'isl-settingsMetaSeparator', 'aria-hidden': true }, '·'),
+          h('span', null, copy.compatStructure),
+          h(
+            'code',
+            { className: 'isl-settingsMetaValue' },
+            shellDialect === 'scroll' ? copy.compatStructureScroll : copy.compatStructureFlat,
+          ),
+        ),
+        h(CompatibilityBanner, { copy, compat, onForce: forceEnable }),
+        compat.forced ? h('div', { className: 'isl-compatForced' }, copy.compatForced) : null,
+        h(
+          'div',
+          { className: 'isl-prefRow' },
+          h(
+            'div',
+            { className: 'isl-prefText' },
+            h('div', { className: 'isl-prefTitle' }, copy.enable),
+            h('div', { className: 'isl-prefDesc' }, copy.enableDesc),
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              role: 'switch',
+              className: 'isl-switch',
+              'aria-checked': on,
+              'aria-label': copy.enable,
+              title: blocked ? copy.compatBannerTitle : copy.enable,
+              disabled: blocked,
+              onClick: () => setEnabled(!on),
+            },
+            h('span', { className: 'isl-switchThumb' }),
+          ),
+        ),
+        h(
+          'div',
+          { className: 'isl-prefRow' },
+          h(
+            'div',
+            { className: 'isl-prefText' },
+            h('div', { className: 'isl-prefTitle' }, copy.accent),
+            h('div', { className: 'isl-prefDesc' }, copy.accentDesc),
+          ),
+          h(
+            'div',
+            { className: 'isl-accentPicker' },
+            h('button', {
+              type: 'button',
+              className: 'isl-accentSwatch is-default' + (accent === null ? ' is-selected' : ''),
+              title: copy.accentDefault,
+              'aria-label': copy.accentDefault,
+              'aria-pressed': accent === null,
+              onClick: () => chooseAccent(null),
+            }),
+            ACCENT_PRESETS.map((color) =>
+              h('button', {
+                type: 'button',
+                key: color,
+                className:
+                  'isl-accentSwatch' + (accent !== null && accent.toLowerCase() === color.toLowerCase() ? ' is-selected' : ''),
+                style: { background: color },
+                title: color,
+                'aria-label': color,
+                'aria-pressed': accent !== null && accent.toLowerCase() === color.toLowerCase(),
+                onClick: () => chooseAccent(color),
+              }),
+            ),
+            h(
+              'label',
+              { className: 'isl-accentCustom', title: copy.accentCustom },
+              h('input', {
+                type: 'color',
+                value: accent ?? DEFAULT_ACCENT,
+                'aria-label': copy.accentCustom,
+                onChange: (event) => chooseAccent(event.target.value),
+              }),
+            ),
+          ),
+        ),
+        // Preview hidden on request. The component and its styles stay in place;
+        // restore the next line to show the state gallery again.
+        // h(IslandsUpdateShowcase, { copy }),
+      );
+    }
+
+    function IslandsSectionIcon({ size = 16 }) {
+      return h(
+        'svg',
+        { width: size, height: size, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+        h('rect', { x: 1.5, y: 1.5, width: 5.5, height: 5.5, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.3 }),
+        h('rect', { x: 9, y: 1.5, width: 5.5, height: 5.5, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.3 }),
+        h('rect', { x: 1.5, y: 9, width: 5.5, height: 5.5, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.3 }),
+        h('rect', { x: 9, y: 9, width: 5.5, height: 5.5, rx: 1.6, stroke: 'currentColor', strokeWidth: 1.3 }),
+      );
+    }
+
+    return {
+      inject: ['slots', 'locale', 'layout'],
+      apply(ctx) {
+        ctx.inject(['uiWorkspace', 'workspaces'], (scope) => {
+          uiWorkspaceService = scope.uiWorkspace;
+          workspacesService = scope.workspaces;
+        });
+
+        pluginCtx = ctx;
+        localeService = ctx.locale;
+        layoutService = ctx.layout;
+        slotsService = ctx.slots;
+        applyAccent(readAccent());
+
+        // Pick the stylesheet before the first paint: the base sheet plus the
+        // variant of the release the client booted with. The compatibility gate
+        // verifies the mounted structure and can still swap it before the skin
+        // turns on.
+        shellVersion = readDshVersion();
+        shellDialect = dialectForVersion(shellVersion) ?? SHELL_FLAT;
+
+        ctx.effect(() => {
+          const tag = document.createElement('style');
+          tag.dataset.plugin = 'sone-wx-islands';
+          tag.dataset.pluginCss = 'sone-wx-islands/islands.css';
+          tag.textContent = stylesheetFor(shellDialect);
+          styleTag = tag;
+          document.head.appendChild(tag);
+          return () => {
+            styleTag = null;
+            tag.remove();
+            document.body?.removeAttribute(ATTRIBUTE);
+          };
+        }, 'dsh-wechat-skin:islands: stylesheet');
+
+        // Everything below turns the chrome on, so it runs only after the gate
+        // has confirmed this build still matches the stylesheet.
+        const registerSkinChrome = (ctx) => {
+          ctx.effect(() => {
+            const root = document.documentElement;
+            let panel = null;
+            let styleObserver = null;
+            let mountObserver = null;
+            let locateFrame = null;
+            let retryTimer = null;
+
+            // Publish the right pane's PREFERRED width, not the width the column
+            // currently has. The column is 0 while the pane is closed (and while
+            // the independent workspace collapse pins the right track), so a
+            // measurement-based value can never recover after the pane opens:
+            // the track would stay 0 and the panel clamp would keep it hidden.
+            // The panel itself always carries its resolved width in
+            // `--dsh-sidebar-width` (and its inline width), even while closed.
+            const publish = () => {
+              if (panel === null) return;
+              const value = (panel.style.getPropertyValue('--dsh-sidebar-width') || panel.style.width || '').trim();
+              if (value !== '') root.style.setProperty('--isl-rightbar-w', value);
+            };
+
+            const watch = (next) => {
+              if (next === panel) return;
+              styleObserver?.disconnect();
+              styleObserver = null;
+              panel = next;
+              if (panel === null) return;
+              styleObserver = new MutationObserver(publish);
+              styleObserver.observe(panel, { attributes: true, attributeFilter: ['style'] });
+              publish();
+            };
+
+            const locate = () => {
+              locateFrame = null;
+              const next = document.querySelector('.Dv5QdW_panel');
+              watch(next);
+              if (next === null) return;
+              mountObserver?.disconnect();
+              mountObserver = null;
+              if (retryTimer !== null) {
+                clearTimeout(retryTimer);
+                retryTimer = null;
+              }
+            };
+
+            const scheduleLocate = () => {
+              if (locateFrame !== null) return;
+              locateFrame = requestAnimationFrame(locate);
+            };
+
+            locate();
+            publishRightbarWidth = locate;
+            // The client applies before the shell mounts, so the first query can
+            // miss the right pane. Watch until it appears (bounded: a profile
+            // without the right pane must not keep a document-wide observer).
+            if (panel === null && document.body !== null) {
+              mountObserver = new MutationObserver(scheduleLocate);
+              mountObserver.observe(document.body, { childList: true, subtree: true });
+              retryTimer = setTimeout(() => {
+                mountObserver?.disconnect();
+                mountObserver = null;
+                retryTimer = null;
+              }, 10_000);
+            }
+
+            return () => {
+              if (locateFrame !== null) cancelAnimationFrame(locateFrame);
+              if (retryTimer !== null) clearTimeout(retryTimer);
+              mountObserver?.disconnect();
+              styleObserver?.disconnect();
+              if (publishRightbarWidth === locate) publishRightbarWidth = null;
+              root.style.removeProperty('--isl-rightbar-w');
+            };
+          }, 'dsh-wechat-skin:islands: rightbar width');
+
+          ctx.slots.inject('shell.overlay', () =>
+            ctx.slots.register({ name: 'shell.overlay', id: 'islands-topbar', order: -100 }, IslandsTopBar),
+          );
+
+          ctx.slots.inject('shell.overlay', () =>
+            ctx.slots.register({ name: 'shell.overlay', id: 'islands-rail', order: -90 }, IslandsRail),
+          );
+
+          ctx.slots.inject('shell.overlay', () =>
+            ctx.slots.register({ name: 'shell.overlay', id: 'islands-rail-settings', order: -89 }, IslandsRailSettings),
+          );
+
+          ctx.slots.inject('shell.overlay', () =>
+            ctx.slots.register({ name: 'shell.overlay', id: 'islands-update', order: -87 }, IslandsUpdateButton),
+          );
+
+          ctx.slots.inject('shell.overlay', () =>
+            ctx.slots.register({ name: 'shell.overlay', id: 'islands-pinned', order: -88 }, IslandsPinnedSection),
+          );
+
+          ctx.inject(['slots', 'modelDirectories'], (scope) => {
+            modelDirectories = scope.modelDirectories;
+            // Single slots render the lowest priority; a negative priority shadows
+            // the shipped selector without colliding with it.
+            scope.slots.inject('conversation.input.model', () =>
+              scope.slots.register({ name: 'conversation.input.model', priority: -1 }, ModelPicker),
+            );
+          });
+
+          // Take the workspace shortcut over at the shortcut service layer: fixed
+          // input listeners run before the catalog dispatch, so the DSH
+          // sidebar.left.toggle never swaps in its rail-only render tree.
+          ctx.inject(['shortcuts'], (scope) => {
+            shortcutsService = scope.shortcuts;
+
+            ctx.effect(
+              () => {
+                try {
+                  return scope.shortcuts.register({
+                    id: 'islands.model.open',
+                    label: () => 'Model picker',
+                    defaults: {
+                      'desktop:macos': { code: 'KeyM', modifiers: ['primary', 'shift'] },
+                      'desktop:windows': { code: 'KeyM', modifiers: ['primary', 'shift'] },
+                      'desktop:linux': { code: 'KeyM', modifiers: ['primary', 'shift'] },
+                    },
+                    regions: ['page', 'editable'],
+                    modals: [],
+                    resolve: () => ({
+                      status: 'handled',
+                      run: () => window.dispatchEvent(new CustomEvent('islands:model-open')),
+                    }),
+                  });
+                } catch (error) {
+                  console.warn('[islands-ui] model picker shortcut unavailable', error);
+                  return undefined;
+                }
+              },
+              'dsh-wechat-skin:islands: model picker shortcut',
+            );
+
+            if (typeof scope.shortcuts.observeFixedInput !== 'function') return;
+          const off = scope.shortcuts.observeFixedInput((input) => {
+              if (input.type !== 'keydown') return;
+              if (!document.body.hasAttribute(ATTRIBUTE)) return;
+              const gesture = input.gesture;
+              if (gesture.code !== 'KeyB' || gesture.repeat || gesture.composing) return;
+              if (!(gesture.meta || gesture.control) || gesture.alt || gesture.shift) return;
+              const modal = input.context?.modal;
+              if (modal !== null && modal !== undefined && modal !== 'sidebar') return;
+              // Desktop delivers the platform's primary chord through the native
+              // keyboard bridge, bypassing fixed input. Let that path collapse the
+              // DSH and let the frame observer below convert it; intercepting both
+              // would toggle twice. The secondary chord is handled here.
+              const runtime = scope.shortcuts.runtime;
+              const platform = scope.shortcuts.platform;
+              const nativeOwned =
+                runtime === 'desktop' &&
+                ((platform === 'macos' && gesture.meta && !gesture.control) ||
+                  (platform !== 'macos' && gesture.control && !gesture.meta));
+              if (nativeOwned) return;
+              input.consume();
+              toggleWorkspace();
+            });
+            scope.effect(() => off, 'dsh-wechat-skin:islands: workspace collapse shortcut');
+          });
+
+          // The native primary chord reaches DSH's own sidebar collapse before any
+          // fixed listener. Convert that collapse into our workspace collapse
+          // immediately (and restore the expanded sidebar render tree) so the
+          // old rail never stays on screen. Drawer mode is different: its open
+          // state is native, and the independent desktop collapse must never hide
+          // the drawer's workspace, so entering the drawer clears that attribute.
+          ctx.effect(() => {
+            let observer;
+            let timer;
+            const fix = () => {
+              const frame = document.querySelector('.PIRFFq_frame');
+              if (frame === null) return;
+              if (frame.hasAttribute('data-sidebar-drawer')) {
+                document.body.removeAttribute(WORKSPACE_ATTR);
+                return;
+              }
+              if (!frame.hasAttribute('data-sidebar-collapsed')) return;
+              const wasCollapsed = document.body.hasAttribute(WORKSPACE_ATTR);
+              if (wasCollapsed) document.body.removeAttribute(WORKSPACE_ATTR);
+              else document.body.setAttribute(WORKSPACE_ATTR, '');
+              layoutService?.toggleSidebar();
+            };
+            const attach = () => {
+              const frame = document.querySelector('.PIRFFq_frame');
+              if (frame === null) {
+                timer = window.setTimeout(attach, 200);
+                return;
+              }
+              fix();
+              observer = new MutationObserver(fix);
+              observer.observe(frame, {
+                attributes: true,
+                attributeFilter: ['data-sidebar-collapsed', 'data-sidebar-drawer'],
+              });
+            };
+            attach();
+            return () => {
+              window.clearTimeout(timer);
+              observer?.disconnect();
+            };
+          }, 'dsh-wechat-skin:islands: native collapse conversion');
+        };
+        skinRegistrar = () => registerSkinChrome(ctx);
+
+        ctx.slots.inject('settings.section', () =>
+          ctx.slots.register(
+            { name: 'settings.section', id: 'sone-wx-islands', order: 51, label: '浮岛布局' },
+            IslandsSettingsPage,
+          ),
+        );
+
+        ctx.slots.inject('settings.section.icon', () =>
+          ctx.slots.register({ name: 'settings.section.icon', id: 'sone-wx-islands' }, IslandsSectionIcon),
+        );
+
+        if (isForced()) {
+          const structure = detectShellDialect();
+          if (structure !== null && structure !== 'unknown') applyStylesheet(structure);
+          setCompat({ status: 'ok', missing: [], forced: true, version: shellVersion, dialect: shellDialect });
+          activate();
+          return;
+        }
+        ctx.effect(() => startCompatibilityGate(), 'dsh-wechat-skin:islands: compatibility gate');      },
+    };
+}
+	//#endregion
 
 
 	const BRAND = (function () {
@@ -5724,6 +11360,17 @@ let uninstallDiag = () => {};
 try { uninstallDiag = installDiagHook() || (() => {}); } catch {}
 const skin = applySkin(ctx);
 BRAND.applyBrand(ctx);
+let islandsDispose = null;
+try {
+const islands = createSoneIslandsLayer(require, {
+css: ISLANDS_CSS,
+cssVariants: ISLANDS_CSS_VARIANTS,
+readEnabled: () => readJson(ISLANDS_KEY, true) !== false,
+writeEnabled: (value) => writeJson(ISLANDS_KEY, value === true)
+});
+islands.apply(ctx);
+islandsDispose = () => { try { islands.setEnabled(false); } catch (e) {} };
+} catch (error) { try { console.warn("[sone-wx] islands layer failed to mount", error); } catch (e) {} }
 applyTableStabilizer(ctx);
 if (ctx.slots && typeof ctx.slots.inject === "function") ctx.effect(() => {
 const offSection = ctx.slots.inject("settings.section", () => ctx.slots.register({
@@ -5742,6 +11389,7 @@ id: "sone-wx"
 return () => {
 offSection();
 offIcon();
+try { if (islandsDispose) islandsDispose(); } catch {}
 try { uninstallDiag(); } catch {}
 };
 }, "sone-wx: settings section");

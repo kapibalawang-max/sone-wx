@@ -1,0 +1,382 @@
+/* ==========================================================================
+   Islands UI · 17 desktop update
+   One circular update entry above the settings gear. The skin owns the whole
+   surface: the shipped indicator lives in the 36px settings row and overflows
+   beside the account avatar, and it does not expose a phase attribute.
+
+   The three busy patterns follow the open-source Dot Matrix loaders
+   (dotmatrix.zzzzshawn.cloud): dotm-3x3-7, dotm-3x3-16 and dotm-3x3-6.
+   ========================================================================== */
+
+/* The native indicator (and its tiny toggle badge) would duplicate the rail
+   button. Keep them out of the skin; a plain browser has neither anyway.
+   0.2.2-rc.1 and rc.2 both use the G-tjAW hash. The update entry itself is a
+   shell.overlay control, so it is independent of the flat/scroll sidebar
+   variant and lives in the base sheet for every supported release. */
+body[data-dsh-wc-islands] .G-tjAW_indicator,
+body[data-dsh-wc-islands] .G-tjAW_badge {
+  display: none !important;
+}
+
+body[data-dsh-wc-islands] {
+  --isl-update-bg: #4176e6;
+  --isl-update-bg-hover: #3264d4;
+  --isl-update-danger: #d93a40;
+}
+
+body[data-dsh-wc-islands][data-ds-dark-theme] {
+  --isl-update-danger: #ff6369;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton {
+  position: fixed;
+  left: calc(var(--isl-gap) + (var(--isl-rail-width) - 36px) / 2);
+  bottom: calc(56px + 36px + 8px);
+  z-index: 26;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: var(--isl-update-bg);
+  color: #fff;
+  cursor: default;
+  box-shadow:
+    0 2px 6px -1px color-mix(in srgb, var(--isl-update-bg) 38%, transparent),
+    0 8px 18px -10px color-mix(in srgb, var(--isl-update-bg) 62%, transparent);
+  transition:
+    background-color 0.15s var(--ds-ease-in-out),
+    box-shadow 0.15s var(--ds-ease-in-out),
+    transform 0.15s var(--ds-ease-in-out),
+    border-color 0.15s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable {
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable:hover {
+  background: var(--isl-update-bg-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 8px -1px color-mix(in srgb, var(--isl-update-bg) 44%, transparent),
+    0 10px 22px -10px color-mix(in srgb, var(--isl-update-bg) 72%, transparent);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-clickable:active {
+  transform: translateY(0) scale(0.96);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--isl-update-bg) 40%, transparent);
+  outline-offset: 2px;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-pending {
+  opacity: 0.82;
+}
+
+/* Busy phases keep the circle but let the matrix carry the state. */
+body[data-dsh-wc-islands] .isl-updateButton[aria-busy='true'] {
+  cursor: default;
+}
+
+/* Error: a translucent danger surface, danger stroke, status dot and a retry
+   glyph. The dot keeps the state readable without relying on color alone. */
+body[data-dsh-wc-islands] .isl-updateButton.is-error {
+  border-color: color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+  background: color-mix(in srgb, var(--isl-update-danger) 14%, transparent);
+  color: var(--isl-update-danger);
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-error.is-clickable:hover {
+  border-color: color-mix(in srgb, var(--isl-update-danger) 72%, transparent);
+  background: color-mix(in srgb, var(--isl-update-danger) 22%, transparent);
+  box-shadow: 0 2px 8px -4px color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+}
+
+body[data-dsh-wc-islands] .isl-updateButton.is-error:focus-visible {
+  outline-color: color-mix(in srgb, var(--isl-update-danger) 55%, transparent);
+}
+
+/* Busy phases drop the circle entirely: the mosaic itself is the control,
+   tinted with the user's accent so it belongs to the skin rather than to the
+   shipped brand pill. */
+body[data-dsh-wc-islands] .isl-updateButton.is-downloading,
+body[data-dsh-wc-islands] .isl-updateButton.is-verifying,
+body[data-dsh-wc-islands] .isl-updateButton.is-installing {
+  border-color: transparent;
+  background: transparent;
+  color: var(--isl-accent);
+  box-shadow: none;
+}
+
+body[data-dsh-wc-islands] .isl-updateErrorDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--isl-update-danger);
+  box-shadow: 0 0 0 2px var(--isl-surface);
+}
+
+/* ---- 3x3 dot matrix ------------------------------------------------------ */
+
+body[data-dsh-wc-islands] .isl-dmx {
+  display: grid;
+  grid-template-columns: repeat(3, 5px);
+  grid-template-rows: repeat(3, 5px);
+  gap: 2.5px;
+  width: 20px;
+  height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.14;
+  will-change: opacity;
+}
+
+/* Column Flux (dotm-3x3-7): columns pulse left to right, all rows together.
+   The three 400ms phases overlap, so at least one column stays lit while the
+   busy button has no filled background behind it. */
+body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot {
+  animation: isl-dmx-column 1200ms cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  animation-delay: calc(var(--dmx-col) * 400ms);
+}
+
+/* Core Echo (dotm-3x3-6): Manhattan rings ripple out from the centre. */
+body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot {
+  animation: isl-dmx-ripple 1230ms ease-in-out infinite;
+  animation-delay: calc(var(--dmx-ring) * 165ms);
+}
+
+/* Smiley Spin (dotm-3x3-16): the pixel glyph rotates in four 180ms phases.
+   Each cell is lit for one or two phases; the first wraps across the cycle. */
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot {
+  animation-duration: 720ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0.12;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='1'] {
+  animation-name: isl-dmx-spin-1;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='2'] {
+  animation-name: isl-dmx-spin-2;
+}
+
+body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-span='wrap'] {
+  animation-name: isl-dmx-spin-wrap;
+}
+
+@keyframes isl-dmx-column {
+  0% {
+    opacity: 0.14;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  40% {
+    opacity: 0.14;
+  }
+
+  100% {
+    opacity: 0.14;
+  }
+}
+
+@keyframes isl-dmx-ripple {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+
+  34% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.22;
+  }
+}
+
+@keyframes isl-dmx-spin-1 {
+  0%,
+  20% {
+    opacity: 0.88;
+  }
+
+  25%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+@keyframes isl-dmx-spin-2 {
+  0%,
+  45% {
+    opacity: 0.88;
+  }
+
+  50%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+@keyframes isl-dmx-spin-wrap {
+  0%,
+  20% {
+    opacity: 0.88;
+  }
+
+  25%,
+  70% {
+    opacity: 0.12;
+  }
+
+  75%,
+  100% {
+    opacity: 0.88;
+  }
+}
+
+/* Narrow desktop: the rail floats above the workspace drawer. */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-updateButton {
+    z-index: 72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-wc-islands] .isl-updateButton {
+    transition: none;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-dot {
+    animation: none !important;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot {
+    opacity: 0.3;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot[data-col='1'] {
+    opacity: 0.55;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-column .isl-dmx-dot[data-col='2'] {
+    opacity: 0.88;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot {
+    opacity: 0.3;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot[data-ring='1'] {
+    opacity: 0.55;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-ripple .isl-dmx-dot[data-ring='0'] {
+    opacity: 1;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot {
+    opacity: 0.12;
+  }
+
+  body[data-dsh-wc-islands] .isl-dmx-smiley .isl-dmx-dot[data-on='1'] {
+    opacity: 0.88;
+  }
+}
+
+/* ---- Settings showcase --------------------------------------------------- */
+
+body[data-dsh-wc-islands] .isl-updateShowcase {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  background: var(--dsw-alias-settings-card-fill);
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseHead {
+  margin-bottom: 14px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseDesc {
+  margin-top: 3px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 14px 8px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseStage {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-lg);
+  background: var(--isl-surface);
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcase .isl-updateButton.is-preview {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: auto;
+  transform: none;
+  cursor: default;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcaseLabel {
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+body[data-dsh-wc-islands] .isl-updateShowcasePhase {
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 14px;
+}

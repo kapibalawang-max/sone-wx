@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Islands UI · 16 left rail
+   Every registered panel launcher lives directly in the rail. Drag an icon to
+   reorder it; right-click the rail to show or hide launchers.
+   ========================================================================== */
+
+body[data-dsh-wc-islands] .isl-rail {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-rail {
+  position: fixed;
+  top: calc(var(--isl-chrome-top) + var(--isl-topbar-height) + 10px);
+  left: var(--isl-gap);
+  z-index: 25;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: var(--isl-rail-width);
+  max-height: calc(100vh - var(--isl-chrome-top) - var(--isl-topbar-height) - 112px);
+  padding: 2px 6px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  pointer-events: auto;
+  user-select: none;
+}
+
+body[data-dsh-wc-islands] .isl-rail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body[data-dsh-wc-islands] .isl-railBtn {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--isl-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  touch-action: none;
+  transition:
+    background-color 0.12s var(--ds-ease-in-out),
+    color 0.12s var(--ds-ease-in-out),
+    opacity 0.12s var(--ds-ease-in-out);
+}
+
+body[data-dsh-wc-islands] .isl-railBtn:hover {
+  background: var(--isl-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* The house is a pure navigation trigger (conversation / workspace drawer),
+   not a destination in the panel model. It has no persistent selected state;
+   hover keeps the standard rail feedback and a click paints a translucent
+   ripple clipped to the rounded tile. */
+body[data-dsh-wc-islands] .isl-railBtn[data-rail-id='workspace'] {
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-dsh-wc-islands] .isl-railRipple {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: isl-rail-ripple 560ms cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes isl-rail-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-dsh-wc-islands] .isl-railRipple {
+    animation-duration: 1ms;
+  }
+}
+
+body[data-dsh-wc-islands] .isl-railBtn.is-active {
+  background: var(--isl-active);
+  color: var(--dsw-alias-label-primary);
+}
+
+body[data-dsh-wc-islands] .isl-railBtn:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+body[data-dsh-wc-islands] .isl-rail.is-dragging,
+body[data-dsh-wc-islands] .isl-rail.is-dragging .isl-railBtn {
+  cursor: grabbing;
+}
+
+body[data-dsh-wc-islands] .isl-railBtn.is-dragging {
+  background: var(--isl-active);
+  opacity: 0.45;
+}
+
+/* Floating copy of the dragged icon; follows the pointer at 90% opacity. */
+body[data-dsh-wc-islands] .isl-railGhost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-md);
+  background: var(--isl-surface);
+  box-shadow: var(--isl-shadow-float);
+  color: var(--dsw-alias-label-primary);
+  opacity: 0.9;
+  pointer-events: none;
+  will-change: transform;
+}
+
+body[data-dsh-wc-islands] .isl-railAdd {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+body[data-dsh-wc-islands] .isl-railDivider {
+  flex: none;
+  width: 24px;
+  height: 1px;
+  margin: 2px 0;
+  background: var(--isl-border-soft);
+}
+
+/* ---- Rail management menu --------------------------------------------- */
+body[data-dsh-wc-islands] .isl-railMenu {
+  position: fixed;
+  z-index: 35;
+  box-sizing: border-box;
+  width: 248px;
+  max-height: min(60vh, 440px);
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: var(--isl-radius-md);
+  background: var(--isl-surface);
+  box-shadow: var(--isl-shadow-float);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+  user-select: none;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuTitle {
+  padding: 4px 8px 6px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--isl-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow:hover,
+body[data-dsh-wc-islands] .isl-railMenuRow.is-current {
+  background: var(--isl-hover);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuRow.is-hidden .isl-railMenuIcon,
+body[data-dsh-wc-islands] .isl-railMenuRow.is-hidden .isl-railMenuText {
+  opacity: 0.5;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuLabel {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuSub {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuCheck {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--isl-border-soft);
+  border-radius: 6px;
+  color: transparent;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuCheck.is-on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--isl-accent) 14%, transparent);
+  color: var(--isl-accent);
+}
+
+body[data-dsh-wc-islands] .isl-railMenuHint {
+  margin-top: 4px;
+  padding: 6px 8px 2px;
+  border-top: 1px solid var(--isl-border-soft);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+body[data-dsh-wc-islands] .isl-railMenuEmpty {
+  padding: 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+/* Settings gear pinned above the account avatar. */
+body[data-dsh-wc-islands] .isl-railSettings {
+  display: none;
+}
+
+body[data-dsh-wc-islands] .isl-railSettings {
+  position: fixed;
+  left: calc(var(--isl-gap) + (var(--isl-rail-width) - 36px) / 2);
+  bottom: 56px;
+  z-index: 26;
+  display: grid;
+  place-items: center;
+}
+
+/* Narrow desktop: the rail is the persistent navigation; the workspace is a
+   drawer opened from its home button. Both the rail and its menus must sit
+   above the drawer (71) and the drawer mask (70). */
+@media (width <= 767px) {
+  body[data-dsh-wc-islands] .isl-rail {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-railSettings {
+    z-index: 72;
+  }
+
+  body[data-dsh-wc-islands] .isl-railMenu {
+    z-index: 1100;
+  }
+}

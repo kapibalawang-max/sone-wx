@@ -1,0 +1,442 @@
+/* ==========================================================================
+   Islands UI · 50 shared components
+   Small, reusable pieces used by the skin's own surfaces. All values come from
+   the token layer, so nothing here is page-specific.
+   ========================================================================== */
+
+/* ---- Preference row (rendered into settings.general.item) ---------------- */
+body[data-dsh-wc-islands] .isl-prefRow,
+.isl-prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+body[data-dsh-wc-islands] .isl-prefRow:last-child,
+.isl-prefRow:last-child {
+  border-bottom: 0;
+}
+
+.isl-prefText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.isl-prefTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.isl-prefDesc {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+/* ---- Switch -------------------------------------------------------------- */
+.isl-switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--dsw-alias-bg-layer-3);
+  box-shadow: inset 0 0 0 1px var(--dsw-alias-border-l2);
+  transition: background-color 0.15s var(--ds-ease-in-out);
+}
+
+.isl-switch[aria-checked='true'] {
+  background: var(--dsw-alias-state-business-primary);
+  box-shadow: none;
+}
+
+.isl-switch:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+.isl-switchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.25);
+  transition: transform 0.15s var(--ds-ease-in-out);
+}
+
+.isl-switch[aria-checked='true'] .isl-switchThumb {
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isl-switch,
+  .isl-switchThumb {
+    transition: none;
+  }
+}
+
+/* ---- Popover / menu materials ------------------------------------------- */
+body[data-dsh-wc-islands] [data-menu-material] {
+  border-radius: var(--isl-radius-lg);
+  border: 1px solid var(--isl-border-soft);
+  box-shadow: var(--isl-shadow-float);
+}
+
+body[data-dsh-wc-islands] [role='dialog'],
+body[data-dsh-wc-islands] [role='menu'],
+body[data-dsh-wc-islands] [role='listbox'] {
+  border-radius: var(--isl-radius-lg);
+}
+
+/* ---- Scrollbars ---------------------------------------------------------- */
+body[data-dsh-wc-islands] ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+/* ---- Focus --------------------------------------------------------------- */
+body[data-dsh-wc-islands] :focus-visible {
+  outline-offset: 1px;
+}
+
+/* ---- Dedicated settings page ------------------------------------------- */
+.isl-settingsPage {
+  box-sizing: border-box;
+  max-width: 760px;
+  padding: 4px 8px 24px;
+}
+
+.isl-settingsPageHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.isl-settingsPageLogo {
+  display: inline-flex;
+  flex: none;
+}
+
+.isl-settingsPageHeadText {
+  min-width: 0;
+}
+
+.isl-settingsPageTitle {
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.isl-settingsPageDesc {
+  margin-top: 4px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-settingsPage .isl-prefRow:first-of-type {
+  margin-top: 12px;
+}
+
+/* Detected DSH release + sidebar dialect: diagnosis for support reports. */
+.isl-settingsMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.isl-settingsMetaValue {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--isl-surface-muted);
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+}
+
+.isl-settingsMetaSeparator {
+  opacity: 0.6;
+}
+
+.isl-accentPicker {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.isl-accentSwatch {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 50%;
+  background-clip: padding-box;
+  cursor: pointer;
+  transition:
+    transform 0.12s var(--ds-ease-in-out),
+    box-shadow 0.12s var(--ds-ease-in-out);
+}
+
+.isl-accentSwatch:hover {
+  transform: scale(1.08);
+}
+
+.isl-accentSwatch.is-selected {
+  box-shadow:
+    0 0 0 2px var(--dsw-alias-bg-base),
+    0 0 0 3.5px var(--dsw-alias-label-primary);
+}
+
+.isl-accentSwatch.is-default {
+  background: linear-gradient(135deg, #ffffff 0 47%, #c4c8ce 47% 53%, #1b1c1f 53% 100%);
+}
+
+.isl-accentCustom {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: 50%;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.isl-accentCustom::before {
+  content: '+';
+  font-size: 14px;
+  line-height: 1;
+}
+
+.isl-accentCustom input {
+  position: absolute;
+  inset: -4px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+
+/* ---- Compatibility notice ------------------------------------------------
+   Rendered while the skin is OFF, so nothing here may rely on the `--isl-*`
+   scale or on `body[data-dsh-wc-islands]`. Every custom property carries a
+   fallback and every color comes from the public DSH theme tokens. */
+
+.isl-compatToast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2000;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 12px 10px 12px 14px;
+  border: 1px solid rgba(224, 160, 24, 0.5);
+  border-left: 3px solid #e0a018;
+  border-radius: var(--isl-radius-lg, 16px);
+  background: var(--dsw-alias-bg-overlay, #ffffff);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  box-shadow: 0 14px 36px -14px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  line-height: 19px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.isl-compatToast.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isl-compatToast {
+    transition: none;
+  }
+}
+
+.isl-compatToastBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.isl-compatToastTitle {
+  font-weight: 600;
+}
+
+.isl-compatToastText {
+  margin-top: 2px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-compatToastAction {
+  margin-top: 6px;
+  color: #a86b00;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.isl-compatToastClose {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, #737a82);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.isl-compatToastClose:hover {
+  background: var(--dsw-alias-interactive-bg-hover, rgba(17, 24, 39, 0.06));
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+/* The settings-page warning bar. */
+.isl-compatBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(224, 160, 24, 0.45);
+  border-radius: var(--isl-radius-lg, 16px);
+  background: rgba(240, 180, 41, 0.14);
+  background: color-mix(in srgb, #f0b429 14%, transparent);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.isl-compatBannerIcon {
+  flex: none;
+  display: inline-flex;
+  margin-top: 1px;
+  color: #b47400;
+}
+
+.isl-compatBannerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.isl-compatBannerTitle {
+  font-weight: 600;
+}
+
+.isl-compatBannerBody,
+.isl-compatBannerHint {
+  margin-top: 2px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-compatBannerHint {
+  margin-top: 6px;
+}
+
+.isl-compatBannerList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  color: var(--dsw-alias-label-secondary, #555b63);
+  font-size: 12px;
+}
+
+.isl-compatAnchor {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(17, 24, 39, 0.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.isl-compatBannerAction {
+  flex: none;
+  align-self: flex-start;
+  padding: 5px 10px;
+  border: 1px solid rgba(224, 160, 24, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: #8a5a00;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.isl-compatBannerAction:hover {
+  background: rgba(240, 180, 41, 0.18);
+}
+
+.isl-compatForced {
+  margin: 8px 0 0;
+  color: var(--dsw-alias-label-tertiary, #737a82);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.isl-switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The notice renders while the skin is off, so darkness is read straight from
+   the host theme attribute its own stylesheet uses. */
+body[data-ds-dark-theme] .isl-compatBannerIcon {
+  color: #e8b451;
+}
+
+body[data-ds-dark-theme] .isl-compatBannerAction {
+  border-color: rgba(240, 180, 41, 0.45);
+  color: #f2c879;
+}
+
+body[data-ds-dark-theme] .isl-compatBannerAction:hover {
+  background: rgba(240, 180, 41, 0.16);
+}
+
+body[data-ds-dark-theme] .isl-compatAnchor {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body[data-ds-dark-theme] .isl-compatToastAction {
+  color: #f0c274;
+}

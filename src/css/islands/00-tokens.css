@@ -1,0 +1,39 @@
+/* ==========================================================================
+   Islands 结构层 · 令牌桥接
+   结构（几何 / 层级 / 组件）移植自 dsh-islands-ui（MIT, DawnCHL），
+   颜色不另起一套：全部取自 sone-wx 皮肤令牌，于是深浅主题与强调色共用一条链路。
+   作用域挂在 body[data-dsh-wc-islands] 上，与 body.dsh-wechat-skin-on 叠加生效。
+   ========================================================================== */
+
+body[data-dsh-wc-islands] {
+	/* 画布：所有岛屿漂浮其上的统一底色。 */
+	--isl-canvas: var(--wc-bg, #fcfcfd);
+	--isl-canvas-veil: color-mix(in srgb, var(--wc-sidebar, #e8e8ec) 72%, transparent);
+	/* 岛屿表面。 */
+	--isl-surface: var(--dsw-alias-bg-base, #ffffff);
+	--isl-surface-muted: var(--wc-bubble-bg, #f0f0f3);
+	--isl-surface-sunken: var(--wc-code-bg, #e8e8ec);
+	/* 发丝描边：比皮肤再安静一档，避免岛屿边框抢画面。 */
+	--isl-border-soft: color-mix(in srgb, var(--wc-border-light, #d9d9e0) 62%, transparent);
+	--isl-border: var(--wc-border-light, #d9d9e0);
+	--isl-border-strong: color-mix(in srgb, var(--wc-ink-2, #4a4e56) 26%, transparent);
+	--isl-hover: var(--dsw-alias-interactive-bg-hover, rgba(17, 24, 39, 0.055));
+	--isl-active: var(--dsw-alias-interactive-bg-active, rgba(17, 24, 39, 0.09));
+	/* 强调色跟随皮肤主色，选中反馈与气泡保持同一家族。 */
+	--isl-accent: var(--wc-accent-solid, #0a7d43);
+	/* 几何：与微信皮肤 12/8/6 的圆角阶梯错开一档，岛屿用更圆的容器。 */
+	--isl-radius-xl: var(--wc-radius-card, 12px);
+	--isl-radius-lg: var(--wc-radius-card, 12px);
+	--isl-radius-md: var(--wc-radius-md, 10px);
+	--isl-radius-sm: var(--wc-radius-sm, 6px);
+	--isl-gap: 5px;
+	--isl-topbar-height: 40px;
+	--isl-chrome-top: 0px;
+	--isl-rail-collapsed-width: 56px;
+	--isl-rail-width: 48px;
+	/* 无投影：微信皮肤靠色阶分层，不靠阴影。 */
+	--isl-shadow-island: none;
+	--isl-shadow-float:
+		0 0 0 0.5px var(--wc-border-light, #d9d9e0),
+		0 8px 24px -12px rgba(17, 24, 39, 0.18);
+}

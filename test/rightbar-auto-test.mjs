@@ -163,8 +163,8 @@ check(src.includes('scanHooks.push(rightbarAutoCtl.tick)'), 'wiring: scanHooks.p
 check(src.includes('initRightbarAuto(ctx)'), 'wiring: initRightbarAuto(ctx) call missing');
 check(src.includes('rightbarAutoCtl.dispose()'), 'wiring: rightbarAutoCtl.dispose() missing');
 check(/const CONFIG_SKIN_KEYS = \[.*RIGHTBAR_AUTO_KEY.*\]/.test(src), 'wiring: RIGHTBAR_AUTO_KEY not in CONFIG_SKIN_KEYS');
-check(/function createStore\((.*)initialRightbarAuto\)/.test(src), 'wiring: createStore lacks initialRightbarAuto');
-check(/sync: \(d,.*rightbarAuto\) =>/.test(src), 'wiring: store sync lacks rightbarAuto param');
+check(/function createStore\((.*)initialRightbarAuto, initialIslands\)/.test(src), 'wiring: createStore lacks initialRightbarAuto');
+check(/sync: \(d,.*rightbarAuto, islands\) =>/.test(src), 'wiring: store sync lacks rightbarAuto param');
 check(src.includes('d.rightbarAuto = rightbarAuto;'), 'wiring: store sync does not write d.rightbarAuto');
 check(src.includes('setRightbarAuto: (on) =>'), 'wiring: injected.setRightbarAuto missing');
 check(src.includes('window.localStorage.removeItem(RIGHTBAR_AUTO_KEY)'), 'wiring: resetSkin does not clear RIGHTBAR_AUTO_KEY');
