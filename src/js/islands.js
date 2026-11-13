@@ -2110,6 +2110,15 @@ function createSoneIslandsLayer(require, host) {
       const revealingRef = React.useRef(false);
       const id = session.id ?? session.sessionId;
       const title = String(session.title ?? '').trim() || copy.untitled;
+      // 头像与侧栏同一套：未命名的会话按 id 取色，命名后跟标题走。
+      let avatar = null;
+      if (typeof host.avatarUrl === 'function') {
+        try {
+          avatar = host.avatarUrl(String(session.title ?? '').trim() || String(id ?? ''));
+        } catch {
+          avatar = null;
+        }
+      }
 
       React.useEffect(() => () => cancelAnimationFrame(frameRef.current), []);
 
@@ -2174,6 +2183,13 @@ function createSoneIslandsLayer(require, host) {
           onPointerEnter: enter,
           onPointerLeave: leave,
         },
+        avatar === null
+          ? null
+          : h('span', {
+              className: 'isl-pinnedAvatar',
+              'aria-hidden': true,
+              style: { backgroundImage: `url("${avatar}")` },
+            }),
         h('span', { className: 'isl-pinnedName', ref: titleRef }, title),
         h(
           'button',

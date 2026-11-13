@@ -160,6 +160,11 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；改样式改 `src/css/` 再 `node build.mjs`，不要改产物。
 
 ## 更新记录
+### v1.47.2
+
+- **置顶聚合补上头像**：浮岛结构层的置顶行原先只有标题，与侧栏会话行不一致。现在由皮肤暴露 `avatarUrl(key)` 给结构层复用同一套头像生成（剪影 / 首字、按主题取色、未命名会话按 id 稳定取色），置顶行渲染 22px 圆角方块，标题起点与侧栏标题对齐（实测 96px vs 95px）。
+- `islands-layer-test` 增至 11 组：钉住头像接线（host 暴露生成器、行内渲染、`style` 必须是对象而非字符串拼接、桥接样式 22px）。
+
 ### v1.47.1
 
 工程基建补齐，浮岛层在真实宿主里跑通之后的收口。

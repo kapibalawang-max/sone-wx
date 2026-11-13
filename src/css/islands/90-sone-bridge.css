@@ -14,3 +14,20 @@ body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-settingsNote {
 	font-size: var(--wc-fs-sm);
 	color: var(--wc-ink-3);
 }
+
+/* 置顶聚合的行与侧栏会话行同一套头像与缩进：
+   头像 22px（侧栏 26px 的紧凑版），标题从 8 + 22 + 6 = 36px 起，与侧栏标题基本对齐。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-pinnedRow {
+	padding-left: 2px;
+	gap: 6px;
+}
+
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-pinnedAvatar {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	border-radius: var(--wc-av-radius, 6px);
+	background-color: var(--wc-code-bg, #e8e8ec);
+	background-size: cover;
+	background-position: center;
+}

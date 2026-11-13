@@ -87,3 +87,13 @@ test('方言选择：版本表与 DOM 结构不符时以 DOM 为准', () => {
   assert.match(src, /function detectShellDialect\(/, 'DOM dialect probe');
   assert.match(src, /shell structure differs from the reported version/, 'warns when they disagree');
 });
+
+test('置顶聚合复用同一套头像', () => {
+  assert.match(src, /avatarUrl: \(key\) => avatarUrlForKey\(key\)/, 'host exposes the avatar generator');
+  assert.match(src, /function avatarUrlForKey\(key\)/, 'avatar key lookup exists');
+  const pinned = src.slice(src.indexOf('function PinnedRow'), src.indexOf('function IslandsPinnedSection'));
+  assert.match(pinned, /host\.avatarUrl\(/, 'pinned row asks the host for an avatar');
+  assert.match(pinned, /className: 'isl-pinnedAvatar'/, 'renders the avatar span');
+  assert.ok(!/style: \{ backgroundImage: '[^`]*' \+ /.test(pinned), 'style stays an object, never a string concat');
+  assert.match(src, /\.isl-pinnedAvatar \{[\s\S]{0,200}?width: 22px/, 'bridge styles the avatar tile');
+});

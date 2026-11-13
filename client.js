@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.1";
+const SKIN_VERSION = "1.47.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1794,6 +1794,13 @@ if (row.dataset.dshAvatar !== value) {
 row.style.setProperty("--dsh-avatar", value);
 row.dataset.dshAvatar = value;
 }
+		}
+
+		/** 浮岛结构层复用同一套头像：置顶聚合里的行必须和侧栏行长得一样。 */
+		function avatarUrlForKey(key) {
+			let index = avatarMap[key];
+			if (index === undefined) index = avatarIndexForTitle(key);
+			return avatarForIndex(key, index);
 		}
 
 		/** Last written values for the document-level avatar vars. Rewriting them forces a
@@ -7357,6 +7364,23 @@ body.dsh-wechat-skin-on[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed)
 body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-settingsNote {
 	font-size: var(--wc-fs-sm);
 	color: var(--wc-ink-3);
+}
+
+/* 置顶聚合的行与侧栏会话行同一套头像与缩进：
+   头像 22px（侧栏 26px 的紧凑版），标题从 8 + 22 + 6 = 36px 起，与侧栏标题基本对齐。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-pinnedRow {
+	padding-left: 2px;
+	gap: 6px;
+}
+
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-pinnedAvatar {
+	flex: none;
+	width: 22px;
+	height: 22px;
+	border-radius: var(--wc-av-radius, 6px);
+	background-color: var(--wc-code-bg, #e8e8ec);
+	background-size: cover;
+	background-position: center;
 }`;
 	const ISLANDS_CSS_VARIANTS = {
 	"scroll": "/* ==========================================================================\n   Islands UI · sidebar variant: scroll containers\n   Chosen at runtime for DSH releases from 0.2.2-rc.2, which wrapped the\n   sidebar's panel list and workspace browser in\n   `.kB3qhq_scrollRegion > .kB3qhq_scrollArea`. The base stylesheet keeps the\n   pre-rc.2 flat layout; this file only corrects the wrapper placement.\n\n   Every selector below names a class that does not exist in the older shell,\n   so inlining it there is inert; the client still injects it only for the\n   dialect it detected from `window.__DSH_BOOT__.release.version`.\n   ========================================================================== */\n\n/* The browser column replaces the old direct `.kB3qhq_regionArea` grid item. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion {\n  grid-area: 3 / 2 / 5 / 3;\n  display: flex;\n  flex-direction: column;\n  min-width: 0;\n  min-height: 0;\n  margin: 0;\n}\n\n/* The shipped grid only made sense inside the full-height shell; the island\n   grid wants a plain column so the workspace browser can fill the island. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollArea {\n  display: flex;\n  flex: 1;\n  flex-direction: column;\n  min-height: 0;\n  margin: 0;\n  overflow: hidden;\n}\n\nbody[data-dsh-wc-islands]\n  .kB3qhq_root:not(.kB3qhq_collapsed)\n  > .kB3qhq_scrollRegion\n  > .kB3qhq_scrollArea\n  > .kB3qhq_regionArea {\n  flex: 1;\n  min-height: 0;\n}\n\n/* The shipped bottom fade reads as a panel edge; the island supplies its own. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollFade {\n  display: none;\n}\n\n/* 0.2.2-rc.2 moved the selected-panel state from `.panelRow` onto the wrapping\n   `.panelEntry`, so mirror the base active rule for the shipped rail. */\nbody[data-dsh-wc-islands] .kB3qhq_root .kB3qhq_panelEntryActive .kB3qhq_panelRow {\n  background: var(--dsw-specific-sidebar-nav-item-active-accent);\n  color: var(--dsw-alias-state-business-primary);\n}"
@@ -9474,6 +9498,15 @@ function createSoneIslandsLayer(require, host) {
       const revealingRef = React.useRef(false);
       const id = session.id ?? session.sessionId;
       const title = String(session.title ?? '').trim() || copy.untitled;
+      // 头像与侧栏同一套：未命名的会话按 id 取色，命名后跟标题走。
+      let avatar = null;
+      if (typeof host.avatarUrl === 'function') {
+        try {
+          avatar = host.avatarUrl(String(session.title ?? '').trim() || String(id ?? ''));
+        } catch {
+          avatar = null;
+        }
+      }
 
       React.useEffect(() => () => cancelAnimationFrame(frameRef.current), []);
 
@@ -9538,6 +9571,13 @@ function createSoneIslandsLayer(require, host) {
           onPointerEnter: enter,
           onPointerLeave: leave,
         },
+        avatar === null
+          ? null
+          : h('span', {
+              className: 'isl-pinnedAvatar',
+              'aria-hidden': true,
+              style: { backgroundImage: `url("${avatar}")` },
+            }),
         h('span', { className: 'isl-pinnedName', ref: titleRef }, title),
         h(
           'button',
@@ -11467,7 +11507,7 @@ const islands = createSoneIslandsLayer(require, {
 css: ISLANDS_CSS,
 cssVariants: ISLANDS_CSS_VARIANTS,
 readEnabled: () => readJson(ISLANDS_KEY, true) !== false,
-writeEnabled: (value) => writeJson(ISLANDS_KEY, value === true)
+writeEnabled: (value) => writeJson(ISLANDS_KEY, value === true), avatarUrl: (key) => avatarUrlForKey(key)
 });
 islands.apply(ctx);
 islandsDispose = () => { try { islands.setEnabled(false); } catch (e) {} };

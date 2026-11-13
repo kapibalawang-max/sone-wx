@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.1";
+const SKIN_VERSION = "1.47.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -366,6 +366,13 @@ if (row.dataset.dshAvatar !== value) {
 row.style.setProperty("--dsh-avatar", value);
 row.dataset.dshAvatar = value;
 }
+		}
+
+		/** 浮岛结构层复用同一套头像：置顶聚合里的行必须和侧栏行长得一样。 */
+		function avatarUrlForKey(key) {
+			let index = avatarMap[key];
+			if (index === undefined) index = avatarIndexForTitle(key);
+			return avatarForIndex(key, index);
 		}
 
 		/** Last written values for the document-level avatar vars. Rewriting them forces a
@@ -4349,7 +4356,7 @@ const islands = createSoneIslandsLayer(require, {
 css: ISLANDS_CSS,
 cssVariants: ISLANDS_CSS_VARIANTS,
 readEnabled: () => readJson(ISLANDS_KEY, true) !== false,
-writeEnabled: (value) => writeJson(ISLANDS_KEY, value === true)
+writeEnabled: (value) => writeJson(ISLANDS_KEY, value === true), avatarUrl: (key) => avatarUrlForKey(key)
 });
 islands.apply(ctx);
 islandsDispose = () => { try { islands.setEnabled(false); } catch (e) {} };
