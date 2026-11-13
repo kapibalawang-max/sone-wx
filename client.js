@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.4";
+const SKIN_VERSION = "1.47.5";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -9112,7 +9112,10 @@ function createSoneIslandsLayer(require, host) {
       const reasoning = current !== null && directory !== null ? directory.catalog.reasoningFor(current) : undefined;
       const efforts = Array.isArray(reasoning?.efforts) ? reasoning.efforts : [];
       const effective = current?.reasoningEffort ?? reasoning?.defaultEffort;
-      const effortName = efforts.find((level) => level.id === effective)?.name ?? state.retainedEffort;
+      // 有些模型给了等级列表却没给默认值：此时退回「滑杆停在哪一档」的名字，
+      // 不要让强制项标签空着（空标签会让用户看不出当前强度）。
+      const sliderId = draft ?? effective ?? efforts[0]?.id;
+      const effortName = efforts.find((level) => level.id === sliderId)?.name ?? state.retainedEffort;
       const modelName = current === null
         ? state.status === 'loading' ? copy.loading : copy.pick
         : modelIn(groups, current)?.name ?? current.model;
@@ -9207,7 +9210,6 @@ function createSoneIslandsLayer(require, host) {
           });
       };
 
-      const sliderId = draft ?? effective;
       const sliderIndex = Math.max(0, efforts.findIndex((level) => level.id === sliderId));
       const percent = efforts.length > 1 ? Math.round((sliderIndex / (efforts.length - 1)) * 100) : 0;
 
