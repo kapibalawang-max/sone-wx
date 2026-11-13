@@ -32,9 +32,10 @@ test('样式只挂在结构层属性上，不再引用上游属性名', () => {
 });
 
 test('令牌桥接：结构层不再自带一套颜色', () => {
-  assert.match(islandsCss, /--isl-canvas:\s*var\(--wc-bg/, 'canvas follows skin bg');
+  assert.match(islandsCss, /--isl-canvas:\s*var\(--wc-sidebar/, 'canvas follows the sidebar swatch (so 侧边栏背景色 also paints the ocean)');
   assert.match(islandsCss, /--isl-accent:\s*var\(--wc-accent-solid/, 'accent follows skin accent');
-  assert.match(islandsCss, /--isl-radius-xl:\s*var\(--wc-radius-card/, 'radius follows skin radius');
+  assert.match(islandsCss, /--isl-radius-xl:\s*18px/, 'islands sit one step rounder than skin cards');
+  assert.match(islandsCss, /--isl-radius-lg:\s*14px/, 'island radius');
   assert.ok(!/--isl-canvas:\s*#/.test(islandsCss), 'no hard-coded canvas color');
 });
 

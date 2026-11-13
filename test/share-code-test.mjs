@@ -15,7 +15,7 @@ const region = src.slice(start, end);
 
 // The region references the storage-key constants; pull their real declarations
 // out of client.js instead of hardcoding the names here.
-const keyNames = ['FONT_LEVEL_KEY', 'TEXT_FONT_LEVEL_KEY', 'DENSITY_KEY', 'CHAT_WIDTH_KEY', 'SIDEBAR_BG_KEY', 'PRESET_KEY', 'LINE_HEIGHT_KEY', 'MOTION_KEY', 'FONT_FAMILY_KEY', 'CONTRAST_KEY', 'AVATAR_SHAPE_KEY', 'AVATAR_STYLE_KEY', 'COMPOSER_FX_KEY', 'RIGHTBAR_AUTO_KEY', 'USER_AVATAR_ENABLED_KEY', 'AI_AVATAR_ENABLED_KEY', 'CUSTOM_PRESETS_KEY'];
+const keyNames = ['FONT_LEVEL_KEY', 'TEXT_FONT_LEVEL_KEY', 'DENSITY_KEY', 'CHAT_WIDTH_KEY', 'SIDEBAR_BG_KEY', 'PRESET_KEY', 'LINE_HEIGHT_KEY', 'MOTION_KEY', 'FONT_FAMILY_KEY', 'CONTRAST_KEY', 'AVATAR_SHAPE_KEY', 'AVATAR_STYLE_KEY', 'COMPOSER_FX_KEY', 'RIGHTBAR_AUTO_KEY', 'ISLANDS_KEY', 'USER_AVATAR_ENABLED_KEY', 'AI_AVATAR_ENABLED_KEY', 'CUSTOM_PRESETS_KEY'];
 let consts = '';
 for (const name of keyNames) {
   const m = src.match(new RegExp('const ' + name + ' = "[^"]+";'));

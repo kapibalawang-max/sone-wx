@@ -2662,6 +2662,15 @@ function createSoneIslandsLayer(require, host) {
       );
     }
 
+    /** 取一个可选服务：没有声明 inject 时 cordis 会抛，这里吞掉并降级。 */
+    function safeService(ctx, name) {
+      try {
+        return ctx.get(name) ?? null;
+      } catch {
+        return null;
+      }
+    }
+
     return {
       inject: ['slots', 'locale', 'layout'],
       apply(ctx) {
@@ -2671,8 +2680,11 @@ function createSoneIslandsLayer(require, host) {
         });
 
         pluginCtx = ctx;
-        localeService = ctx.locale;
-        layoutService = ctx.layout;
+        // 宿主把本层当作 sone-wx 的一部分来挂载，ctx 上没有声明 inject，
+        // 直接取 ctx.locale / ctx.layout 会被 cordis 拒绝（without inject），
+        // 所以一律走容错的 safeService()。
+        localeService = safeService(ctx, 'locale');
+        layoutService = safeService(ctx, 'layout');
         slotsService = ctx.slots;
         applyAccent(readAccent());
 

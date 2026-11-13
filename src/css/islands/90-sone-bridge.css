@@ -1,0 +1,16 @@
+/* ==========================================================================
+   sone-wx × 浮岛结构层：本插件自己的接线
+   结构层来自 dsh-islands-ui，这里只写「把它接回微信皮肤」的少量覆盖，
+   与移植文件分开放，便于日后跟上游对比。
+   ========================================================================== */
+
+/* 侧栏岛：结构层用伪元素画左侧工作区岛，底色跟随会话底色，与其它岛一致。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed)::after {
+	background: var(--isl-surface);
+}
+
+/* 结构层的设置分区与我们并排：标题沿用皮肤的分组标题尺度。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-settingsNote {
+	font-size: var(--wc-fs-sm);
+	color: var(--wc-ink-3);
+}

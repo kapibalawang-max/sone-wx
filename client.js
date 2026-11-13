@@ -3148,7 +3148,7 @@ function portalModal(node) {
 	return node;
 }
 const SHARE_CODE_PREFIX = "SWX1.";
-const SHARE_CODE_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_ENABLED_KEY, CUSTOM_PRESETS_KEY];
+const SHARE_CODE_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, ISLANDS_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_ENABLED_KEY, CUSTOM_PRESETS_KEY];
 function base64UrlEncode(text) {
 	const bytes = new TextEncoder().encode(text);
 	let bin = "";
@@ -4617,12 +4617,13 @@ window.localStorage.removeItem(STAR_KEY);
    ========================================================================== */
 
 body[data-dsh-wc-islands] {
-	/* 画布：所有岛屿漂浮其上的统一底色。 */
-	--isl-canvas: var(--wc-bg, #fcfcfd);
+	/* 画布 = 皮肤的侧栏底色：既让岛屿浮起来，又让「侧边栏背景色」这项设置
+	   在浮岛模式下直接决定海面颜色（5 个色板 + 自定义取色都生效）。 */
+	--isl-canvas: var(--wc-sidebar, #e8e8ec);
 	--isl-canvas-veil: color-mix(in srgb, var(--wc-sidebar, #e8e8ec) 72%, transparent);
-	/* 岛屿表面。 */
-	--isl-surface: var(--dsw-alias-bg-base, #ffffff);
-	--isl-surface-muted: var(--wc-bubble-bg, #f0f0f3);
+	/* 岛屿表面 = 会话底色，恒比画布亮一档；静止靠色阶分层，不靠阴影。 */
+	--isl-surface: var(--wc-bg, #fcfcfd);
+	--isl-surface-muted: var(--wc-surface, #f9f9fb);
 	--isl-surface-sunken: var(--wc-code-bg, #e8e8ec);
 	/* 发丝描边：比皮肤再安静一档，避免岛屿边框抢画面。 */
 	--isl-border-soft: color-mix(in srgb, var(--wc-border-light, #d9d9e0) 62%, transparent);
@@ -4633,8 +4634,9 @@ body[data-dsh-wc-islands] {
 	/* 强调色跟随皮肤主色，选中反馈与气泡保持同一家族。 */
 	--isl-accent: var(--wc-accent-solid, #0a7d43);
 	/* 几何：与微信皮肤 12/8/6 的圆角阶梯错开一档，岛屿用更圆的容器。 */
-	--isl-radius-xl: var(--wc-radius-card, 12px);
-	--isl-radius-lg: var(--wc-radius-card, 12px);
+	/* 岛屿比皮肤内的卡片更圆一档：12px 的卡片阶梯之上，另给浮岛 14/18。 */
+	--isl-radius-xl: 18px;
+	--isl-radius-lg: 14px;
 	--isl-radius-md: var(--wc-radius-md, 10px);
 	--isl-radius-sm: var(--wc-radius-sm, 6px);
 	--isl-gap: 5px;
@@ -4647,6 +4649,17 @@ body[data-dsh-wc-islands] {
 	--isl-shadow-float:
 		0 0 0 0.5px var(--wc-border-light, #d9d9e0),
 		0 8px 24px -12px rgba(17, 24, 39, 0.18);
+}
+
+/* 深色：--wc-bg 在深色块里沿用宿主底色，结构层需要自己的海面与岛屿。 */
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"][data-dsh-wc-islands] {
+	--isl-canvas: var(--wc-sidebar-dark, #18191b);
+	--isl-surface: var(--wc-surface-dark, #212225);
+	--isl-surface-muted: color-mix(in srgb, var(--wc-surface-dark, #212225) 72%, #ffffff);
+	--isl-surface-sunken: var(--wc-code-bg, #16181a);
+	--isl-border-soft: color-mix(in srgb, var(--wc-border-dark, #363a3f) 72%, transparent);
+	--isl-border: var(--wc-border-dark, #363a3f);
+	--isl-border-strong: color-mix(in srgb, #ffffff 22%, transparent);
 }
 
 /* ==========================================================================
@@ -7327,6 +7340,23 @@ body[data-ds-dark-theme] .isl-compatAnchor {
 
 body[data-ds-dark-theme] .isl-compatToastAction {
   color: #f0c274;
+}
+
+/* ==========================================================================
+   sone-wx × 浮岛结构层：本插件自己的接线
+   结构层来自 dsh-islands-ui，这里只写「把它接回微信皮肤」的少量覆盖，
+   与移植文件分开放，便于日后跟上游对比。
+   ========================================================================== */
+
+/* 侧栏岛：结构层用伪元素画左侧工作区岛，底色跟随会话底色，与其它岛一致。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed)::after {
+	background: var(--isl-surface);
+}
+
+/* 结构层的设置分区与我们并排：标题沿用皮肤的分组标题尺度。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-settingsNote {
+	font-size: var(--wc-fs-sm);
+	color: var(--wc-ink-3);
 }`;
 	const ISLANDS_CSS_VARIANTS = {
 	"scroll": "/* ==========================================================================\n   Islands UI · sidebar variant: scroll containers\n   Chosen at runtime for DSH releases from 0.2.2-rc.2, which wrapped the\n   sidebar's panel list and workspace browser in\n   `.kB3qhq_scrollRegion > .kB3qhq_scrollArea`. The base stylesheet keeps the\n   pre-rc.2 flat layout; this file only corrects the wrapper placement.\n\n   Every selector below names a class that does not exist in the older shell,\n   so inlining it there is inert; the client still injects it only for the\n   dialect it detected from `window.__DSH_BOOT__.release.version`.\n   ========================================================================== */\n\n/* The browser column replaces the old direct `.kB3qhq_regionArea` grid item. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion {\n  grid-area: 3 / 2 / 5 / 3;\n  display: flex;\n  flex-direction: column;\n  min-width: 0;\n  min-height: 0;\n  margin: 0;\n}\n\n/* The shipped grid only made sense inside the full-height shell; the island\n   grid wants a plain column so the workspace browser can fill the island. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollArea {\n  display: flex;\n  flex: 1;\n  flex-direction: column;\n  min-height: 0;\n  margin: 0;\n  overflow: hidden;\n}\n\nbody[data-dsh-wc-islands]\n  .kB3qhq_root:not(.kB3qhq_collapsed)\n  > .kB3qhq_scrollRegion\n  > .kB3qhq_scrollArea\n  > .kB3qhq_regionArea {\n  flex: 1;\n  min-height: 0;\n}\n\n/* The shipped bottom fade reads as a panel edge; the island supplies its own. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollFade {\n  display: none;\n}\n\n/* 0.2.2-rc.2 moved the selected-panel state from `.panelRow` onto the wrapping\n   `.panelEntry`, so mirror the base active rule for the shipped rail. */\nbody[data-dsh-wc-islands] .kB3qhq_root .kB3qhq_panelEntryActive .kB3qhq_panelRow {\n  background: var(--dsw-specific-sidebar-nav-item-active-accent);\n  color: var(--dsw-alias-state-business-primary);\n}"
@@ -9996,6 +10026,15 @@ function createSoneIslandsLayer(require, host) {
       );
     }
 
+    /** 取一个可选服务：没有声明 inject 时 cordis 会抛，这里吞掉并降级。 */
+    function safeService(ctx, name) {
+      try {
+        return ctx.get(name) ?? null;
+      } catch {
+        return null;
+      }
+    }
+
     return {
       inject: ['slots', 'locale', 'layout'],
       apply(ctx) {
@@ -10005,8 +10044,11 @@ function createSoneIslandsLayer(require, host) {
         });
 
         pluginCtx = ctx;
-        localeService = ctx.locale;
-        layoutService = ctx.layout;
+        // 宿主把本层当作 sone-wx 的一部分来挂载，ctx 上没有声明 inject，
+        // 直接取 ctx.locale / ctx.layout 会被 cordis 拒绝（without inject），
+        // 所以一律走容错的 safeService()。
+        localeService = safeService(ctx, 'locale');
+        layoutService = safeService(ctx, 'layout');
         slotsService = ctx.slots;
         applyAccent(readAccent());
 
