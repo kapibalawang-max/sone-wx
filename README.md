@@ -160,6 +160,10 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；改样式改 `src/css/` 再 `node build.mjs`，不要改产物。
 
 ## 更新记录
+### v1.47.7
+
+- 工程文档补齐：`CONTRIBUTING.md`（`src/` 是唯一可信来源、`client.js` 是产物、提交前跑哪几条命令、样式约定）、`SECURITY.md`（本地路由的同源与上限、不上传不收集、分享码只含外观）、`.editorconfig`（代码用 tab，文档与配置用 2 空格）。
+
 ### v1.47.6
 
 - **浮岛面上不再叠一块更暗的矩形**：皮肤原先把会话区 `.kiGsTW_scrollBody` 与标题栏刷成 `--dsw-alias-bg-base`，浅色下与岛屿几乎同色看不出来，深色下 `#111113` 会在 `#212225` 的岛上压出一块暗矩形。浮岛模式下两层都改为透明，表面由岛屿本体提供（实测深色岛上各层底色统一为 `rgb(33,34,37)`）。
