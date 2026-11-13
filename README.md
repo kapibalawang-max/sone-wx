@@ -127,6 +127,14 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 - 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；样式改 `client.js` 内 WECHAT_CSS（本插件无独立 src，双源合并为单源）。
 
 ## 更新记录
+### v1.46.1
+
+收尾三件事。
+
+- **输入框玻璃让位给 dsh-chat-ux**：两者都接管 `[data-composer-card]` 时，皮肤那层绿色渐变会叠在 chat-ux 的中性淡出带上，输入框上方出现一条绿色阴影。现在皮肤规则加 `:not([data-chat-ux-composer-glass])`：装了 chat-ux 并开启它的毛玻璃时由它接管玻璃，皮肤只保留光标与发送形变这些行为层。
+- **插件元数据本地化**：新增 `locale/zh.json` 与 `locale/en.json`（`meta.title` / `meta.description`），`exports` 与 `files` 同步放开 `./locale/*.json`。此前 Plugins 列表里只能显示裸包名 `sone-wx`。
+- **视觉回归去掉 Python 依赖**：`test/visual.mjs` 原先靠 `python3` + Pillow 比对像素，现在是纯 Node（新增 `test/png.mjs`，自带 PNG 解码与差值）。新增 `test/png-test.mjs` 4 项钉住「pct 是百分比而非比例」这个单位——这个单位写错会让 0.15% 的阈值松 100 倍，真实 15% 漂移照样通过。
+
 ### v1.46.0
 
 全面审查（功能实测 / 样式主题 / 公开仓库合规三路审计）后的集中修复。

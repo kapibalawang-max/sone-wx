@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.46.0",
+  "version": "1.46.1",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
@@ -9,6 +9,8 @@
     ".": "./index.js",
     "./client": "./client.js",
     "./icon": "./icon.svg",
+    "./locale/en.json": "./locale/en.json",
+    "./locale/zh.json": "./locale/zh.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -16,6 +18,7 @@
     "client.js",
     "cordis.patch.yml",
     "icon.svg",
+    "locale",
     "docs",
     "README.md",
     "LICENSE",

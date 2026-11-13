@@ -90,7 +90,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.46.0";
+const SKIN_VERSION = "1.46.1";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -1286,8 +1286,14 @@ body.dsh-wechat-skin-on[data-dsh-wc-reduce-motion="1"] *::after {
 /* ---- composer effects: glass card, sliding caret, send flight ----
    The glass is painted by the card itself (semi-transparent background +
    backdrop-filter). A ::before with z-index:-1 looked right in isolation but
-   disappears inside the real dock, which stacks its own layers. */
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
+   disappears inside the real dock, which stacks its own layers.
+   Another plugin may already own the composer glass (dsh-chat-ux marks the body
+   with data-chat-ux-composer-glass and blurs the card's own ::before). Painting
+   ours on top double-blurs and lays a green wash over its neutral fade band,
+   which reads as a green seam above the input. Yield the surface to whoever
+   claimed it first; the caret and send flight below are behaviour, not paint,
+   so they stay on either way. */
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"]:not([data-chat-ux-composer-glass]) [data-composer-card] {
   background:
     linear-gradient(180deg,
       color-mix(in srgb, #ffffff 26%, transparent),
@@ -1301,7 +1307,7 @@ body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"] [data-composer-card] {
     inset 0 0 0 0.5px var(--wc-border-light),
     0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
-body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"][data-dsh-wechat-dark="1"] [data-composer-card] {
+body.dsh-wechat-skin-on[data-dsh-wc-composer-fx="1"]:not([data-chat-ux-composer-glass])[data-dsh-wechat-dark="1"] [data-composer-card] {
   background:
     linear-gradient(180deg,
       color-mix(in srgb, var(--wc-overlay-dark) 62%, transparent),

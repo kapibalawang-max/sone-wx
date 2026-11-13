@@ -4,11 +4,11 @@
 //   node test/visual.mjs            -> compare
 //   node test/visual.mjs --update   -> rewrite baselines
 import { readFileSync, writeFileSync, existsSync, mkdirSync, mkdtempSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import os from 'node:os'
 import { chromium } from './browser.mjs'
+import { diffPng } from './png.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
@@ -138,23 +138,6 @@ for (const [name, html] of Object.entries(screens)) {
 }
 await browser.close()
 
-const py = `
-import json,sys
-from PIL import Image, ImageChops
-out=[]
-for name,a,b in json.loads(sys.argv[1]):
-    try:
-        A=Image.open(a).convert('RGB'); B=Image.open(b).convert('RGB')
-    except FileNotFoundError:
-        out.append({'name':name,'missing':True}); continue
-    if A.size!=B.size: out.append({'name':name,'size':[A.size,B.size]}); continue
-    d=ImageChops.difference(A,B).convert('L')
-    hist=d.histogram(); total=A.size[0]*A.size[1]
-    changed=sum(hist[7:])
-    out.append({'name':name,'pct':round(100.0*changed/total,3),'max':max(i for i,v in enumerate(hist) if v)})
-print(json.dumps(out))
-`
-
 const pairs = Object.entries(shots).map(([n, f]) => [n, f, join(baseDir, n + '.png')])
 if (update) {
   for (const [, from, to] of pairs) writeFileSync(to, readFileSync(from))
@@ -165,7 +148,7 @@ if (!existsSync(join(baseDir, Object.keys(shots)[0] + '.png'))) {
   console.error('no baseline yet: run `node test/visual.mjs --update` first')
   process.exit(1)
 }
-const res = JSON.parse(execFileSync('python3', ['-c', py, JSON.stringify(pairs)], { encoding: 'utf8' }))
+const res = pairs.map(([name, a, b]) => ({ name, ...diffPng(a, b) }))
 let bad = 0
 for (const r of res) {
   if (r.missing) { console.log(`${r.name}: MISSING baseline`); bad++ ; continue }
