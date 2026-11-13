@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.2";
+const SKIN_VERSION = "1.47.3";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -7628,7 +7628,8 @@ function createSoneIslandsLayer(require, host) {
     const RAIL_CONFIG_KEY = 'dsh-wechat-skin:islands:rail';
     const ACCENT_KEY = 'dsh-wechat-skin:islands:accent';
     const DEFAULT_ACCENT = '#4176e6';
-    const ACCENT_PRESETS = ['#4176e6', '#7c5cff', '#1f9d63', '#e07a2e', '#d94f8a', '#d64545'];
+    // 起点是皮肤自己的强调色（微信绿），其余按色相拉开；换色只走一条令牌链路。
+    const ACCENT_PRESETS = ['#0a7d43', '#1f9d63', '#4176e6', '#7c5cff', '#e07a2e', '#d94f8a'];
     const listeners = new Set();
 
     function readStored() {

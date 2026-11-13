@@ -240,7 +240,8 @@ function createSoneIslandsLayer(require, host) {
     const RAIL_CONFIG_KEY = 'dsh-wechat-skin:islands:rail';
     const ACCENT_KEY = 'dsh-wechat-skin:islands:accent';
     const DEFAULT_ACCENT = '#4176e6';
-    const ACCENT_PRESETS = ['#4176e6', '#7c5cff', '#1f9d63', '#e07a2e', '#d94f8a', '#d64545'];
+    // 起点是皮肤自己的强调色（微信绿），其余按色相拉开；换色只走一条令牌链路。
+    const ACCENT_PRESETS = ['#0a7d43', '#1f9d63', '#4176e6', '#7c5cff', '#e07a2e', '#d94f8a'];
     const listeners = new Set();
 
     function readStored() {

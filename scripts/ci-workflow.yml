@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline:
+    name: Build check + offline suites
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: client.js is built from src/
+        run: node build.mjs --check
+      - name: Syntax check
+        run: |
+          node --check client.js
+          node --check index.js
+          node --check src/js/islands.js
+      - name: Offline suites
+        run: node test/run-offline.mjs
+
+  # The browser suites need a real Chrome and a local DSH install (they read the
+  # host bundle out of app.asar), so they stay a pre-release local gate:
+  #   node test/run-all.mjs
