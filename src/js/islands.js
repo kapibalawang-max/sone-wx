@@ -514,6 +514,34 @@ function createSoneIslandsLayer(require, host) {
      * 选中态、焦点环、链接、图钉、模型药丸与左侧图标栏一起换色，
      * 深浅主题靠 color-mix 与 --wc-ink-1 自适应，无需两套值。
      */
+    /** #rgb / #rrggbb → [r, g, b]。 */
+    function parseHex(hex) {
+      const raw = String(hex || '').replace('#', '').trim();
+      if (raw.length === 3) return raw.split('').map((c) => parseInt(c + c, 16));
+      if (raw.length === 6) return [0, 2, 4].map((i) => parseInt(raw.slice(i, i + 2), 16));
+      return null;
+    }
+
+    function toHex(rgb) {
+      return '#' + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+    }
+
+    /**
+     * 选中态是实心填充，上面压白字。用户挑的强调色未必够深（橙色 #e07a2e 白字只有 3.0:1），
+     * 所以实心色按需要往黑压，直到白字达标；挑中的原色仍作为装饰亮色保留。
+     */
+    function solidForWhiteInk(hex) {
+      const rgb = parseHex(hex);
+      if (rgb === null) return hex;
+      const contrast = (candidate) => {
+        const [hi, lo] = [relativeLuminance(candidate), relativeLuminance('#ffffff')].sort((a, b) => b - a);
+        return (hi + 0.05) / (lo + 0.05);
+      };
+      let mix = 0;
+      while (mix <= 0.6 && contrast(toHex(rgb.map((v) => v * (1 - mix)))) < 4.5) mix += 0.02;
+      return toHex(rgb.map((v) => v * (1 - mix)));
+    }
+
     function applyAccentRamp(color) {
       const body = document.body;
       if (body === null) return;
@@ -522,11 +550,12 @@ function createSoneIslandsLayer(require, host) {
         return;
       }
       const style = body.style;
-      const light = relativeLuminance(color) > 0.42;
+      const solid = solidForWhiteInk(color);
+      const light = relativeLuminance(solid) > 0.42;
       const mixed = (weight, target) => `color-mix(in srgb, ${color} ${weight}%, ${target})`;
-      style.setProperty('--wc-accent-solid', color);
+      style.setProperty('--wc-accent-solid', solid);
       style.setProperty('--wc-accent-bright', color);
-      style.setProperty('--wc-accent-press', mixed(78, '#000'));
+      style.setProperty('--wc-accent-press', `color-mix(in srgb, ${solid} 86%, #000)`);
       style.setProperty('--wc-accent-soft', mixed(10, 'var(--wc-surface)'));
       style.setProperty('--wc-accent-line', mixed(40, 'var(--wc-surface)'));
       style.setProperty('--wc-green', color);

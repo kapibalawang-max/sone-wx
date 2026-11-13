@@ -97,3 +97,26 @@ test('置顶聚合复用同一套头像', () => {
   assert.ok(!/style: \{ backgroundImage: '[^`]*' \+ /.test(pinned), 'style stays an object, never a string concat');
   assert.match(src, /\.isl-pinnedAvatar \{[\s\S]{0,200}?width: 22px/, 'bridge styles the avatar tile');
 });
+
+test('强调色实心色保证白字对比度', () => {
+  assert.match(src, /function solidForWhiteInk\(hex\)/, 'darkens the fill for white ink');
+  assert.match(src, /style\.setProperty\('--wc-accent-solid', solid\)/, 'selection fill uses the darkened colour');
+  assert.match(src, /style\.setProperty\('--wc-accent-bright', color\)/, 'decorative bright keeps the picked colour');
+  // 在沙箱里跑一遍取色函数，逐格核对白字对比度
+  const fn = src.slice(src.indexOf('function parseHex'), src.indexOf('function applyAccentRamp'));
+  const sandbox = { relativeLuminance: null };
+  sandbox.relativeLuminance = (hex) => {
+    const n = String(hex).replace('#', '');
+    const c = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16) / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const run = new Function('relativeLuminance', fn + '; return { solidForWhiteInk };');
+  const { solidForWhiteInk } = run(sandbox.relativeLuminance);
+  for (const preset of ['#0a7d43', '#1f9d63', '#4176e6', '#7c5cff', '#e07a2e', '#d94f8a']) {
+    const solid = solidForWhiteInk(preset);
+    const [hi, lo] = [sandbox.relativeLuminance(solid), 1].sort((a, b) => b - a);
+    const ratio = (hi + 0.05) / (lo + 0.05);
+    assert.ok(ratio >= 4.5, preset + ' -> ' + solid + ' white ink ' + ratio.toFixed(2) + ':1');
+  }
+});
