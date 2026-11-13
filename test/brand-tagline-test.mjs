@@ -110,9 +110,13 @@ check(src.includes("post({ heroTagline: tagline[0].trim() })"), 'saveTagline pos
 check(src.includes("post({ title: '', wordmarkImage: false, heroMark: true, heroTagline: '' })"), 'resetBrand heroTagline missing');
 check(src.includes("tagline: '新会话标语'") && src.includes("tagline: 'New-session tagline'"), 'TEXT tagline keys missing');
 check(src.includes('maxLength: MAX_TAGLINE'), 'tagline input maxLength missing');
-check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after'), 'tagline CSS ::after rule missing');
-check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {'), 'tagline CSS hide rule missing');
-check(src.includes('font-size: 0 !important;\n  display: flex;\n  align-items: center;'), 'title span must be flex-centered so the slogan aligns with the mark');
+check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"]::before'), 'tagline renders on the title group, not on the hidden span');
+check(src.includes('[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {\n  display: none !important;\n}'), 'official title must leave the render tree entirely');
+// font-size:0 kept the official text in the accessibility tree and in copy/paste,
+// so a screen reader read both strings and selecting the headline yielded the wrong one.
+check(!src.includes('font-size: 0 !important'), 'must not hide the title with font-size:0');
+check(src.includes('display: flex;\n  align-items: center;\n  font-size: var(--wc-hero-size);'), 'tagline is flex-centered against the mark and follows the type scale');
+check(src.includes('--wc-hero-size: clamp('), 'hero size is a token, not a fifth fixed font step');
 check(src.includes("body.setAttribute('data-dsh-wc-tagline-set', '1')"), 'applyHeroTagline does not set the body switch');
 check(src.includes("document.body.removeAttribute('data-dsh-wc-tagline-set')"), 'applyHeroTagline does not clear the body switch');
 check(src.includes('var(--dsh-wc-hero-tagline, none)'), 'tagline CSS var fallback missing');

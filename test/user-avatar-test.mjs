@@ -1,7 +1,6 @@
 // My-avatar toggle: browser-level computed-style assertions on the real CSS.
 import { writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import { chromium } from './browser.mjs';
 const row = `<div class="tnXGgG_flowItem" data-chat-flow-kind="user"><div class="AkCqbG_userRow"><p>我发的消息</p></div></div>
 <div class="tnXGgG_column"><div class="_bubble_x"><p>气泡内容</p></div></div>`;
 const bubbleClone = (a) => a;
@@ -13,12 +12,15 @@ const bubble=getComputedStyle(document.querySelector('._bubble_x'),'::before');d
 </script></body></html>`;
 let pass=0,fail=0;
 const ok=(c,n)=>{ if(c){pass++;} else {fail++; console.log('FAIL',n);} };
-const read=(attr)=>{
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:800,height:600}});
+const read=async(attr)=>{
   const f=`/tmp/user-avatar-${attr}.html`; writeFileSync(f,html(attr));
-  const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom',`file://${f}`],{encoding:'utf8'});
-  return JSON.parse(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"'));
+  await page.goto(`file://${f}`);
+  return JSON.parse(await page.evaluate(()=>document.title));
 };
-const on=read('1'), off=read('0');
+const on=await read('1'), off=await read('0');
+await browser.close();
 ok(on.afterContent!=='none','avatar shown when enabled (::after present)');
 ok(on.afterWidth==='34px','avatar is 34px wide');
 ok(on.radius==='6px','avatar uses 6px radius');

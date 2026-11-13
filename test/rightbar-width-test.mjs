@@ -23,10 +23,21 @@ function loadWidthRegion(opts = {}) {
     removeEventListener(type, fn, cap) { delete listeners.doc[type + ':' + (cap ? 'cap' : 'bub')] },
     body: {}
   }
+  const session = {}
+  const legacy = {}
   const win = {
     innerWidth: opts.innerWidth || 1280,
     addEventListener(type, fn) { listeners.win[type] = fn },
-    removeEventListener(type) { delete listeners.win[type] }
+    removeEventListener(type) { delete listeners.win[type] },
+    sessionStorage: {
+      getItem: (k) => (k in session ? session[k] : null),
+      setItem: (k, v) => { session[k] = String(v) },
+      removeItem: (k) => { delete session[k] }
+    },
+    localStorage: {
+      getItem: (k) => (k in legacy ? legacy[k] : null),
+      removeItem: (k) => { delete legacy[k] }
+    }
   }
   const sandbox = {
     document: doc,
@@ -38,9 +49,9 @@ function loadWidthRegion(opts = {}) {
     writeJson: (k, v) => { store[k] = v }
   }
   vm.createContext(sandbox)
-  vm.runInContext(region + '; globalThis.__api = { RIGHTBAR_TOUCHED_KEY, RIGHTBAR_WIDTH_RATIO, rightbarTouched, applyRightbarDefault, initRightbarWidth };', sandbox, { filename: 'rightbar-width-region.js' })
+  vm.runInContext(region + '; globalThis.__api = { RIGHTBAR_TOUCHED_KEY, RIGHTBAR_WIDTH_RATIO, rightbarTouched, markRightbarTouched, clearRightbarTouched, applyRightbarDefault, initRightbarWidth };', sandbox, { filename: 'rightbar-width-region.js' })
   const ctx = { get: (name) => (name === 'layout' ? services.layout : null) }
-  return { api: sandbox.__api, store, calls, listeners, services, ctx }
+  return { api: sandbox.__api, store, session, legacy, calls, listeners, services, ctx }
 }
 
 test('applies 35% of the viewport when untouched', () => {
@@ -51,8 +62,8 @@ test('applies 35% of the viewport when untouched', () => {
 })
 
 test('never overrides after the user touched the handle', () => {
-  const { api, store, calls } = loadWidthRegion()
-  store['dsh-wechat-skin:rightbar-touched'] = true
+  const { api, session, calls } = loadWidthRegion()
+  session['dsh-wechat-skin:rightbar-touched'] = '1'
   assert.equal(api.rightbarTouched(), true)
   assert.equal(api.applyRightbarDefault({ panels: { setRightbar: (px) => calls.push(px) } }), false)
   assert.equal(JSON.stringify(calls), '[]')
@@ -74,13 +85,13 @@ test('retries until the layout service shows up, then applies', () => {
 })
 
 test('pointerdown on the rightbar handle marks touched; resize then keeps hands off', () => {
-  const { api, store, calls, listeners } = loadWidthRegion()
+  const { api, session, calls, listeners } = loadWidthRegion()
   const ctl = api.initRightbarWidth({ get: () => ({ panels: { setRightbar: (px) => calls.push(px) } }) })
   assert.equal(JSON.stringify(calls), '[448]') // initial apply
   const touch = listeners.doc['pointerdown:cap']
   assert.equal(typeof touch, 'function', 'capture pointerdown listener registered')
   touch({ target: { closest: (sel) => (sel === '.PIRFFq_handle[data-side="rightbar"]' ? {} : null) } })
-  assert.equal(store['dsh-wechat-skin:rightbar-touched'], true)
+  assert.equal(session['dsh-wechat-skin:rightbar-touched'], '1')
   calls.length = 0
   listeners.win.resize()
   assert.equal(JSON.stringify(calls), '[]', 'no re-apply after touch')
@@ -104,6 +115,35 @@ test('dispose removes listeners', () => {
   assert.equal(Object.keys(fresh.listeners.win).length, 0, 'window listeners cleaned')
 })
 
+test('touched is per-window and reset clears both the new and the legacy flag', () => {
+  const { api, session, legacy, calls, ctx } = loadWidthRegion()
+  legacy['dsh-wechat-skin:rightbar-touched'] = 'true' // pre-1.46永久标记
+  api.markRightbarTouched()
+  assert.equal(api.rightbarTouched(), true)
+  assert.equal(api.applyRightbarDefault({ panels: { setRightbar: (px) => calls.push(px) } }), false)
+  api.clearRightbarTouched()
+  assert.equal(api.rightbarTouched(), false)
+  assert.equal(session['dsh-wechat-skin:rightbar-touched'], undefined)
+  assert.equal(legacy['dsh-wechat-skin:rightbar-touched'], undefined, 'upgrading users are not stuck')
+  calls.length = 0
+  const ctl = api.initRightbarWidth(ctx)
+  assert.equal(JSON.stringify(calls), '[448]', 'default applies again after reset')
+  ctl.dispose()
+})
+
+test('reapply restores the default without a reload', () => {
+  const { api, calls, ctx } = loadWidthRegion()
+  const ctl = api.initRightbarWidth(ctx)
+  calls.length = 0
+  api.markRightbarTouched()
+  ctl.reapply()
+  assert.equal(JSON.stringify(calls), '[]', 'still respects a touched handle')
+  api.clearRightbarTouched()
+  ctl.reapply()
+  assert.equal(JSON.stringify(calls), '[448]')
+  ctl.dispose()
+})
+
 test('wiring: region, applySkin init, cleanup dispose, key and ratio', () => {
   assert.ok(src.includes("const RIGHTBAR_TOUCHED_KEY = \"dsh-wechat-skin:rightbar-touched\";"))
   assert.ok(src.includes('const RIGHTBAR_WIDTH_RATIO = 0.35;'))
@@ -111,4 +151,8 @@ test('wiring: region, applySkin init, cleanup dispose, key and ratio', () => {
   assert.ok(src.includes('try { rightbarWidthCtl = initRightbarWidth(ctx); } catch (e) { rightbarWidthCtl = null; }'))
   assert.ok(src.includes('if (rightbarWidthCtl) rightbarWidthCtl.dispose();'))
   assert.ok(src.includes(".PIRFFq_handle[data-side=\"rightbar\"]"))
+  assert.ok(src.includes('window.sessionStorage.getItem(RIGHTBAR_TOUCHED_KEY)'), 'touched is per-window, not permanent')
+  assert.ok(src.includes('window.localStorage.removeItem(RIGHTBAR_TOUCHED_KEY)'), 'legacy flag is migrated away')
+  assert.ok(/removeItem\(STAR_KEY\);[\s\S]{0,2200}clearRightbarTouched\(\);/.test(src), 'resetSkin clears the touched flag')
+  assert.ok(src.includes('if (rightbarWidthCtl) rightbarWidthCtl.reapply();'), 'resetSkin re-applies immediately')
 })

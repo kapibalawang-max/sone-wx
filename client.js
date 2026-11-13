@@ -32,6 +32,8 @@ window.__ModuleLoader__.load({
 		Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 		let react_jsx_runtime = require("react/jsx-runtime");
 		let _react = require("react");
+		let _reactDom = null;
+		try { _reactDom = require("react-dom"); } catch (e) { _reactDom = null; }
 		let _runtime_client = require("@deepseek-ai/dsh-client-store");
 
 		//#region dsh-wechat-skin: constants
@@ -88,7 +90,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.45.2";
+const SKIN_VERSION = "1.46.0";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -217,12 +219,16 @@ const SKIN_VERSION = "1.45.2";
      One hue per meaning. Amber belongs to warnings only, which is why the chat
      avatar no longer uses a saturated orange next to it. */
   --wc-dot-warning: #d97706;
+  --wc-star-ink: #ab6400;            /* amber11: 3.77:1 on the slate4 sidebar */
+  --wc-hero-size: clamp(22px, calc(26px * var(--dsh-wechat-font-scale, 1)), 31px);
   --wc-dot-error: #dc2626;
   --wc-danger: #b42318;
   --wc-danger-hover: #991b1b;
   --wc-stop: #e5484d;
   --wc-stop-hover: #d13438;
   --wc-sched-badge: #3b82f6;
+  --wc-sched-badge-dark: #7db8ff;   /* same hue lifted for the dark sidebar */
+  --wc-sched-ink-on-sel: #1d6fe0;  /* badge ink when the row carries the green selected fill */
   --wc-avatar-user-a: #f7f0e8;
   --wc-avatar-user-b: #a08256;
 
@@ -295,6 +301,7 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] {
                                         into the host's layer2 (old delta 0.5) */
   --wc-btn-idle-bg: #272a2d;
   --wc-caret-ink: #f5f5f6;           /* caret stays visible on dark canvas */
+  --wc-star-ink: #ffc53d;            /* amber9 reads at 11.15:1 on the dark sidebar */
   --wc-count-bg: #2a2d31;            /* one step above the dark sidebar */
   --wc-count-ink: #c3c8ce;
   /* Despite the legacy name this token means "the hairline for the current
@@ -319,6 +326,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"]:not([data-dsh-wechat-dar
   --wc-accent-line: #cdd8b4;
   --wc-accent-solid: #55703f;
   --wc-accent-press: #4a6337;
+  --wc-accent-bright: #6b8f45;      /* moss, not the cold wechat green: 3.66:1 on sand1 */
+  --wc-star-ink: #8a6100;            /* warm amber, 4.52:1 on the sand4 sidebar */
   --wc-bg: #fdfdfc;                  /* sand1 */
   --wc-bubble-bg: #f1ede2;           /* warm sand bubble on the near-white paper canvas */
   --wc-surface: #f9f9f8;             /* sand2 */
@@ -480,10 +489,10 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow [data-session-schedule-mark] > span {
   display: none;
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow [data-session-schedule-mark] {
-  background: var(--wc-sidebar-dark); color: #7db8ff; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+  background: var(--wc-sidebar-dark); color: var(--wc-sched-badge-dark); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_slot [data-session-schedule-mark] {
-  background: #ffffff; color: #1d6fe0; box-shadow: 0 0 0 1px #ffffff;
+  background: #ffffff; color: var(--wc-sched-ink-on-sel); box-shadow: 0 0 0 1px #ffffff;
 }
 
 /* session status rides as a corner badge on the avatar, never as a mark over the initial */
@@ -550,6 +559,13 @@ body.dsh-wechat-skin-on .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pin
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pinIndicator) {
   background: color-mix(in srgb, var(--wc-green, #07c160) 13%, var(--wc-sidebar-dark));
+}
+/* paper keeps its own moss tint instead of a cold green wash on warm sand */
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"] .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pinIndicator) {
+  background: color-mix(in srgb, var(--wc-accent-soft) 62%, var(--wc-sidebar));
+}
+body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"] .JoiKIa_sessionRow:not(.JoiKIa_selected):has(.JoiKIa_pinIndicator) {
+  background: color-mix(in srgb, var(--wc-accent-soft) 70%, var(--wc-sidebar-dark));
 }
 /* the pin has to follow the row's own ink, or it vanishes on the green selected fill */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow.JoiKIa_selected .JoiKIa_pinIndicator { color: var(--wc-sel-ink); }
@@ -715,12 +731,12 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card {
 }
 /* focus ring while composing */
 body.dsh-wechat-skin-on .JZLxKW_card:focus-within {
-  border-color: rgba(7, 193, 96, 0.55);
-  box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.12), 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-color: color-mix(in srgb, var(--wc-green) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wc-green) 12%, transparent), 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_card:focus-within {
-  border-color: rgba(7, 193, 96, 0.6);
-  box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.16), 0 8px 22px rgba(0, 0, 0, 0.4);
+  border-color: color-mix(in srgb, var(--wc-green) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--wc-green) 16%, transparent), 0 8px 22px rgba(0, 0, 0, 0.4);
 }
 /* drag grip hint on the top edge: hover to see it, drag or double-click to reset */
 /* align input, placeholder and the toolbar to one 12px gutter */
@@ -764,17 +780,17 @@ body.dsh-wechat-skin-on .JZLxKW_select option {
   color: var(--dsw-alias-label-primary, #1a1a1a);
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select {
-  background-color: rgba(7, 193, 96, 0.18);
+  background-color: color-mix(in srgb, var(--wc-green) 18%, transparent);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'%3E%3Cpath d='M2.2 3.9L5 6.7L7.8 3.9' stroke='%237EE2A8' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  color: #7ee2a8;
+  color: var(--wc-brand-text);
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select:hover:not(:disabled) {
-  background-color: rgba(7, 193, 96, 0.28);
-  color: #a7f0c6;
+  background-color: color-mix(in srgb, var(--wc-green) 28%, transparent);
+  color: var(--wc-link-hover);
 }
 body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .JZLxKW_select option {
   background: var(--wc-sidebar-dark);
-  color: #f2f2f3;
+  color: var(--wc-ink-1);
 }
 /* send: small green circle with the native arrow icon, no text label */
 body.dsh-wechat-skin-on .JZLxKW_primary {
@@ -800,7 +816,7 @@ body.dsh-wechat-skin-on .JZLxKW_primary[data-sending] { background: var(--wc-bra
 /* thin scrollbar + soft fade for long drafts */
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar { width: 6px; }
 body.dsh-wechat-skin-on .JZLxKW_scroll::-webkit-scrollbar-thumb {
-  background: var(--dsw-alias-scrollbar-bg-l2); border-radius: 3px;
+  background: var(--dsw-alias-scrollbar-bg-l2); border-radius: var(--wc-radius-xs);
 }
 body.dsh-wechat-skin-on .JZLxKW_scroll[data-dsh-fade="both"] {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 12px), transparent 100%);
@@ -953,7 +969,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="turn-process"] { margin: 2px 0 6px
 body.dsh-wechat-skin-on .UHhYua_root { border-radius: var(--wc-radius-bubble); }
 body.dsh-wechat-skin-on .UHhYua_row {
   padding: 3px 6px; border-radius: var(--wc-radius-bubble); font-size: var(--wc-fs-sm);
-  color: var(--dsw-alias-label-secondary, #666); transition: background-color .15s ease-out;
+  color: var(--dsw-alias-label-secondary, #666); transition: background-color 250ms ease-out;
 }
 body.dsh-wechat-skin-on .UHhYua_row:hover { background: var(--dsw-alias-interactive-bg-hover); }
 body.dsh-wechat-skin-on .UHhYua_title { font-weight: 500; color: var(--dsw-alias-label-primary, #1b1b1c); }
@@ -1024,7 +1040,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] input[type="check
 /* Links: colour alone at rest, underline on hover (WeChat does not underline links). */
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a {
   color: var(--wc-link); text-decoration: none; text-underline-offset: 2px; text-decoration-thickness: 0.5px;
-  border-radius: 3px; transition: color 250ms ease-out;
+  border-radius: var(--wc-radius-xs); transition: color 250ms ease-out;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:hover { color: var(--wc-link-hover); text-decoration: underline; }
 body.dsh-wechat-skin-on [data-chat-flow-kind="assistant-step"] a:focus-visible { outline: 2px solid color-mix(in srgb, var(--wc-green) 45%, transparent); outline-offset: 2px; }
@@ -1173,7 +1189,7 @@ body.dsh-wechat-skin-on .JoiKIa_chevron { color: var(--wc-ink-3); }
 body.dsh-wechat-skin-on .ZITbJG_actions { gap: 2px; }
 body.dsh-wechat-skin-on .ZITbJG_action {
   width: 24px; height: 24px; border-radius: var(--wc-radius-sm);
-  color: var(--wc-ink-3); transition: background-color .15s ease-out, color .15s ease-out;
+  color: var(--wc-ink-3); transition: background-color 250ms ease-out, color 250ms ease-out;
 }
 body.dsh-wechat-skin-on .ZITbJG_action:hover { background: var(--wc-hover); color: var(--dsw-alias-label-primary, #1b1b1c); }
 body.dsh-wechat-skin-on .ZITbJG_endInfo { font-size: var(--wc-fs-sm); color: var(--wc-ink-3); }
@@ -1186,7 +1202,7 @@ body.dsh-wechat-skin-on ._toast_af3m1_6 {
 
 /* Running / streaming group label. */
 body.dsh-wechat-skin-on .r52wTW_label { font-size: var(--wc-fs-sm); color: var(--dsw-alias-label-secondary, #666); display: inline-flex; align-items: center; gap: 6px; }
-body.dsh-wechat-skin-on .r52wTW_label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--wc-dot-warning); box-shadow: 0 0 0 2px rgba(255,197,61,0.25); animation: dsh-wc-pulse 1.2s ease-in-out infinite; }
+body.dsh-wechat-skin-on .r52wTW_label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--wc-dot-warning); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wc-dot-warning) 25%, transparent); animation: dsh-wc-pulse 1.2s ease-in-out infinite; }
 @keyframes dsh-wc-pulse { 0%,100%{ transform:scale(1); opacity:1 } 50%{ transform:scale(0.7); opacity:0.6 } }
 
 /* Paper preset, dark flavour: a full warm-charcoal ladder plus the moss accent.
@@ -1206,6 +1222,8 @@ body.dsh-wechat-skin-on[data-dsh-wechat-preset="paper"][data-dsh-wechat-dark="1"
   --wc-th-bg: #242019;
   --wc-btn-idle-bg: #242019;
   --wc-caret-ink: #efece6;           /* warm dark canvas caret */
+  --wc-accent-bright: #9dbf6e;      /* moss bright for the warm dark canvas */
+  --wc-star-ink: #ffc53d;
   --wc-ink-1: #efece6;              /* 14.55 / 8.23 / 6.22 on the card */
   --wc-ink-2: #b9b3a8;
   --wc-ink-3: #a29b8f;
@@ -1229,8 +1247,7 @@ body.dsh-wechat-skin-on [data-chat-flow-kind] img:not([class*="avatar"]):not([da
   border-radius: var(--wc-radius-card); border: 0.5px solid var(--wc-border-light); max-width: 100%;
 }
 body.dsh-wechat-skin-on [data-chat-flow-kind] [class*="fileCard"],
-body.dsh-wechat-skin-on [data-chat-flow-kind] [class*="attachment"],
-body.dsh-wechat-skin-on [data-chat-flow-kind] [class*="_file_"] {
+body.dsh-wechat-skin-on [data-chat-flow-kind] [class*="attachment"] {
   border-radius: var(--wc-radius-bubble); border: 0.5px solid var(--wc-border-light); background: var(--wc-code-bg);
 }
 /* 4. 用户引用回复块 */
@@ -1311,16 +1328,17 @@ body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-caret { background: va
 }
 /* 新会话页自定义标语：直接替换 hero 标题文字。值在 body 变量
    --dsh-wc-hero-tagline（JSON 字符串），开关是 body 的 data-dsh-wc-tagline-set。
-   官方标题 span（无类名）font-size 归零后由其 ::after 以原标题字号渲染标语；
-   未设置时开关不存在，官方标题原样显示 */
+   官方标题 span 用 display:none 整段移出渲染树与无障碍树——font-size:0 会让读屏
+   把官方标题和自定义标语念两遍，且选中复制拿到的仍是官方原文。
+   标语改由父级 ::before 承载；未设置时开关不存在，官方标题原样显示。 */
 body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class]) {
-  font-size: 0 !important;
+  display: none !important;
+}
+body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"]::before {
+  content: var(--dsh-wc-hero-tagline, none);
   display: flex;
   align-items: center;
-}
-body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > span:not([class])::after {
-  content: var(--dsh-wc-hero-tagline, none);
-  font-size: 26px;
+  font-size: var(--wc-hero-size);
   line-height: 1.25;
   font-weight: 500;
   color: var(--wc-ink-1, #1c2024);
@@ -1331,13 +1349,19 @@ body.dsh-wechat-skin-on[data-dsh-wc-tagline-set="1"] [class*="_titleGroup"] > sp
 body.dsh-wechat-skin-on [class*="_headline"] [class*="_previewBadge"] {
   display: none !important;
 }
-/* 会话星标：分组内视觉置顶 + 行侧星形按钮（sone-wx 本地能力，不改宿主数据） */
-body.dsh-wechat-skin-on .Kjh-qa_groupSection { display: flex; flex-direction: column; }
-body.dsh-wechat-skin-on .Kjh-qa_groupSection > span:has(> .JoiKIa_sessionRow[data-dsh-wc-star="1"]) { order: -1; }
+/* 会话星标：只做行内标记，不重排。
+   宿主的拖拽落点按视觉矩形判定、却按数据序写回，任何 CSS 重排都会让拖拽静默错位，
+   所以这里不改 .Kjh-qa_groupSection 的 display，也不用 order。 */
 body.dsh-wechat-skin-on .JoiKIa_sessionRow { position: relative; }
-body.dsh-wechat-skin-on .dsh-wc-star-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary, #81858c); opacity: 0; transition: opacity 250ms ease-out; cursor: pointer; z-index: 3; }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow:hover .dsh-wc-star-btn, body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn { opacity: 1; }
-body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn { color: #ffc53d; }
+/* 给星标让出右侧 26px：宿主动作簇（…/归档/置顶）整体左移，避免星标压住「置顶」并吞掉点击。
+   静止态 rowActions 是 display:none，这条不占位。 */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow .JoiKIa_rowActions { margin-right: 26px; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .JoiKIa_timestamp { margin-right: 26px; }
+body.dsh-wechat-skin-on .dsh-wc-star-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; color: var(--wc-ink-3, #60646c); opacity: 0; transition: opacity 250ms ease-out; cursor: pointer; z-index: 3; }
+body.dsh-wechat-skin-on .JoiKIa_sessionRow:hover .dsh-wc-star-btn, body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn, body.dsh-wechat-skin-on .dsh-wc-star-btn:focus-visible { opacity: 1; }
+body.dsh-wechat-skin-on .dsh-wc-star-btn:focus-visible { outline: 2px solid var(--wc-green, #07c160); outline-offset: -2px; border-radius: var(--wc-radius-xs, 4px); }
+/* 浅色侧栏上 amber9 只有 1.29:1，改用 amber12 深琥珀；深色底仍用亮琥珀。 */
+body.dsh-wechat-skin-on .JoiKIa_sessionRow[data-dsh-wc-star="1"] .dsh-wc-star-btn { color: var(--wc-star-ink); }
 `;
 
 				/** Settings-row button styles: injected even when the skin is off, so the row keeps hover/active/disabled feedback. */
@@ -1475,7 +1499,7 @@ body .dsh-wc-btn:focus-visible,
 body .dsh-wc-switch:focus-visible,
 body .dsh-wc-swatch:focus-visible,
 body .dsh-wc-color:focus-visible {
-	outline: 2px solid rgba(7, 193, 96, 0.5);
+	outline: 2px solid color-mix(in srgb, var(--wc-green, #07c160) 50%, transparent);
 	outline-offset: 2px;
 }
 body .dsh-wc-btn[disabled] {
@@ -1527,8 +1551,8 @@ body .dsh-wc-panel-ghost * {
 }
 body .dsh-wc-panel-placeholder {
 	border-radius: var(--wc-radius-md);
-	background: rgba(7, 193, 96, 0.1);
-	box-shadow: inset 0 0 0 1px rgba(7, 193, 96, 0.35);
+	background: color-mix(in srgb, var(--wc-green, #07c160) 10%, transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wc-green, #07c160) 35%, transparent);
 }
 body .dsh-wc-color {
 	width: 44px;
@@ -1541,10 +1565,17 @@ body .dsh-wc-color {
 }
 /* share-code modal */
 body .dsh-wc-modal-mask { position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
-body .dsh-wc-modal { width: min(520px, calc(100vw - 48px)); max-height: 80vh; overflow: auto; background: var(--dsw-alias-bg-base, #ffffff); border-radius: var(--wc-radius-card, 12px); padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 10px; }
+body .dsh-wc-modal { width: min(520px, calc(100vw - 48px)); max-height: 80vh; overflow: auto; background: var(--wc-surface, #f9f9fb); border-radius: var(--wc-radius-card, 12px); padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; gap: 10px; }
 body .dsh-wc-modal-title { font-size: var(--wc-fs-md, 13px); font-weight: 600; color: var(--dsw-alias-label-primary, #1c2024); }
 body .dsh-wc-modal-desc { font-size: var(--wc-fs-sm, 12px); line-height: 1.55; color: var(--dsw-alias-label-secondary, #61666b); }
-body .dsh-wc-modal textarea { width: 100%; box-sizing: border-box; min-height: 88px; resize: vertical; border: 0.5px solid var(--dsw-alias-border-l2, #d9d9e0); border-radius: var(--wc-radius-btn, 8px); padding: 8px 10px; font: var(--wc-fs-sm, 12px)/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--dsw-alias-label-primary, #1c2024); background: var(--dsw-alias-bg-layer-2, #f7f7f8); }
+body .dsh-wc-modal textarea { width: 100%; box-sizing: border-box; min-height: 88px; resize: vertical; border: 0.5px solid var(--wc-border-light, #d9d9e0); border-radius: var(--wc-radius-btn, 8px); padding: 8px 10px; font: var(--wc-fs-sm, 12px)/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--wc-ink-1, #1c2024); background: var(--wc-code-bg, #e8e8ec); }
+/* the dialog is an overlay, so it sits one rung above the canvas in both dark themes */
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-modal { background: var(--wc-surface-dark, #212225); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-modal textarea { border-color: var(--wc-border-dark); color: var(--wc-ink-1); background: var(--wc-code-bg); }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-modal-title { color: var(--wc-ink-1); }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-modal-desc { color: var(--wc-ink-2); }
+body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .dsh-wc-modal-divider { background: var(--wc-border-dark); }
+body .dsh-wc-modal-error { font-size: var(--wc-fs-sm, 12px); line-height: 1.5; color: var(--wc-danger, #b42318); }
 body .dsh-wc-modal-divider { height: 0.5px; background: var(--dsw-alias-border-l2, #d9d9e0); }
 		`;
 
@@ -2390,8 +2421,10 @@ function initGroupCounts(ctx) {
 				const key = row ? (row.getAttribute("data-row-key") || "") : "";
 				const sessionId = key.indexOf("session:") === 0 ? key.slice("session:".length) : "";
 				if (!sessionId || sessionId === lastSessionId) return;
-				lastSessionId = sessionId;
+				// Check the preference BEFORE remembering the session: otherwise turning
+				// the switch on while already inside a session never fires for it.
 				if (readJson(RIGHTBAR_AUTO_KEY, false) !== true) return;
+				lastSessionId = sessionId;
 				stop();
 				attempt();
 			};
@@ -2401,9 +2434,28 @@ function initGroupCounts(ctx) {
 
 		//#region dsh-wechat-skin: session stars
 		const STAR_KEY = "dsh-wechat-skin:starred";
-		function readStars() { return readJson(STAR_KEY, []); }
-		function writeStars(list) { writeJson(STAR_KEY, list); }
-		function isStarred(key) { return readStars().indexOf(key) >= 0; }
+		/** Bounded so a long-lived profile cannot grow this without limit. */
+		const STAR_LIMIT = 500;
+		/**
+		 * Local bilingual label: this region runs outside the settings closure that
+		 * owns t(), and the host locale service may not be up yet at first stamp.
+		 */
+		function starText(zh, en) {
+			let lang = "";
+			try { lang = String(document.documentElement.lang || navigator.language || "zh"); } catch (e) { lang = "zh"; }
+			return lang.toLowerCase().indexOf("zh") === 0 ? zh : en;
+		}
+		function readStars() {
+			const raw = readJson(STAR_KEY, []);
+			if (!Array.isArray(raw)) return [];
+			const seen = [];
+			for (const item of raw) {
+				if (typeof item !== "string" || !item) continue;
+				if (seen.indexOf(item) < 0) seen.push(item);
+			}
+			return seen.slice(0, STAR_LIMIT);
+		}
+		function writeStars(list) { writeJson(STAR_KEY, list.slice(0, STAR_LIMIT)); }
 		function toggleStars(key) {
 			const list = readStars();
 			const at = list.indexOf(key);
@@ -2420,11 +2472,13 @@ function initGroupCounts(ctx) {
 				btn = document.createElement("button");
 				btn.type = "button";
 				btn.className = "dsh-wc-star-btn";
-				btn.setAttribute("aria-label", "Toggle star");
+				btn.setAttribute("aria-label", starText("切换星标", "Toggle star"));
+				btn.setAttribute("aria-pressed", "false");
 				btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2.6l2.9 6.1 6.5.8-4.8 4.6 1.2 6.5-5.8-3.2-5.8 3.2 1.2-6.5-4.8-4.6 6.5-.8z"/></svg>';
 				title.insertAdjacentElement("afterend", btn);
 			}
 			if (btn.getAttribute("data-star-key") !== key) btn.setAttribute("data-star-key", key);
+			return btn;
 		}
 		function stampStars() {
 			let rows = [];
@@ -2433,10 +2487,21 @@ function initGroupCounts(ctx) {
 			for (const row of rows) {
 				const key = row.getAttribute("data-row-key") || "";
 				if (!key) continue;
-				if (stars.indexOf(key) >= 0) row.setAttribute("data-dsh-wc-star", "1");
+				const on = stars.indexOf(key) >= 0;
+				if (on) row.setAttribute("data-dsh-wc-star", "1");
 				else row.removeAttribute("data-dsh-wc-star");
-				ensureStarButton(row, key);
+				const btn = ensureStarButton(row, key);
+				if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
 			}
+		}
+		/** Drop every injected node and marker; the skin's CSS is gone by then. */
+		function unstampStars() {
+			let nodes = [];
+			try { nodes = Array.prototype.slice.call(document.querySelectorAll(".dsh-wc-star-btn")); } catch (e) { return; }
+			for (const node of nodes) { if (node.parentNode) node.parentNode.removeChild(node); }
+			let rows = [];
+			try { rows = Array.prototype.slice.call(document.querySelectorAll("[data-dsh-wc-star]")); } catch (e) { return; }
+			for (const row of rows) row.removeAttribute("data-dsh-wc-star");
 		}
 		function onStarClick(event) {
 			const btn = event.target && event.target.closest ? event.target.closest(".dsh-wc-star-btn") : null;
@@ -2451,7 +2516,13 @@ function initGroupCounts(ctx) {
 		function initSessionStars() {
 			document.addEventListener("click", onStarClick, true);
 			stampStars();
-			return { stamp: stampStars, dispose() { document.removeEventListener("click", onStarClick, true); } };
+			return {
+				stamp: stampStars,
+				dispose() {
+					document.removeEventListener("click", onStarClick, true);
+					unstampStars();
+				}
+			};
 		}
 		//#endregion
 
@@ -2464,7 +2535,23 @@ function initGroupCounts(ctx) {
 		 */
 		const RIGHTBAR_TOUCHED_KEY = "dsh-wechat-skin:rightbar-touched";
 		const RIGHTBAR_WIDTH_RATIO = 0.35;
-		function rightbarTouched() { return readJson(RIGHTBAR_TOUCHED_KEY, false) === true; }
+		/**
+		 * sessionStorage, not localStorage: the host does not persist the right-panel
+		 * width at all (layoutInfo.rightbar starts null every launch), so a permanent
+		 * "touched" flag would disable the 35% default forever with no way back.
+		 * Per-window means a fresh launch gets the default again, and resetSkin clears it.
+		 */
+		function rightbarTouched() {
+			try { return window.sessionStorage.getItem(RIGHTBAR_TOUCHED_KEY) === "1"; } catch (e) { return false; }
+		}
+		function markRightbarTouched() {
+			try { window.sessionStorage.setItem(RIGHTBAR_TOUCHED_KEY, "1"); } catch (e) {}
+		}
+		function clearRightbarTouched() {
+			try { window.sessionStorage.removeItem(RIGHTBAR_TOUCHED_KEY); } catch (e) {}
+			// Drop the pre-1.46 localStorage flag too, so upgrading users are not stuck.
+			try { window.localStorage.removeItem(RIGHTBAR_TOUCHED_KEY); } catch (e) {}
+		}
 		function applyRightbarDefault(layout) {
 			if (rightbarTouched()) return false;
 			if (!layout || !layout.panels || typeof layout.panels.setRightbar !== "function") return false;
@@ -2493,13 +2580,14 @@ function initGroupCounts(ctx) {
 			const onTouch = (event) => {
 				const el = event.target && event.target.closest ? event.target.closest('.PIRFFq_handle[data-side="rightbar"]') : null;
 				if (!el) return;
-				writeJson(RIGHTBAR_TOUCHED_KEY, true);
+				markRightbarTouched();
 				document.removeEventListener("pointerdown", onTouch, true);
 			};
 			document.addEventListener("pointerdown", onTouch, true);
 			window.addEventListener("resize", onResize);
 			attempt();
 			return {
+				reapply() { if (layout) applyRightbarDefault(layout); else attempt(); },
 				dispose() {
 					stop();
 					document.removeEventListener("pointerdown", onTouch, true);
@@ -3037,6 +3125,16 @@ return { setEnabled, dispose };
 /** Share code: a compact, copyable encoding of the skin-only appearance
  * settings. Excludes avatar images (large data URLs), the sidebar order
  * (personal session ids) and legacy keys, so codes stay short and private. */
+/**
+ * Render the share dialog on body when react-dom is reachable, so no future
+ * ancestor transform can trap its position:fixed. Falls back to inline.
+ */
+function portalModal(node) {
+	try {
+		if (_reactDom && typeof _reactDom.createPortal === "function" && document.body) return _reactDom.createPortal(node, document.body);
+	} catch (e) {}
+	return node;
+}
 const SHARE_CODE_PREFIX = "SWX1.";
 const SHARE_CODE_KEYS = [FONT_LEVEL_KEY, TEXT_FONT_LEVEL_KEY, DENSITY_KEY, CHAT_WIDTH_KEY, SIDEBAR_BG_KEY, PRESET_KEY, LINE_HEIGHT_KEY, MOTION_KEY, FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, USER_AVATAR_ENABLED_KEY, AI_AVATAR_ENABLED_KEY, CUSTOM_PRESETS_KEY];
 function base64UrlEncode(text) {
@@ -3051,7 +3149,7 @@ function base64UrlDecode(text) {
 	const bin = atob(t);
 	const bytes = new Uint8Array(bin.length);
 	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-	return new TextDecoder().decode(bytes);
+	return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 function encodeSkinShare() {
 	const skin = {};
@@ -3063,8 +3161,11 @@ function encodeSkinShare() {
 	} catch (e) {}
 	return SHARE_CODE_PREFIX + base64UrlEncode(JSON.stringify({ v: 1, s: skin }));
 }
+/** Upper bound on an accepted code: a megabyte-long paste must not reach storage. */
+const SHARE_CODE_MAX = 65536;
 function decodeSkinShare(raw) {
 	const text = String(raw == null ? "" : raw).trim();
+	if (text.length > SHARE_CODE_MAX) throw new Error("invalid share code");
 	if (!text.startsWith(SHARE_CODE_PREFIX)) throw new Error("invalid share code");
 	let parsed = null;
 	try { parsed = JSON.parse(base64UrlDecode(text.slice(SHARE_CODE_PREFIX.length))); } catch (e) { throw new Error("invalid share code"); }
@@ -3203,51 +3304,97 @@ const [shareOpen, setShareOpen] = (0, _react.useState)(false);
 const [shareCode, setShareCode] = (0, _react.useState)("");
 const [shareCopied, setShareCopied] = (0, _react.useState)(false);
 const [shareImportText, setShareImportText] = (0, _react.useState)("");
+const [shareError, setShareError] = (0, _react.useState)("");
+const shareModalRef = (0, _react.useRef)(null);
 const openShare = () => {
 	setShareCode(encodeSkinShare());
 	setShareCopied(false);
 	setShareImportText("");
+	setShareError("");
 	setShareOpen(true);
 };
 const copyShareCode = () => {
 	const legacyCopy = () => {
+		let ok = false;
+		let ta = null;
 		try {
-			const ta = document.createElement("textarea");
+			ta = document.createElement("textarea");
 			ta.value = shareCode;
+			// Off-screen: an unpositioned textarea at the end of body reflows the page.
+			ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
 			document.body.appendChild(ta);
 			ta.select();
-			document.execCommand("copy");
-			ta.remove();
-			setShareCopied(true);
-		} catch (e) {}
+			ok = document.execCommand("copy");
+		} catch (e) { ok = false; }
+		if (ta && ta.parentNode) ta.parentNode.removeChild(ta);
+		setShareCopied(ok);
+		if (!ok) setShareError(t("shareCopyFailed"));
 	};
-	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareCode).then(() => setShareCopied(true)).catch(legacyCopy);
+	if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(shareCode).then(() => { setShareCopied(true); setShareError(""); }).catch(legacyCopy);
 	else legacyCopy();
 };
 const runShareImport = () => {
 	if (!importConfig) return;
 	let skin = null;
 	try { skin = decodeSkinShare(shareImportText); } catch (e) {
-		setStatus({ kind: "err", detail: t("shareInvalid") });
+		setShareError(t("shareInvalid"));
 		return;
 	}
 	if (!skin || !Object.keys(skin).length) {
-		setStatus({ kind: "err", detail: t("shareInvalid") });
+		setShareError(t("shareInvalid"));
 		return;
 	}
+	setShareError("");
 	importConfig({ app: "sone-wx", version: 1, skin: skin }).then(() => {
 		const importedPreset = readJson(PRESET_KEY, null);
 		setPresetId(typeof importedPreset === "string" && importedPreset ? importedPreset : null);
 		bumpPresets((n) => n + 1);
 		setShareOpen(false);
 		setStatus({ kind: "ok", detail: t("imported") });
-	}).catch(() => setStatus({ kind: "err", detail: t("shareInvalid") }));
+	}).catch(() => setShareError(t("shareInvalid")));
 };
 (0, _react.useEffect)(() => {
 	if (!shareOpen) return;
-	const onKey = (event) => { if (event.key === "Escape") setShareOpen(false); };
-	window.addEventListener("keydown", onKey);
-	return () => window.removeEventListener("keydown", onKey);
+	const previousFocus = document.activeElement;
+	const previousOverflow = document.body.style.overflow;
+	document.body.style.overflow = "hidden";
+	const focusables = () => {
+		const root = shareModalRef.current;
+		if (!root) return [];
+		return Array.prototype.slice.call(root.querySelectorAll("button, textarea, [href], input, select, [tabindex]:not([tabindex='-1'])")).filter((el) => !el.disabled);
+	};
+	const first = focusables()[0];
+	if (first && typeof first.focus === "function") first.focus();
+	// Capture + stopPropagation: the host settings dialog also listens for Escape
+	// and would otherwise close the whole settings page along with this modal.
+	const onKey = (event) => {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			event.stopPropagation();
+			setShareOpen(false);
+			return;
+		}
+		if (event.key !== "Tab") return;
+		const items = focusables();
+		if (!items.length) return;
+		const head = items[0];
+		const tail = items[items.length - 1];
+		const active = document.activeElement;
+		const inside = shareModalRef.current && shareModalRef.current.contains(active);
+		if (event.shiftKey && (active === head || !inside)) {
+			event.preventDefault();
+			tail.focus();
+		} else if (!event.shiftKey && (active === tail || !inside)) {
+			event.preventDefault();
+			head.focus();
+		}
+	};
+	window.addEventListener("keydown", onKey, true);
+	return () => {
+		window.removeEventListener("keydown", onKey, true);
+		document.body.style.overflow = previousOverflow;
+		if (previousFocus && typeof previousFocus.focus === "function" && document.contains(previousFocus)) previousFocus.focus();
+	};
 }, [shareOpen]);
 const fontOptions = [1, 2, 3, 4, 5].map((level) => ({ value: level, label: t("fontL" + level) }));
 const densityOptions = [
@@ -3498,7 +3645,7 @@ children: (0, react_jsx_runtime.jsx)(Segmented, { value: contrast, options: cont
 (0, react_jsx_runtime.jsx)(SkinRow, {
 title: t("composerFxTitle"),
 hint: t("composerFxHint"),
-onReset: () => { if (setComposerFx) setComposerFx(false); }, resetLabel: t("rowReset"),
+onReset: () => { if (setComposerFx) setComposerFx(true); }, resetLabel: t("rowReset"),
 children: (0, react_jsx_runtime.jsx)(Segmented, { value: composerFx, options: composerFxOptions, onChange: (value) => { if (setComposerFx) setComposerFx(value); } })
 }),
 ] }),
@@ -3540,11 +3687,15 @@ className: "dsh-wc-btn dsh-wc-btn-secondary dsh-wc-btn-sm",
 onClick: openShare,
 children: t("shareTitle")
 }),
-shareOpen ? (0, react_jsx_runtime.jsx)("div", {
+shareOpen ? portalModal((0, react_jsx_runtime.jsx)("div", {
 className: "dsh-wc-modal-mask",
 onClick: () => setShareOpen(false),
 children: (0, react_jsx_runtime.jsxs)("div", {
 className: "dsh-wc-modal",
+ref: shareModalRef,
+role: "dialog",
+"aria-modal": true,
+"aria-label": t("shareTitle"),
 onClick: (event) => event.stopPropagation(),
 children: [
 (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-title", children: t("shareTitle") }),
@@ -3556,13 +3707,14 @@ children: [
 ] }),
 (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-divider" }),
 (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-desc", children: t("shareImportTitle") }),
-(0, react_jsx_runtime.jsx)("textarea", { className: "dsh-wc-modal-code", placeholder: SHARE_CODE_PREFIX, value: shareImportText, onChange: (event) => setShareImportText(event.target.value) }),
+(0, react_jsx_runtime.jsx)("textarea", { className: "dsh-wc-modal-code", placeholder: SHARE_CODE_PREFIX, value: shareImportText, onChange: (event) => { setShareImportText(event.target.value); if (shareError) setShareError(""); } }),
+shareError ? (0, react_jsx_runtime.jsx)("div", { className: "dsh-wc-modal-error", role: "alert", children: shareError }) : null,
 (0, react_jsx_runtime.jsxs)("div", { style: { display: "flex", gap: "8px", justifyContent: "flex-end" }, children: [
 (0, react_jsx_runtime.jsx)("button", { type: "button", className: "dsh-wc-btn dsh-wc-btn-primary dsh-wc-btn-sm", onClick: runShareImport, children: t("shareImportBtn") })
 ] })
 ]
 })
-}) : null
+})) : null
 ]
 }),
 (0, react_jsx_runtime.jsxs)("div", {
@@ -4008,7 +4160,7 @@ scanHooks.push(composerScrollScan);
 							};
 							// Only send heroTagline when the export carried one, so importing
 							// older exports keeps the current tagline instead of clearing it.
-							if (typeof brand.heroTagline === "string") brandBody.heroTagline = brand.heroTagline.slice(0, 40);
+							if (typeof brand.heroTagline === "string") brandBody.heroTagline = brand.heroTagline.trim().slice(0, 40);
 							jobs.push(fetch("/sone-wx/brand", {
 								method: "POST",
 								headers: { "content-type": "application/json" },
@@ -4137,6 +4289,11 @@ window.localStorage.removeItem(STAR_KEY);
 						// until the next reload, and saved presets would survive a "restore defaults".
 						sidebarOrder = []; applyPanelOrder();
 						writeJson(CUSTOM_PRESETS_KEY, []);
+						clearRightbarTouched();
+						if (rightbarWidthCtl) rightbarWidthCtl.reapply();
+						// Removing STAR_KEY does not repaint the rows; without this the
+						// highlight survives until some unrelated DOM mutation happens.
+						stampStars();
 						sync();
 					}
 				};
@@ -4249,6 +4406,7 @@ window.localStorage.removeItem(STAR_KEY);
 "shareImportTitle": "粘贴分享码",
 "shareImportBtn": "导入",
 "shareInvalid": "分享码无效",
+"shareCopyFailed": "复制失败，请手动选中分享码复制",
 					"importBad": "文件格式不对"
 				},
 				en: {
@@ -4357,6 +4515,7 @@ window.localStorage.removeItem(STAR_KEY);
 "shareImportTitle": "Paste a share code",
 "shareImportBtn": "Import",
 "shareInvalid": "Invalid share code",
+"shareCopyFailed": "Copy failed — select the code and copy it manually",
 					"importBad": "Unreadable file"
 				}
 			}), "sone-wx: skin dictionaries");
@@ -4379,6 +4538,7 @@ window.localStorage.removeItem(STAR_KEY);
 				const removableHooks = [applyPanelOrder, composerScrollScan];
 				if (groupCounts) removableHooks.push(groupCounts.stamp);
 				if (rightbarAutoCtl) removableHooks.push(rightbarAutoCtl.tick);
+				if (starsCtl) removableHooks.push(starsCtl.stamp);
 				for (const hook of removableHooks) {
 					const at = scanHooks.indexOf(hook);
 					if (at >= 0) scanHooks.splice(at, 1);

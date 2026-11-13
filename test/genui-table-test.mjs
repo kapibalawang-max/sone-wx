@@ -1,7 +1,6 @@
 // GenUI's own table component must not inherit the markdown-table styling.
 import { writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import { chromium } from './browser.mjs';
 const html = `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="file:///tmp/sone-css.css">
 <style>
 .V1MMBW_tableWrap{border-radius:8px;border:1px solid #e0e0e0;overflow-x:auto;max-width:100%}
@@ -10,7 +9,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><link rel="styles
 .V1MMBW_table td{padding:10px 12px;border-bottom:1px solid #e8e8e8}
 .V1MMBW_card{border:1px solid #ddd;border-radius:12px;padding:20px}
 </style></head><body class="dsh-wechat-skin-on dsh-wechat-match">
-<div class="tnXGgG_flowItem" data-chat-flow-kind="assistant-step"><div class="V1MMBW_card"><div class="V1MMBW_tableWrap"><table class="V1MMBW_table"><thead><tr><th>城市</th><th>门店</th></tr></thead><tbody><tr><td>示例县</td><td>692</td></tr></tbody></table></div></div></div>
+<div class="tnXGgG_flowItem" data-chat-flow-kind="assistant-step"><div class="V1MMBW_card"><div class="V1MMBW_tableWrap"><table class="V1MMBW_table"><thead><tr><th>城市</th><th>门店</th></tr></thead><tbody><tr><td>示例县</td><td>100</td></tr></tbody></table></div></div></div>
 <script>
 const w=document.querySelector('.V1MMBW_tableWrap'), t=w.querySelector('table');
 const th=w.querySelector('th'), td=w.querySelector('td');
@@ -19,8 +18,11 @@ document.title=JSON.stringify({tableBorder:cs.borderTopWidth,tableMargin:cs.marg
  cardBorder:getComputedStyle(document.querySelector('.V1MMBW_card')).borderTopWidth,thPadTop:hs.paddingTop,thPadLeft:hs.paddingLeft,tdPadLeft:ds.paddingLeft,wrapBorder:ws.borderTopWidth});
 </script></body></html>`;
 const f='/tmp/genui-table-test.html'; writeFileSync(f,html);
-const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom',`file://${f}`],{encoding:'utf8'});
-const r=JSON.parse(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"'));
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:800,height:600}});
+await page.goto(`file://${f}`);
+const r=JSON.parse(await page.evaluate(()=>document.title));
+await browser.close();
 let pass=0,fail=0; const ok=(c,n)=>{ c?pass++:(fail++,console.log('FAIL',n,JSON.stringify(r))); };
 ok(r.tableBorder==='0px','genui table gets no extra border');
 ok(r.tableMargin==='0px','genui table keeps zero margin');

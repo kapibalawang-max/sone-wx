@@ -1,7 +1,6 @@
 // Markdown table frame: computed-style assertions on the real CSS.
 import { writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import { chromium } from './browser.mjs';
 const table = `<div class="_tableScroll_abc_1"><table><thead><tr><th>名称</th><th>数值</th></tr></thead><tbody><tr><td>甲</td><td>1</td></tr><tr><td>乙</td><td>2</td></tr></tbody></table></div>`;
 const fill = `<div class="_tableFill_abc_9"><div class="_tableScroll_abc_1"><table><thead><tr><th>名称</th><th>数值</th></tr></thead><tbody><tr><td>甲</td><td>1</td></tr></tbody></table></div></div>`;
 const html = `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="file:///tmp/sone-css.css"><style>body{margin:0;padding:20px;font:13px/1.6 -apple-system}th,td{padding-left:0;padding-right:0}</style></head><body class="dsh-wechat-skin-on"><div class="tnXGgG_flowItem" data-chat-flow-kind="assistant-step">${table}${fill}</div><script>
@@ -18,8 +17,11 @@ document.title=JSON.stringify({
 });
 </script></body></html>`;
 const f='/tmp/table-test.html'; writeFileSync(f,html);
-const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom',`file://${f}`],{encoding:'utf8'});
-const r=JSON.parse(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"'));
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:800,height:600}});
+await page.goto(`file://${f}`);
+const r=JSON.parse(await page.evaluate(()=>document.title));
+await browser.close();
 let pass=0,fail=0; const ok=(c,n)=>{ if(c){pass++;} else {fail++; console.log('FAIL',n, JSON.stringify(r));} };
 ok(r.wrapBorder==='0px','wrapper stays frameless');
 ok(r.wrapStyle==='none','no wrapper frame style');

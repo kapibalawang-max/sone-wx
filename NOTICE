@@ -1,0 +1,61 @@
+Sone-wx
+Copyright (c) 2026 kapibalawang-max
+
+本插件以 MIT License 发布，全文见本仓库 LICENSE。
+This plugin is released under the MIT License; see LICENSE in this repository.
+
+=========================================================================
+衍生作品声明 / Derivative work
+=========================================================================
+
+Sone-wx 是 dsh-wechat-skin 的衍生作品（derivative work），在其基础上移植到
+DeepSeek Harness 0.2.2 并做了大量本地定制。
+
+  上游项目 / Upstream project: dsh-wechat-skin
+  上游地址 / Upstream URL:     https://github.com/licheng-ma/dsh-wechat-skin
+  上游许可 / Upstream license: MIT License
+  许可全文 / License text:     https://github.com/licheng-ma/dsh-wechat-skin/blob/main/LICENSE
+
+上游完整版权声明与许可声明 / Upstream copyright and permission notice:
+
+  MIT License
+
+  Copyright (c) licheng-ma
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+=========================================================================
+合并的本地插件 / Merged local plugins
+=========================================================================
+
+2026-11-08 起，本仓库把三个本地插件合并为一个 bundle：
+
+  1. dsh-wechat-skin —— 上述上游项目的本地移植与深度定制版，提供微信风格皮肤
+     （气泡、头像、字号、密度、布局、输入框效果、主题预设、配置导出导入）。
+     localStorage 键沿用 `dsh-wechat-skin:*`，老数据直接延续。
+
+  2. dsh-brand-studio —— 本地自研插件，提供品牌标志、标题、文字标志图片与新会话
+     标语，接管侧栏与新会话页的品牌位。品牌数据真源为 ~/.dsh/sone-wx/brand/，
+     首次启动时从旧目录 ~/.dsh/dsh-brand-studio/brand/ 自动迁移。
+
+  3. dsh-table-stabilizer —— 本地自研插件，修复宽表格悬停时的横向跳动（把实测
+     滚动条宽度绑到表格容器的 --dsh-scrollbar-width）。纯 client 行为，无设置项。
+
+dsh-brand-studio 与 dsh-table-stabilizer 均为本地自研，无第三方上游，同样以本仓库
+的 MIT License 发布。

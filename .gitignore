@@ -1,0 +1,12 @@
+# 依赖与日志
+node_modules/
+*.log
+
+# 系统垃圾文件
+.DS_Store
+
+# 打包产物（npm pack / plugin_manager 生成的 tarball）
+/*.tgz
+
+# 注意：docs/*.png（README 预览图）与 test/baseline/*.png（视觉基线）
+# 是必须追踪的产物，不要加入忽略规则。

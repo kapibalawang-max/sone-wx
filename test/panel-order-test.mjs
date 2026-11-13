@@ -1,6 +1,5 @@
 import { writeFileSync, readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import { chromium } from './browser.mjs';
 // Extract the live "sidebar entry order" region straight from client.js so this
 // test tracks the current implementation instead of a stale /tmp snapshot.
 const clientSrc = readFileSync(new URL('../client.js', import.meta.url), 'utf8');
@@ -78,9 +77,14 @@ document.title = encodeURIComponent(JSON.stringify(results));
 } catch(e) { document.title = encodeURIComponent(JSON.stringify({error:String((e&&e.stack)||e)})); }
 </script></body></html>`;
 writeFileSync('/tmp/panel-order.html', html);
-const dom = execFileSync(chrome, ['--headless=new','--disable-gpu','--hide-scrollbars','--window-size=600,400','--virtual-time-budget=800','--dump-dom','file:///tmp/panel-order.html'], {encoding:'utf8'});
-const m = /<title>([^<]*)<\/title>/.exec(dom);
-const out = JSON.parse(decodeURIComponent(m[1]));
+// The old CLI run used --window-size=600,400 and --hide-scrollbars; headless
+// Chromium hides scrollbars on its own, so only the viewport needs carrying over.
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const page = await browser.newPage({ viewport: { width: 600, height: 400 } });
+await page.goto('file:///tmp/panel-order.html');
+const title = await page.evaluate(() => document.title);
+await browser.close();
+const out = JSON.parse(decodeURIComponent(title));
 if (out.error) { console.log('PAGE ERROR', out.error); process.exit(1); }
 const eq = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const checks = [

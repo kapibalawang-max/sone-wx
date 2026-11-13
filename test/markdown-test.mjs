@@ -1,7 +1,6 @@
 // Assistant markdown: type hierarchy, link/code chrome, quote rule, table rhythm.
 import { writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import { chromium } from './browser.mjs';
 const body = `<h1 id="h1">标题一</h1><h2 id="h2">标题二</h2><p id="p">正文 <a id="a" href="#">链接</a> <code id="code">x=1</code></p>
 <ul><li id="li">条目 <strong>加粗</strong></li></ul>
 <blockquote id="bq"><p>引用</p></blockquote>
@@ -22,8 +21,11 @@ document.title=JSON.stringify({
 });
 </script></body></html>`;
 const f='/tmp/markdown-test.html'; writeFileSync(f,html);
-const out=execFileSync(chrome,['--headless=new','--disable-gpu','--dump-dom',`file://${f}`],{encoding:'utf8'});
-const r=JSON.parse(out.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g,'"'));
+const browser=await chromium.launch({channel:'chrome',headless:true});
+const page=await browser.newPage({viewport:{width:800,height:600}});
+await page.goto(`file://${f}`);
+const r=JSON.parse(await page.evaluate(()=>document.title));
+await browser.close();
 let pass=0,fail=0; const ok=(c,n)=>{ if(c) pass++; else { fail++; console.log('FAIL',n,JSON.stringify(r)); } };
 ok(r.h1>r.h2 && r.h2>r.p,'h1 > h2 > body');
 ok(r.h2>=17,'h2 noticeably larger than body');

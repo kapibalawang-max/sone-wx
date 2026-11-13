@@ -1,7 +1,11 @@
 // The project folder glyph is redrawn as a mask on the wrapper. Guard the mask,
 // the hidden host svg, the 16px box and the active-project tint.
 import fs from 'node:fs';
-const src = fs.readFileSync('/Users/user/.dsh/local-plugins/sone-wx/client.js', 'utf8');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const src = fs.readFileSync(path.join(root, 'client.js'), 'utf8');
 const i = src.indexOf('const WECHAT_CSS = `'); const j = src.indexOf('`;', i);
 const css = src.slice(i + 'const WECHAT_CSS = `'.length, j);
 const rule = (sel) => { const at = css.lastIndexOf(sel + ' {'); return at < 0 ? '' : css.slice(at, css.indexOf('}', at)); };

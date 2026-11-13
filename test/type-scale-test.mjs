@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
-import { execFileSync } from 'node:child_process'
+import { chromium } from './browser.mjs'
 // 断言五档字号下层级单调、正文不低于 13px、标题不超过 21px。
 const src = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
 function grab(name) {
@@ -10,7 +10,10 @@ function grab(name) {
 }
 writeFileSync('/tmp/sone-css-type.css', grab('WECHAT_CSS') + '\n' + grab('WECHAT_UI_CSS'))
 
-function probe(scale, textScale = scale) {
+const browser = await chromium.launch({ channel: 'chrome', headless: true })
+const page = await browser.newPage({ viewport: { width: 800, height: 600 } })
+
+async function probe(scale, textScale = scale) {
   const html = `<!doctype html><html style="--dsh-wechat-font-scale:${scale};--dsh-wechat-text-scale:${textScale}"><head><meta charset="utf-8">
 <link rel="stylesheet" href="file:///tmp/sone-css-type.css"></head>
 <body class="dsh-wechat-skin-on dsh-wechat-match" style="--wc-line-height:1.6">
@@ -29,14 +32,13 @@ for (const id of ids) out[id]=parseFloat(getComputedStyle(document.getElementByI
 document.title=JSON.stringify(out);
 </script></body></html>`
   writeFileSync('/tmp/type-scale.html', html)
-  const dom = execFileSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    ['--headless=new', '--disable-gpu', '--dump-dom', 'file:///tmp/type-scale.html'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
-  return JSON.parse(dom.match(/<title>(.*?)<\/title>/s)[1].replace(/&quot;/g, '"'))
+  await page.goto('file:///tmp/type-scale.html')
+  return JSON.parse(await page.evaluate(() => document.title))
 }
 
 let fail = 0
 for (const scale of [0.85, 0.92, 1.0, 1.08, 1.18]) {
-  const r = probe(scale)
+  const r = await probe(scale)
   // i/j/k are the sidebar project + new-session texts: they must ride the UI
   // scale token, not a hardcoded px (D2 guard)
   const ok = r.b > r.a && r.a >= r.c && r.c >= r.d && r.d >= r.e && r.d >= 12 && r.e >= 12 && r.b >= 13 && r.b <= 21 && r.f >= 12
@@ -45,9 +47,9 @@ for (const scale of [0.85, 0.92, 1.0, 1.08, 1.18]) {
   console.log(String(scale).padEnd(5), JSON.stringify(r), ok ? 'OK' : 'FAIL')
 }
 // 两级字号互不影响：只动正文档时正文变大、界面不变；只动界面档时反之
-const base = probe(1, 1)
-const bodyOnly = probe(1, 1.18)
-const uiOnly = probe(1.18, 1)
+const base = await probe(1, 1)
+const bodyOnly = await probe(1, 1.18)
+const uiOnly = await probe(1.18, 1)
 const checks = [
   ['body scale raises bubble only', bodyOnly.b > base.b && bodyOnly.a === base.a],
   ['ui scale raises sidebar only', uiOnly.a > base.a && uiOnly.b === base.b],
@@ -57,5 +59,6 @@ const checks = [
 for (const [name, ok] of checks) {
   if (!ok) { fail += 1; console.log('FAIL', name, JSON.stringify({ base, bodyOnly, uiOnly })) }
 }
+await browser.close()
 console.log(fail ? `${fail}/11 FAIL` : '11/11 OK（含侧栏三处字号随档）')
 process.exit(fail ? 1 : 0)
