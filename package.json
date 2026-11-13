@@ -1,6 +1,6 @@
 {
   "name": "sone-wx",
-  "version": "1.46.1",
+  "version": "1.47.0",
   "private": true,
   "description": "SONE主题：微信风格皮肤 + 品牌自定义（独立设置分区）。",
   "type": "module",
@@ -76,6 +76,8 @@
     "test": "node test/run-all.mjs",
     "test:fixtures": "node test/fixtures.mjs",
     "test:visual": "node test/visual.mjs",
-    "test:update-baseline": "node test/visual.mjs --update"
+    "test:update-baseline": "node test/visual.mjs --update",
+    "build": "node build.mjs",
+    "check:build": "node build.mjs --check"
   }
 }

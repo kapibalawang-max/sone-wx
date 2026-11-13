@@ -478,6 +478,64 @@ function createSoneIslandsLayer(require, host) {
       }
     }
 
+    /** 强调色影响到的皮肤令牌：一条链路同时喂结构层与微信皮肤。 */
+    const ACCENT_SKIN_TOKENS = [
+      '--wc-accent-solid',
+      '--wc-accent-bright',
+      '--wc-accent-press',
+      '--wc-accent-soft',
+      '--wc-accent-line',
+      '--wc-green',
+      '--wc-link',
+      '--wc-link-hover',
+      '--wc-sel-ink',
+      '--wc-sel-ink-dim'
+    ];
+
+    /** 相对亮度：只在「浅色强调色要不要换深色文字」这一处做判断。 */
+    function relativeLuminance(hex) {
+      const value = hex.replace('#', '');
+      const channels = [0, 2, 4].map((index) => {
+        const channel = parseInt(value.slice(index, index + 2), 16) / 255;
+        return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    }
+
+    function clearAccentRamp() {
+      const body = document.body;
+      if (body === null) return;
+      for (const token of ACCENT_SKIN_TOKENS) body.style.removeProperty(token);
+    }
+
+    /**
+     * 选中的颜色直接写进皮肤令牌，而不是另起一套 --isl-* 变量：
+     * 选中态、焦点环、链接、图钉、模型药丸与左侧图标栏一起换色，
+     * 深浅主题靠 color-mix 与 --wc-ink-1 自适应，无需两套值。
+     */
+    function applyAccentRamp(color) {
+      const body = document.body;
+      if (body === null) return;
+      if (color === null) {
+        clearAccentRamp();
+        return;
+      }
+      const style = body.style;
+      const light = relativeLuminance(color) > 0.42;
+      const mixed = (weight, target) => `color-mix(in srgb, ${color} ${weight}%, ${target})`;
+      style.setProperty('--wc-accent-solid', color);
+      style.setProperty('--wc-accent-bright', color);
+      style.setProperty('--wc-accent-press', mixed(78, '#000'));
+      style.setProperty('--wc-accent-soft', mixed(10, 'var(--wc-surface)'));
+      style.setProperty('--wc-accent-line', mixed(40, 'var(--wc-surface)'));
+      style.setProperty('--wc-green', color);
+      // 链接与焦点环跟着主题墨色走：浅色主题压深、深色主题提亮。
+      style.setProperty('--wc-link', mixed(62, 'var(--wc-ink-1)'));
+      style.setProperty('--wc-link-hover', mixed(80, 'var(--wc-ink-1)'));
+      style.setProperty('--wc-sel-ink', light ? 'var(--wc-ink-1)' : '#ffffff');
+      style.setProperty('--wc-sel-ink-dim', light ? 'color-mix(in srgb, var(--wc-ink-1) 72%, transparent)' : 'rgba(255, 255, 255, 0.92)');
+    }
+
     function applyAccent(color) {
       const body = document.body;
       if (body === null) return;
@@ -488,6 +546,7 @@ function createSoneIslandsLayer(require, host) {
         body.setAttribute('data-dsh-wc-accent', '');
         body.style.setProperty('--isl-accent', color);
       }
+      applyAccentRamp(color);
     }
 
     function storeAccent(color) {

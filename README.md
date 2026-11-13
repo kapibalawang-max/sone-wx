@@ -114,6 +114,27 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 
 卡片底部的状态点报告皮肤与当前 DSH 版本的适配情况：「适配正常」「选择器缺失 (n)」「上下文探针未渲染」。DSH 升级后宿主哈希类名可能漂移，自检报缺失时需按当前 `*.module.css` 重新映射（见「结构」）。
 
+### 浮岛布局
+
+打开「布局 → 浮岛布局」后，界面从平铺改为浮岛：统一画布上放圆角面板，另加一条 40px 自绘顶栏与常驻左侧图标栏。它自带一页设置（设置 → **浮岛布局**），与皮肤卡并列：
+
+| 设置 | 说明 |
+| --- | --- |
+| 启用浮岛布局 | 关闭立即回平铺外观，其余设置保留 |
+| 强调色 | 6 个预设 + 自定义取色 + 跟随主题；选中的颜色同时驱动皮肤令牌（选中态、焦点环、链接、图钉、模型药丸） |
+| 左侧栏图标 | 勾选哪些插件图标常驻左侧栏；按住图标拖动可排序 |
+
+浮岛层带来的能力：
+
+- **自绘顶栏**：工作区折叠/展开、打开或关闭右侧栏、工作区切换；macOS 自动避让红绿灯，Windows 在原生标题栏下预留高度。
+- **常驻左侧图标栏**：所有侧栏插件图标直排，可拖动排序、右键增删，首页房子按钮只做导航、不占选中态。
+- **置顶聚合**：置顶会话留在原工作区，另在「新会话」与「工作区」之间聚成可折叠分类。
+- **两级模型弹层**：点模型药丸先选模型，再选推理等级，替代原生下拉。
+- **桌面更新入口**：订阅桌面端的更新通道，发现、下载、校验、重启各状态都有反馈。
+- **可调强调色**：见上表。
+
+结构层关闭时以上全部不生效，皮肤其余部分不受影响。
+
 ### 停用与卸载
 
 停用或卸载会移除全部注入内容：皮肤与 UI 的 `<style>` 标签、body 上的类与 `data-*` 标记、DOM 增强节点（星形按钮、头像、分组计数、输入框效果）、侧栏入口的 `order`、注入的 CSS 变量，并退订所有监听、还原被接管的 `console.error`、停止 `/sone-wx/diag` 上报。
@@ -123,10 +144,28 @@ git clone https://github.com/kapibalawang-max/sone-wx ~/projects/sone-wx
 ## 结构
 
 - `index.js` — Host 半：品牌数据真源 + webServer 路由（含一次性迁移）。
-- `client.js` — Client 半：皮肤（含全部样式与行为）+ 品牌编辑器，合并注册一个 `settings.section`。
-- 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；样式改 `client.js` 内 WECHAT_CSS（本插件无独立 src，双源合并为单源）。
+- `client.js` — Client 半构建产物：**不要直接改**。模块加载器只接受单个浏览器产物，所以样式与结构层都内联在这里。
+- `src/css/skin/*.css` — 皮肤样式（按文件名顺序拼接成 `WECHAT_CSS`）。
+- `src/css/ui/*.css` — 设置页控件样式（`WECHAT_UI_CSS`，皮肤关闭时也在）。
+- `src/css/islands/*.css` — 浮岛结构层样式（`ISLANDS_CSS`），作用域 `body[data-dsh-wc-islands]`。
+- `src/css/dialects/*.css`、`src/css/islands-variants/*.css` — 按宿主结构方言注入的差异样式。
+- `src/js/islands.js` — 浮岛结构层逻辑（移植自 dsh-islands-ui，MIT）。
+- `src/client.template.js` — 皮肤与品牌逻辑，样式处留占位符。
+- `build.mjs` — 把上面全部拼成 `client.js`：`node build.mjs` 重新生成，`node build.mjs --check` 校验产物是否过期（`test/islands-layer-test.mjs` 会跑它）。
+
+维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；改样式改 `src/css/` 再 `node build.mjs`，不要改产物。
 
 ## 更新记录
+### v1.47.0
+
+浮岛布局与工程基建：把 dsh-islands-ui（MIT，DawnCHL）的结构与交互移植进来，配色改走本皮肤的令牌。
+
+- **构建分层**：新增 `src/`（皮肤 / UI / 结构层 / 方言）与 `build.mjs`。`client.js` 从此是构建产物，`node build.mjs --check` 校验是否过期，`test/islands-layer-test.mjs` 把它钉进测试。之所以必须内联：模块加载器只给一个浏览器产物，没有文件系统。
+- **浮岛布局**：统一画布 + 圆角面板 + 5px 缝隙 + 发丝描边；40px 自绘顶栏；常驻左侧图标栏（拖动排序、右键增删、房子按钮纯导航）；置顶聚合分类；两级模型/推理弹层；桌面更新入口；可调强调色。开关在「布局 → 浮岛布局」，默认开，关闭即回平铺。
+- **令牌桥接**：结构层不再自带一套颜色，`--isl-*` 全部指向 `--wc-*`；强调色选择器选中的颜色直接写进 `--wc-accent-*`、`--wc-green`、`--wc-link`、`--wc-sel-ink`，选中态、焦点环、链接、图钉与模型药丸一起换色，深浅主题靠 `color-mix` 与 `--wc-ink-1` 自适应。
+- **对称接入**：开关进 store / `injected.setIslands` / 设置行 / 分享码 / 导入校验 / 恢复默认，与其余 17 项同一套路径。
+- **合规**：`NOTICE` 增补 dsh-islands-ui 的 MIT 版权与许可全文。
+
 ### v1.46.1
 
 收尾三件事。
