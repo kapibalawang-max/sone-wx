@@ -92,7 +92,7 @@ const ISLANDS_KEY = "dsh-wechat-skin:islands";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.47.5";
+const SKIN_VERSION = "1.47.6";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -7381,6 +7381,17 @@ body.dsh-wechat-skin-on[data-dsh-wc-islands] .isl-pinnedAvatar {
 	background-color: var(--wc-code-bg, #e8e8ec);
 	background-size: cover;
 	background-position: center;
+}
+
+/* 会话区与标题栏都不再自己铺底色：浮岛本体就是那一层的表面。
+   皮肤原先把 .kiGsTW_scrollBody 刷成 --dsw-alias-bg-base，浅色下与岛屿几乎同色看不出来，
+   深色下 (#111113) 会在 #212225 的岛上压出一块更暗的矩形。 */
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .kiGsTW_scrollBody,
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .kiGsTW_root,
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .tnXGgG_root,
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .tnXGgG_scroll,
+body.dsh-wechat-skin-on[data-dsh-wc-islands] .kiGsTW_header {
+	background: transparent;
 }`;
 	const ISLANDS_CSS_VARIANTS = {
 	"scroll": "/* ==========================================================================\n   Islands UI · sidebar variant: scroll containers\n   Chosen at runtime for DSH releases from 0.2.2-rc.2, which wrapped the\n   sidebar's panel list and workspace browser in\n   `.kB3qhq_scrollRegion > .kB3qhq_scrollArea`. The base stylesheet keeps the\n   pre-rc.2 flat layout; this file only corrects the wrapper placement.\n\n   Every selector below names a class that does not exist in the older shell,\n   so inlining it there is inert; the client still injects it only for the\n   dialect it detected from `window.__DSH_BOOT__.release.version`.\n   ========================================================================== */\n\n/* The browser column replaces the old direct `.kB3qhq_regionArea` grid item. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion {\n  grid-area: 3 / 2 / 5 / 3;\n  display: flex;\n  flex-direction: column;\n  min-width: 0;\n  min-height: 0;\n  margin: 0;\n}\n\n/* The shipped grid only made sense inside the full-height shell; the island\n   grid wants a plain column so the workspace browser can fill the island. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollArea {\n  display: flex;\n  flex: 1;\n  flex-direction: column;\n  min-height: 0;\n  margin: 0;\n  overflow: hidden;\n}\n\nbody[data-dsh-wc-islands]\n  .kB3qhq_root:not(.kB3qhq_collapsed)\n  > .kB3qhq_scrollRegion\n  > .kB3qhq_scrollArea\n  > .kB3qhq_regionArea {\n  flex: 1;\n  min-height: 0;\n}\n\n/* The shipped bottom fade reads as a panel edge; the island supplies its own. */\nbody[data-dsh-wc-islands] .kB3qhq_root:not(.kB3qhq_collapsed) > .kB3qhq_scrollRegion > .kB3qhq_scrollFade {\n  display: none;\n}\n\n/* 0.2.2-rc.2 moved the selected-panel state from `.panelRow` onto the wrapping\n   `.panelEntry`, so mirror the base active rule for the shipped rail. */\nbody[data-dsh-wc-islands] .kB3qhq_root .kB3qhq_panelEntryActive .kB3qhq_panelRow {\n  background: var(--dsw-specific-sidebar-nav-item-active-accent);\n  color: var(--dsw-alias-state-business-primary);\n}"
