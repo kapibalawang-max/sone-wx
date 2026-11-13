@@ -233,9 +233,7 @@ test('wiring: apply/cleanup/reset are all connected', () => {
 })
 
 test('css: star marks the row without reordering it or covering host controls', () => {
-  const cssStart = src.indexOf('const WECHAT_CSS = `')
-  const cssEnd = src.indexOf('const ISLANDS_CSS = `')
-  const css = src.slice(cssStart, cssEnd > cssStart ? cssEnd : undefined)
+  const css = src.slice(src.indexOf('const WECHAT_CSS = `'))
   // The reorder is deliberately gone: it broke host drag-and-drop and lifted
   // starred rows above their own group heading.
   assert.ok(!css.includes('.Kjh-qa_groupSection { display: flex'), 'must not change the host group layout')

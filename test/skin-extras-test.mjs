@@ -79,7 +79,7 @@ ok(hcDark.tertiary === 'rgb(210, 210, 214)', 'high contrast dark tertiary text',
 ok(/const FONT_FAMILY_KEY = "dsh-wechat-skin:font-family"/.test(src), 'font family key')
 ok(/const CONTRAST_KEY = "dsh-wechat-skin:contrast"/.test(src), 'contrast key')
 ok(/const AVATAR_SHAPE_KEY = "dsh-wechat-skin:avatar-shape"/.test(src), 'avatar shape key')
-ok(/FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, ISLANDS_KEY, CUSTOM_PRESETS_KEY\]/.test(src), 'keys exported in config')
+ok(/FONT_FAMILY_KEY, CONTRAST_KEY, AVATAR_SHAPE_KEY, AVATAR_STYLE_KEY, COMPOSER_FX_KEY, RIGHTBAR_AUTO_KEY, CUSTOM_PRESETS_KEY\]/.test(src), 'keys exported in config')
 ok(/const AVATAR_STYLE_KEY = "dsh-wechat-skin:avatar-style"/.test(src), 'avatar style key')
 ok(/function applyAvatarStyle\(value\)/.test(src), 'applyAvatarStyle defined')
 ok(/function silhouetteAvatar\(title, seed\)/.test(src), 'silhouette generator')

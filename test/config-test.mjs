@@ -22,7 +22,6 @@ const KEY = {
   AVATAR_STYLE_KEY: 'dsh-wechat-skin:avatar-style',
   COMPOSER_FX_KEY: 'dsh-wechat-skin:composer-fx',
   RIGHTBAR_AUTO_KEY: 'dsh-wechat-skin:rightbar-auto',
-  ISLANDS_KEY: 'dsh-wechat-skin:islands',
   CUSTOM_PRESETS_KEY: 'dsh-wechat-skin:presets',
   COMPOSER_H_KEY: 'dsh-wechat-skin:composer-height'
 };

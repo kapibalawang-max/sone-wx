@@ -7,21 +7,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-
-/**
- * The islands structural layer is vendored third-party code inside its own
- * `function createSoneIslandsLayer(...)` scope; a name that repeats across that
- * boundary is not the same-scope shadowing this test guards against.
- */
-function stripVendoredLayer(src) {
-  const start = src.indexOf('function createSoneIslandsLayer(');
-  if (start < 0) return src;
-  const end = src.indexOf('//#endregion', start);
-  return end < 0 ? src : src.slice(0, start) + src.slice(end);
-}
 const fails = [];
 for (const file of ['client.js', 'index.js']) {
-  const src = stripVendoredLayer(fs.readFileSync(path.join(here, '..', file), 'utf8'));
+  const src = fs.readFileSync(path.join(here, '..', file), 'utf8');
   const counts = new Map();
   for (const m of src.matchAll(/^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm)) {
     const name = m[1];
