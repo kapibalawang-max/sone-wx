@@ -88,7 +88,7 @@ const COMPOSER_FX_KEY = "dsh-wechat-skin:composer-fx";
 /** Open the host right panel automatically on a session's first visit. */
 const RIGHTBAR_AUTO_KEY = "dsh-wechat-skin:rightbar-auto";
 // Bumped together with package.json (test/version-test.mjs keeps the two in sync).
-const SKIN_VERSION = "1.45.1";
+const SKIN_VERSION = "1.45.2";
 		const CUSTOM_PRESETS_KEY = "dsh-wechat-skin:presets";
 		const SIDEBAR_BG_CLASS = "dsh-wc-sidebar-bg";
 		/** Sidebar entry order: panel labels, first = topmost. */
@@ -695,9 +695,7 @@ body.dsh-wechat-skin-on.dsh-wechat-match[data-dsh-wechat-dark="1"] .XNZzAa_body 
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-/* reasoning rows: quiet pill */
-body.dsh-wechat-skin-on .ijfCxa_root { background: rgba(0, 0, 0, 0.035); border-radius: var(--wc-radius-sm); padding: 2px 8px; }
-body.dsh-wechat-skin-on[data-dsh-wechat-dark="1"] .ijfCxa_root { background: rgba(255, 255, 255, 0.06); }
+/* reasoning rows: no background pill — plain text on canvas, keep type scale only */
 body.dsh-wechat-skin-on .ijfCxa_summary,
 body.dsh-wechat-skin-on .ijfCxa_thinkBody { font-size: var(--wc-body-sm); }
 

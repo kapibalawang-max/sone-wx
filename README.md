@@ -15,6 +15,10 @@ DeepSeek Harness 插件：**微信风格皮肤 + 品牌自定义**，设置里�
 - 维护铁律沿用 dsh-wechat-skin：DSH 升级后哈希类名可能漂移，需按当前 `*.module.css` 重新映射；样式改 `client.js` 内 WECHAT_CSS（本插件无独立 src，双源合并为单源）。
 
 ## 更新记录
+### v1.45.2
+
+- 调整：移除会话区思考模块（reasoning）的背景色药丸——浅色 `rgba(0,0,0,.035)`、深色 `rgba(255,255,255,.06)` 的底色与配套内边距、圆角全部去掉，思考内容回归画布上的普通文字，仅保留字号随全局字阶缩放。
+
 ### v1.45.1
 
 - 修复：设置页「SONE主题 渲染出错」（ReferenceError: useState/useEffect is not defined）。v1.43.0 在 WechatSkinRow 内新增分享码状态与 Esc 关闭逻辑时误用了裸 `useState`/`useEffect`，而该组件作用域内未引入这两个 Hook（其余代码均为 `(0, _react.useState)` 形式），React 渲染即抛错、被错误边界接管。现改为与组件内其他 Hook 一致的 `(0, _react.useState)`/`(0, _react.useEffect)` 写法。
